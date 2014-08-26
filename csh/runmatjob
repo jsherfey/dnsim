@@ -1,0 +1,7 @@
+#!/bin/csh
+
+cd $1
+echo "command = " $2
+echo "cwd = " `pwd`
+mat -r "$2"
+echo "finished"

@@ -1,0 +1,57 @@
+DNSim user functions:
+1. modeler()
+ --> build compartmental cell/network models
+2. simstudy(modelspec,scope,variable,values,args)
+ --> submit (to SGE cluster) embarrassingly-parallel batch simulations exploring model/parameter space 
+     (requires ~/research/csh to be in your OS path; proper .bashrc changes are given above)
+    modelspec = model specification structure saved by modeler()
+    scope = scope of thing to vary (cell or connection label; e.g., 'E', 'I-E', '(E,I)')
+    variable = thing to vary (e.g., 'gNa'; reserved options: 'multiplicity', 'mechanisms')
+    values = values of the thing to vary (e.g., [5:5:50], {'iNap','iK','iM'})
+      special case: variable mechanisms are concatenated/added to those in those in the base model.
+    syntax (for arbitrary elements a,b,c):
+      [a,b,c] = iterate over set
+      (a,b,c) = group elements
+      {a,b,c} = permute elements
+      note: all three set options are optional and available for scopes, variables, and values
+
+DNS approach to modeling and simulation:
+1. create mechanism files:
+   text files with mechanism model equations (e.g., ion currents, buffers, noise, inputs, etc)
+   e.g., see examples in ~/research/modeling/database
+   tip: can use predefined mechanisms in ~/research/modeling/database
+   wip: linking Matlab to MySQL database of predefined models
+
+2. create model using modeler()
+  # GUI method
+  modeler;
+   --> add compartment. comma-separated list of mechanisms (use filenames without extension). run simulation.
+  # Script method
+  m-file (or command line):
+   cell.label = 'E';
+   cell.multiplicity = 1;
+   cell.dynamics = 'V''=(current)/Cm';
+   cell.mechanisms = {'iNa','iK','itonic','noise'};
+   cell.parameters = {'Cm',1};
+   modeler(cell);
+   tip: use (File -> Save spec) to save .mat with model specification that can be passed to simstudy().
+   wip: modifying NeuroML=>NEURON converter for outputing DNS models in NEURON-readable format.
+   wip: creating DNS-to-CellML converter for generic simulator-independent model specification.
+
+3. run simulation study using simstudy() (see function notes above)
+
+4. do batch-level analysis and metric visualization over parameter space (work in progress)
+
+##################################################
+
+net = [];
+net.cells.label = 'E';
+net.cells.multiplicity = 1;
+net.cells.dynamics = 'V''=(current)/Cm';
+net.cells.mechanisms = {'iNa','iK','itonic','noise'};
+net.cells.parameters = {'Cm',1};
+net.connections.label = 'E-E';
+net.connections.mechanisms = {'iSYN'};
+modeler(net);
+
+
