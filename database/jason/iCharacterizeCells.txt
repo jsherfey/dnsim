@@ -1,0 +1,13 @@
+# staircase stimulus
+
+# constants
+stim = 1;  # scaling factor
+stimoffset = 0; # constant offset
+stepsize = 1;   # amplitude of the step
+steptau = 10;   # period between steps
+
+# injected current
+Iext(t) = stim.*(stimoffset + stepsize.*fix(t./steptau))
+
+# interface statement
+current => Iext(t)

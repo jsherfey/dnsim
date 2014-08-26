@@ -1,0 +1,27 @@
+% Parameters:
+gk = [5]
+Ek = [-100]
+
+ 
+% Functions:
+
+
+ninf(V) = ((1.0) ./ (1 + exp((-26.0 - V)/7.8)))
+sinf(V) = 0.6 + ((1.0 - 0.6) ./ (1 + exp(-(-20.0 - V)/10.0)))
+
+taun(V) = 0.1 + ((14.0 - 0.1) ./ (exp((-26.0-V)/13.0) + exp(-(-26.0-V)/12.0)))
+taus(V) = 7.0 + ((33.0 - 7.0) ./ (exp((-V)/10.0) + exp(-(-V)/10.0)))
+
+GPeIk(V,n,s) = -gk.*(n.^4).*s.*(V-Ek) 
+
+
+% ODEs:
+n' = (ninf(V) - n)./taun(V)
+s' = (sinf(V) - s)./taus(V)
+
+% Initial Conditions
+n(0) = zeros(Npop,1)
+s(0) = zeros(Npop,1)
+ 
+% Substitution:
+current => GPeIk(V,n,s)

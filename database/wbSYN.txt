@@ -1,0 +1,23 @@
+% 1st-order synapse (synaptic current in Wang-Buzsaki interneuron model, 1996)
+wbgSYN=.1; wbESYN=-75; wbtauRx=.083; wbtauDx=10; theta=0; IC=.1; IC_noise=.1
+wbPrSYN=1 % probability of two cells being connected
+
+% Random connectivity
+mask=rand(Npre,Npost)<=wbPrSYN
+
+% Dynamics
+F(V)=1./(1+exp(-(V-theta)/2))
+s'=(F(Vpre)./wbtauRx).*(1-s)-s/wbtauDx
+s(0)=IC+IC_noise.*rand(Npre,1)
+ISYN(V,s)=(wbgSYN/(wbPrSYN*Npre)).*s.*(V-wbESYN)
+current => -ISYN(Vpost,s)
+
+% for N cells and M synapses per cell (on average):
+% set gsyn=gsyn/M (do this in the mech file itself)
+% random connectivity: Pr[i->j or j->i]=M/N
+
+% units:
+% a=12 [units: 1/ms]
+% b=.1 [units: 1/ms; i.e., tauDx=10ms]
+% theta=0 [units: mV; set high so NT only when pre spike]
+

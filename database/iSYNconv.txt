@@ -1,0 +1,30 @@
+# iSYNconv: fast threshold modulation with convergence-based connectivity
+# Each postsynaptic neuron receives connections from convval randomly
+# chosen presynaptic neurons. Note that we should have convval <= Npre.
+# Other than connectivity, everything else is the same as iSYN.txt
+# See also: iSYNdiv.txt
+
+# constants
+g_SYN=.5; E_SYN=-80; tauDx=1; tauRx=.25; convval = 1;
+IC=.1; IC_noise=0
+
+# precompute linear positions (index)
+[dummy,Xpre] = sort(randn(Npre,Npost),1)
+Xpost = Xpre
+# Xpre stores random values in each column
+# Xpost is not used
+
+# compute mask
+mask = Xpre <= convval
+
+# gating dynamics
+sSYNpre' = -sSYNpre./tauDx + ((1-sSYNpre)/tauRx).*(1+tanh(Vpre/10))
+
+# initial conditions
+sSYNpre(0)=IC+IC_noise.*rand(Npre,1)
+
+# synaptic current
+ISYNconv(V,s) = (g_SYN.*(s'*mask)'.*(V-E_SYN))
+
+# interface statement
+current => -ISYNconv(Vpost,sSYNpre)

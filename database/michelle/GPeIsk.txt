@@ -1,0 +1,16 @@
+% Parameters:
+gsk = [0.2]
+Ek = [-100]
+
+% Functions:
+GPeSK(V,m) = -gsk*m.*(V-Ek)
+minf(Ca) = ((Ca*1000).^4.6) ./ ((Ca*1000).^4.6 + 0.35^4.6)
+taum(Ca) = ((Ca*1000 < 5.0).*(7.7 - (Ca*1000 .* ((7.7 - 1.1) / 14.4)))) + ((Ca*1000 >= 5.0).*1.1)
+
+% ODEs:
+m' = (minf(Ca)-m)./taum(Ca)
+m(0) = zeros(Npop,1)
+
+% Substitution:
+current => GPeSK(V,m)
+

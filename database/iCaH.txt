@@ -1,0 +1,21 @@
+% high-threshold noninactivating calcium current
+
+# constants
+gCaH=6.5; tauCaH=1/3; c_CaHaM=1; c_CaHbM=1;
+IC=0; IC_noise=0
+
+# auxiliary functions
+aM(V) = c_CaHaM.*(1.6./(1+exp(-.072*(V-5))))
+bM(V) = c_CaHbM.*(.02*(V+8.9)./(exp((V+8.9)/5)-1))
+
+# gating dynamics
+mCaH' = (aM(V).*(1-mCaH)-bM(V).*mCaH)/tauCaH
+
+# initial conditions
+mCaH(0)=IC+IC_noise.*rand(Npop,1)
+
+# intrinsic current
+ICaH(V,m) = gCaH.*m.^2.*(-125+V)
+
+# interface statement
+current => -ICaH(V,mCaH)

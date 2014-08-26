@@ -1,0 +1,30 @@
+# iSYNdiv: fast threshold modulation with divergence-based connectivity
+# Each presynaptic neuron yields connections from divval randomly
+# chosen postsynaptic neurons. Note that we should have divval <= Npost.
+# Other than connectivity, everything else is the same as iSYN.txt
+# See also: iSYNconv.txt
+
+# constants
+g_SYN=.5; E_SYN=-80; tauDx=1; tauRx=.25; divval = 1;
+IC=.1; IC_noise=0
+
+# precompute linear positions (index)
+[dummy,Xpre] = sort(randn(Npre,Npost),2)
+Xpost = Xpre
+# Xpre stores random values in each column
+# Xpost is not used
+
+# compute mask
+mask = Xpre <= divval
+
+# gating dynamics
+sSYNpre' = -sSYNpre./tauDx + ((1-sSYNpre)/tauRx).*(1+tanh(Vpre/10))
+
+# initial conditions
+sSYNpre(0)=IC+IC_noise.*rand(Npre,1)
+
+# synaptic current
+ISYNdiv(V,s) = (g_SYN.*(s'*mask)'.*(V-E_SYN))
+
+# interface statement
+current => -ISYNdiv(Vpost,sSYNpre)

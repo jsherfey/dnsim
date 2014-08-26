@@ -1,0 +1,23 @@
+% iPoissonExp0.txt (connection mechanism: spikes from precomputed and saved spike train)
+% Poisson exponential synapse (one-to-one connectivity)
+
+lambda=100; 	% Hz, Poisson spike rate
+T=2000; 	% ms, duration
+tauD=10; 	% ms, exponential decay time constant
+Pmax=1; 	% conductance step on spike
+gsyn0=1;	% input strength
+Esyn=0;
+poiss_id0=1;
+overwrite_flag=0;
+
+G = getPoissonExp(lambda,tauD,Pmax,Npop,T,dt,overwrite_flag,poiss_id0);
+
+%Itrain(t,V) = gsyn0.*G(:,max(1,round(t/dt))).*(V-Esyn);
+Gt(t) = gsyn0.*G(:,max(1,round(t/dt)));
+Itrain(t,V) = Gt(t).*(V-Esyn);
+current => -Itrain(t,V)
+
+%Itrain(t) = gsyn0.*G(:,max(1,round(t/dt)));
+%current => -Itrain(t)
+
+

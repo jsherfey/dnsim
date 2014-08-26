@@ -1,0 +1,12 @@
+% D in Poirazi 2013; KS in Durstewitz and Grabriel 2007
+gKS=.24; EKS=-80; IC=.1; IC_noise=.1;
+ainf(V)=1./(1+exp(-(V+34)/6.5))
+atau(V)=10
+binf(V)=1./(1+exp((V+65)/6.6))
+btau(V)=200+(3200./(1+exp(-(V+63.6)/4)))
+a'=(ainf(V)-a)./atau(V)
+b'=(binf(V)-b)./btau(V)
+a(0)=IC+IC_noise.*rand(Npop,1)
+b(0)=IC+IC_noise.*rand(Npop,1)
+IKS(V,a,b) = gKS.*a.*b.*(V-EKS)
+current => -IKS(V,a,b)

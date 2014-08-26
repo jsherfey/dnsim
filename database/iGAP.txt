@@ -1,0 +1,20 @@
+# ohmic gap junction current
+
+# constants
+g_GAP=.2; fanout=inf;
+
+# precompute linear positions (index)
+UB = max(Npre,Npost)
+Xpre = linspace(1,UB,Npre)'*ones(1,Npost)
+Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'
+# Npre,Npost are reserved variables = entity multiplicities
+
+# compute mask
+mask = abs(Xpre-Xpost)<=fanout
+#mask = mask-diag(diag(mask))
+
+# intrinsic current
+IGAP(V1,V2) = g_GAP.*sum(((V1*ones(1,size(V1,1)))'-(V2*ones(1,size(V2,1)))).*mask,2)
+
+# interface statement
+current => IGAP(Vpre,Vpost)

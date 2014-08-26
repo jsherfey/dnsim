@@ -1,0 +1,13 @@
+% INa: TC sodium current
+gNa=90; % mS/cm^2
+ENa=50; % mV
+aM(V) = (.32*(13-(V+35)))./(exp((13-(V+35))/4)-1)
+bM(V) = .28*((V+35)-40)./(exp(((V+35)-40)/5)-1)
+aH(V) = .128*exp((17-(V+35))/18)
+bH(V) = 4./(1+exp((40-(V+35))/5))
+mNaf' = aM(V).*(1-mNaf)-bM(V).*mNaf
+hNaf' = aH(V).*(1-hNaf)-bH(V).*hNaf
+hNaf(0)=.54+.1*rand(Npop,1)
+mNaf(0)=.05+.1*rand(Npop,1)
+INaf(V,m,h) = gNa.*m.^3.*h.*(V-ENa)
+current => -INaf(V,mNaf,hNaf)

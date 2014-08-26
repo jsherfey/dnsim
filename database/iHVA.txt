@@ -1,0 +1,17 @@
+% iHVA (Durstewitz and Sejnowski 2000)
+gHVA=.35; % .34 (PY soma); .7 (PY prox dend)
+Cao=2; % extracellular calcium concentration
+IC=.1; IC_noise=.1;
+uinf(V)=1./(1+exp(-(V+24.6)/11.3))
+utau(V)=1.25*sech(-.031*(V+37.1))
+vinf(V)=1./(1+exp((V+12.6)/18.9))
+vtau(V)=420
+u'=(uinf(V)-u)./utau(V)
+v'=(vinf(V)-v)./vtau(V)
+u(0)=IC+IC_noise.*rand(Npop,1)
+v(0)=IC+IC_noise.*rand(Npop,1)
+ECa(caHVA)=12.5*log(Cao./caHVA)
+IHVA(V,u,v,caHVA)=gHVA.*u.^2.*v.*(V-ECa(caHVA))
+current => -IHVA(V,u,v,caHVA)
+IHVA => IHVA(V,u,v,caHVA)
+

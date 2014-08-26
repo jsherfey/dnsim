@@ -1,0 +1,45 @@
+%% iSYN: HH synaptic current with predefined dual exponential conductance
+
+E_SYN=0; g_SYN=.5;
+IC_noise=0; IC=0;
+
+tauDx=10; tauRx=.25; 
+c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))));
+
+fLFP = 100; %timelimits = [0 300];
+spiketimes = [0 (timelimits(1):1000/fLFP:timelimits(2))];
+
+ts = @(t) spiketimes((spiketimes<t));
+sSYNsim = @(T) cellfun(@(t)sum(c*(exp(-(t-ts(t))/tauDx) - exp(-(t-ts(t))/tauRx))),num2cell(T));
+
+%t=0:.1:300;
+%figure; plot(t,sSYNsim(t));
+
+% output function
+ISYN =@(V,s) g_SYN.*(s).*(V-E_SYN);
+
+%figure
+%V = -100:100; 
+%for k=1:length(V)
+%  I = ISYN(V(k),sSYNsim(t));
+%  plot(t,I); xlim([t(1) t(end)]); ylim([-100 100]);
+%  title(sprintf('V=%g',V(k)));
+%  drawnow
+%end
+
+% interface statement
+current => -ISYN(V,sSYNsim(t))
+
+% precomputed data
+%fanout = inf
+%pconnect = .2 % probability of connecting to entities located in +/- fanout
+% linear positions [indices]
+%UB = max(Npre,Npost)
+%Xpre = linspace(1,UB,Npre)'*ones(1,Npost)
+%Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'
+% adjacency matrix (binary mask)
+%mask = abs(Xpre-Xpost)<=fanout
+%mask = mask .* (rand(size(mask))<=pconnect)
+% output function
+%ISYN(V,s) = g_SYN.*(s'*mask)'.*(V-E_SYN)
+

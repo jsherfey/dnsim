@@ -1,0 +1,12 @@
+# IKs: slow potassium current
+gKs=2; EKs=-80;
+qinf(V)=1./(1+exp(-(V+34)/6.5))
+qtau(V)=8./(exp(-(V+55)/30)+exp((V+55)/30))
+rinf(V)=1./(1+exp((V+65)/6.6))
+rtau(V)=100+100./(1+exp(-(V+65)/6.8))
+qKs' = (qinf(V)-qKs)./qtau(V)
+rKs' = (rinf(V)-rKs)./rtau(V)
+qKs(0)=rand(Npop,1)
+rKs(0)=rand(Npop,1)
+IKs(V,q,r)=gKs.*q.*r.*(V-EKs);
+current => -IKs(V,qKs,rKs)

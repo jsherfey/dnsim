@@ -1,0 +1,7 @@
+sigonset3=0; sigoffset3=inf; sigspan=.15; 
+sigma = ceil(sigspan*Npop);
+mask = circshift([ones(1,sigma) zeros(1,Npop-sigma)]',Npop-sigma);
+
+sigamp3=30;
+Ifocal3(t) = sigamp3*(t>sigonset3 & t<sigoffset3).*mask
+current => Ifocal3(t)

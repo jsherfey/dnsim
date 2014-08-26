@@ -1,0 +1,7 @@
+# ICa: calcium current in Tegner/Compte 2002
+ECaf=120; 	# mV
+gCaf=.25; 	# mS/cm2, 1.5 (soma), .25 (dend)
+minf(V)=1./max(.001,(1+exp(-(V+20)/9)));
+ICaf(V)=gCaf*minf(V).^2.*(V-ECaf);
+current => -ICaf(V) 	# for entity dynamics
+ICaf => ICaf(V)				# for other mech dynamics

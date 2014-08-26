@@ -1,0 +1,10 @@
+# ICan: slow cationic calcium-dependent current
+gCan=.025; ECan=-20;
+alphacan=.0056;	# 1/(ms*mM)
+betacan=.002;		# 1/ms
+minf(cai)=alphacan*cai./(alphacan*cai+betacan);
+mtau(cai)=1./(alphacan*cai+betacan);
+mCan' = (minf(cai)-mCan)./mtau(cai);
+mCan(0)=rand(Npop,1)
+ICan(V,m)=gCan.*m.^2.*(V-ECan)
+current => -ICan(V,mCan)

@@ -1,0 +1,11 @@
+# INap: persistent sodium current
+gNap=.15; # mS/cm2
+ENap=50; napshift=0;
+
+alpha(V)=.001*exp((-85-V)/30);
+beta(V)=.0034./(exp((-17-V)/10)+1);
+minf(V)=1./(1+exp(-(V+(55.7+napshift))/7.7));
+hNap' = alpha(V).*(1-hNap)-beta(V).*hNap
+hNap(0)=rand(Npop,1)
+INap(V,h)=gNap*minf(V).^3.*h.*(V-ENap);
+current => -INap(V,hNap)

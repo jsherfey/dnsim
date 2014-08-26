@@ -1,0 +1,5 @@
+% L: HH leak current
+g_l=.3; % mS/cm^2
+E_l=-54.4; % mV
+IL(V) = g_l.*(V-E_l)
+current => -IL(V)

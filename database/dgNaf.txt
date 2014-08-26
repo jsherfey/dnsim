@@ -1,0 +1,19 @@
+% iNaf in Poirazi 2013; Na in Durstewitz & Gabriel 2007
+gNaf=100; ENaf=55; IC=.1; IC_noise=.1;
+
+ma(V)=(-.2816*(V+28))./(-1+exp((-V+28)/9.3))
+mb(V)=(.2464*(V+1))./(-1+exp((V+1)/6))
+minf(V)=ma(V)./(ma(V)+mb(V))
+mtau(V)=1./(ma(V)+mb(V))
+ha(V)=.098*exp(-(V+43.1)/20)
+hb(V)=1.4./(1+exp(-(V+13.1)/10))
+hinf(V)=ha(V)./(ha(V)+hb(V))
+htau(V)=1./(ha(V)+hb(V))
+m'=(minf(V)-m)./mtau(V)
+h'=(hinf(V)-h)./htau(V)
+m(0)=IC+IC_noise.*rand(Npop,1)
+h(0)=IC+IC_noise.*rand(Npop,1)
+INaf(V,m,h)=gNaf.*m.^3.*h.*(V-ENaf)
+current => -INaf(V,m,h)
+
+

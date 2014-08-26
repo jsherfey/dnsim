@@ -1,0 +1,12 @@
+% HH2LI.txt (connection mechanism)
+
+Eli=2; % neg for inhibitory; pos for excitatory
+g=1;
+T=10; % ms
+prepopid=1;
+thresh=0;
+
+r(Vpre,t) = rt_rate(Vpre,t,T,prepopid)
+I(Vpre,Vpost,t) = g*((Vpost-Eli).*r(t,Vpre))
+input => -I(Vpre,Vpost,t)
+

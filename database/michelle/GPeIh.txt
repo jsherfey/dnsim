@@ -1,0 +1,21 @@
+% Parameters:
+gh = [0.1]
+Eh = [-42]
+ 
+% Functions:
+GPeIh(V,r,s) = -gh.*(r + s).*(V-Eh)
+rinf(V) = 1.0./(1.0 + exp(-(-76.4-V)/3.3))
+sinf(V) = ((1.0) ./ (1 + exp(-(-87.5 - V)/4.0)))
+
+taur(V) = max(.01, 3625 ./ (exp((-76.4-V)/6.56) + exp(-(-76.4-V)/7.48)))
+taus(V) = (6300) ./ (exp((-87.5-V)/8.9) + exp(-(-87.5-V)/8.2))
+ 
+% ODEs:
+r'=(rinf(V)-r)./taur(V)
+s'=(sinf(V)-s)./taus(V)
+r(0) = zeros(Npop,1)
+s(0) = zeros(Npop,1)
+ 
+% Substitution:
+current => GPeIh(V,r,s)
+ 

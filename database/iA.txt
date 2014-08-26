@@ -1,0 +1,12 @@
+# A: A-current
+gA=1; EA=-80;
+ainf(V)=1./(1+exp(-(V+60)/8.5))
+atau(V)=.37+1./(exp((V+46)/5)+exp(-(V+238)/37.5))
+binf(V)=1./(1+exp((V+78)/6))
+btau(V)=19+1./(exp((V+46)/5)+exp((V+238)/(-37.5)))
+a' = (ainf(V)-a)./atau(V)
+b' = (binf(V)-b)./btau(V)
+a(0)=rand(Npop,1)
+b(0)=rand(Npop,1)
+IA(V,a,b)=gA.*a.^4.*b.*(V-EA)
+current => -IA(V,a,b)

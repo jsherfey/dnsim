@@ -1,0 +1,30 @@
+% Parameters:
+gnap = [0.2]
+Ena = [50]
+ 
+% Functions:
+GPeInap(V,m,h,s) = -gnap.*(m.^3).*h.*s.*(V-Ena)
+
+minf(V) = ((1.0) ./ (1 + exp((-57.7 - V)/5.7)))
+hinf(V) = 0.154 + ((1.0 - 0.154) ./ (1 + exp(-(-57.0 - V)/4.0)))
+sinf(V) = ((1.0) ./ (1 + exp(-(-10.0 - V)/4.9)))
+
+taum(V) = 0.03 + ((0.146 - 0.03) ./ (exp((-42.6-V)/14.4) + exp(-(-42.6-V)/14.4)))
+tauh(V) = 10.0 + ((17.0 - 10.0) ./ (exp((-34.0-V)/26.0) + exp(-(-34.0-V)/31.9)))
+
+alpha(V) = ((-.00000288 * V) - 0.000049) ./ (1.0 - exp((V + (0.000049/0.00000288))/4.63))
+beta(V) = ((0.00000694 * V) + 0.000447) ./ (1.0 - exp(-(V + (0.000447/0.00000694))/2.63))
+taus(V) = 1.0 ./ (alpha(V) + beta(V))   
+
+% ODEs:
+m' = (minf(V)-m)./taum(V)
+h' = (hinf(V)-h)./tauh(V)
+s' = (sinf(V)-s)./taus(V)
+
+% Initial Conditions
+m(0) = zeros(Npop,1)
+h(0) = zeros(Npop,1)
+s(0) = zeros(Npop,1)
+ 
+% Substitution:
+current => GPeInap(V,m,h,s)

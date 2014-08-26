@@ -1,0 +1,9 @@
+% K: (delayed rectifier in Wang-Buzsaki interneuron model, 1996)
+wbgK=9; wbEK=-90; wbphi=5; IC=.34; IC_noise=.1;
+an(V)=-.01*(V+34)./(exp(-.1*(V+34))-1)
+bn(V)=.125*exp(-(V+44)/80)
+n'=wbphi*(an(V).*(1-n)-bn(V).*n)
+n(0)=IC+IC_noise*rand(Npop,1)
+IK(V,n)=wbgK.*n.^4.*(V-wbEK)
+current => -IK(V,n)
+

@@ -1,0 +1,12 @@
+% Na: (transient sodium in Wang-Buzsaki interneuron model, 1996)
+wbgNa=35; wbENa=55; wbphi=5; IC=.54; IC_noise=.1;
+ah(V)=.07*exp(-(V+58)/20)
+bh(V)=1./(exp(-.1*(V+28))+1)
+am(V)=-.1*(V+35)./(exp(-.1*(V+35))-1)
+bm(V)=4*exp(-(V+60)/18)
+minf(V)=am(V)./(am(V)+bm(V))
+h'=wbphi*(ah(V).*(1-h)-bh(V).*h)
+h(0)=IC+IC_noise*rand(Npop,1)
+INa(V,h)=wbgNa.*minf(V).^3.*h.*(V-wbENa)
+current => -INa(V,h)
+

@@ -1,0 +1,22 @@
+% poiss_syn.txt (switch: type) (connection mechanism: spikes from time-varying source)
+% Poisson exponential synapse (one-to-one connectivity)
+
+baserate=0; 	% Hz, ~ background Poisson spike rate
+maxsrcrate=1000;% Hz, maximum spike rate from source
+tauD=10; 	% exponetial decay rate
+g=1; E=0; 	% synaptic parameters
+prepopid=1 	% unique identifier for this population
+
+% spikes simulated by Poisson[lambda=f(time-varying source)]
+lambda(Vpre)=baserate+maxsrcrate*Vpre
+spikes(Vpre)=poissrnd(lambda(Vpre)*(1e-4),[Npre,1]) 	% population spiking at time t
+
+% update conductance G with difference equation (kernel K=alpha synapse)
+G(Vpre,t)=g.*updateGalpha(t,dt,spikes(Vpre),prepopid,Npre,tauD) % uses eventdata: stores G and spikes at t-1 and t-2
+
+% synaptic current
+I(Vpre,Vpost,t)=G(Vpre,t).*(Vpost-E)
+current => -I(Vpre,Vpost,t)
+
+
+

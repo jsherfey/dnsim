@@ -1,0 +1,98 @@
+Dynamic Neural Simulator: a simple tool for rapidly building and sharing large neural models
+
+-----------------------------------------------------------------------------------------
+DNSim quick start for CRC beta users:
+-----------------------------------------------------------------------------------------
+1. Join CRC on GitHub to access code
+	1. set up Git/GitHub account (see steps below)
+	2. request membership to CRC organization "cogrhythms" on GitHub: email your GitHub username to Jason Sherfey (sherfey@bu.edu)
+2. VNC to SCC for computing [optional, recommended]
+	1. request account on the SCC: email Xiaoshi Shi (xiaoshi@bu.edu) and ask to be added to the crc-nak project on the SCC
+	2. VNC to access SCC resources (see steps below)
+3. Set up DNSim (on SCC or your local machine):
+	1. in shell (to download DNSim): 
+         	cd ~
+            	git clone git@github.com:cogrhythms/dsim.git
+	2. for cluster computing, add to ~/.bashrc: 
+           	export PATH=$PATH:$HOME/dsim/csh
+	3. demo -- in matlab:
+		1. run ~/dsim/startup.m
+		2. modeler; % launch the graphical interface (DNS GUI)
+		3. in GUI: click load ==> open database/networks/demo.mat
+		4. have fun
+
+Tips and Recommendations:
+* Save your models in ~/dsim/database/YOURNAME
+* Make them available to other beta testers by entering these commands in shell terminal:
+	* git add -A *
+	* git commit -am "description of your changes to the repository"
+	* git push origin -u HEAD
+	* tip: create aliases for these commands in ~/.bashrc
+* Access new models and changes pushed by others: git pull
+* If processing simulation batches on the cluster:
+	* check the status of your job in the queue (in terminal): qstat -u YOURUSER
+	* standard output and error cluster logs: ~/batchdirs/TIMESTAMP/pbsout
+	* simulation results saved to rootdir/TIMESTAMP where rootdir is set in DNSim's batch tab
+* Check space usage on the SCC (in terminal): pquota -u
+* CRC project directory (create your personal working directory there): /projectnb/crc-nak
+* Create alias to easily launch DNSim from the terminal. Add to ~/.bashrc: alias dsim='cd ~/dsim; matlab -r "modeler;"'
+
+-----------------------------------------------------------------------------------------
+Git/GitHub set up:
+-----------------------------------------------------------------------------------------
+1. Create GitHub account: https://github.com/join
+2. Download and install Git: http://git-scm.com/downloads
+3. Configure Git (in shell):
+       	git config --global user.name "Your Name Here"
+       	git config --global user.email "your_email@example.com"
+    Note: Your email address for Git should be the same one associated with your GitHub account
+4. Generate ssh key for each computer and add to github (see: https://help.github.com/articles/generating-ssh-keys)
+	ssh-keygen -t rsa -C "your_email@example.com"
+	eval `ssh-agent -s`
+	ssh-add ~/.ssh/id_rsa
+	clip < ~/.ssh/id_rsa.pub
+	GitHub: Account Settings => Add SSH key: paste key
+More resources:
+   GitHub: https://help.github.com/articles/set-up-git
+   Kelly's config help : https://github.com/cogrhythms/git_config
+
+
+-----------------------------------------------------------------------------------------
+SCC VNC set up:
+-----------------------------------------------------------------------------------------
+1. Launch VNC server on SCC
+	* ssh scc2.bu.edu:
+	* vncstart -geometry RESOLUTION
+		* where RESOLUTION is the screen resolution of your physical display (e.g., vncstart -geometry 1366x768)
+		* after successful execution, note the session #: 59XX. use this # when tunneling.
+	* vncpassword ...    
+2. Create ssh tunnel from your local machine to SCC
+   ssh USER@scc2.bu.edu -L 2015:localhost:59XX
+3. Connect to VNC session
+   vncviewer: localhost:2015
+4. Set up CRC project directory (save work here, not in your home directory): 
+   cd /projectnb/crc-nak
+   mkdir USER
+For more details and troubleshooting: http://www.bu.edu/tech/support/research/system-usage/getting-started/remote-desktop-vnc/
+
+-----------------------------------------------------------------------------------------
+Documentation:
+-----------------------------------------------------------------------------------------
+set up instructions
+     online: https://github.com/cogrhythms/dsim/blob/master/readme
+     repository: dsim/readme
+function notes
+     online: https://github.com/cogrhythms/dsim/blob/master/matlab/readme
+     repository: dsim/matlab/readme
+
+-----------------------------------------------------------------------------------------
+Acronyms/definitions:
+Git: tool to manage collections of code ("repositories")
+GitHub: online social site for collaborating and managing Git repositories
+SCC = Shared Computing Cluster: high performance BU computing resource located off-site at the MGHPCC
+MGHPCC = Massachusetts Green High-Performance Computing Center
+VNC = Virtual Network Computing: a way to remotely access the graphical display of another machine (e.g., on the SCC)
+GUI = Graphical User Interface
+DNS = Dynamic Neural Simulator
+DNSim: name used to refer collectively to the DNS toolbox and graphical environment
+

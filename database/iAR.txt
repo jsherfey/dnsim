@@ -1,0 +1,24 @@
+% ih: anomalous rectifier (rat somatosensory cortex)
+
+# constants
+AR_V12=-87.5; AR_k=-5.5; gAR=25; E_AR=-35; c_ARaM=1; c_ARbM=1; AR_L=1; AR_R=1;
+
+IC=0; IC_noise=0
+
+# auxiliary functions
+minf(V) = 1 ./ (1+exp((AR_V12-V)/AR_k))
+mtau(V) = 1./(AR_L.*exp(-14.6-.086*V)+AR_R.*exp(-1.87+.07*V))
+aM(V) = c_ARaM.*(minf(V) ./ mtau(V))
+bM(V) = c_ARbM.*((1-minf(V))./mtau(V))
+
+# gating dynamics
+mAR' = aM(V).*(1-mAR)-bM(V).*mAR
+
+# initial conditions
+mAR(0)=IC+IC_noise.*rand(Npop,1)
+
+# intrinsic current
+IAR(V,m) = gAR.*m.*(V-E_AR)
+
+# interface statement
+current => -IAR(V,mAR)

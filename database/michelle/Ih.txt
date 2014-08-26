@@ -1,0 +1,20 @@
+% Parameters:
+gh = [0.3]
+Eh = [-30]
+ 
+% Functions:
+Ih(V,r) = -gh.*r.*(V-Eh)
+minfH(V) = 1.0./(1.0 + exp(-(-76.4-V)/3.3))
+tauH(V) = 3625 ./ (exp((-76.4-V)/6.56) + exp(-(-76.4-V)/7.48))
+
+if tauH < 0.01
+tauH = 0.01;
+end
+ 
+% ODEs:
+r'=(minfH-r)./tauH
+r(0) = [0]
+ 
+% Substitution:
+current => Ih(V,r)
+ 

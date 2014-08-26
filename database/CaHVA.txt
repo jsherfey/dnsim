@@ -1,0 +1,22 @@
+# CaHVA: d/dt [Ca2+]: umol/l, calcium dynamics in Durstewitz and Sejnowski 2000
+phi = .000000965; % calcium accumulation factor. (.000000386 soma; .000000965 dend)
+Carest = 50/1000; % umol/l, resting calcium concentration
+dshell = .0002; % um, sperimembrane shell thickness
+d = 2.6; % um, compartment diamter (23 soma, 2.6 apical dend, 16 basal dend)
+l = 400; % um, compartment length (-- soma, 400 dend, 150 basal dend)
+tauCa = 120; % 250 soma, 120 dend (80 distal dend)
+F = 96154; % Faraday constant
+
+r2 = (d/2); % um, outer radius
+r1 = (r2-dshell); % um, inner radius
+Vshell = ((3.14*r2^2*l-3.14*r1^2*l));
+
+caHVA' = -phi*(IHVA/(F*Vshell))+(Carest-caHVA)/tauCa % max(0,term1)?
+caHVA(0) = rand(Npop,1)
+caHVA => caHVA
+
+% for potassium buffer ([K+]i=const; [K+]o dynamics same as above):
+% dshell=70nm (extracellular space)
+% phi=2, tauK=7, EK=25*ln([K+]o/[K+]i)
+% [K+]i=140 mmol/l, [K+]o(t=0)=[K+]rest=3.82 mmol/l
+

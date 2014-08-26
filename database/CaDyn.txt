@@ -1,0 +1,7 @@
+# d/dt [Ca2+]: calcium dynamics from Tegner/Compte 2002
+alphacaf=.002; 		# uM 1/(ms uA) cm2, .000667 (soma); .002 (dend)
+tauca=80;		# ms, 240 (soma), 80 (dend)
+c0=0; 
+cai' = alphacaf.*(-ICaf)-(cai-c0)/tauca; # max(alphacaf.*ICaf,0)-(cai-c0)/tauca
+cai(0) = rand(Npop,1);
+cai => cai

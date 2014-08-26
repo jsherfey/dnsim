@@ -1,0 +1,12 @@
+% Kdr in Poirazi 2013; DR in Durstewitz and Grabriel 2007
+% an(V) multiplied by 3 to get faster repolarization
+% gDR increased from .35 to 25
+gDR=25; EDR=-80; IC=.1; IC_noise=.1;
+an(V)=3*(-.018*(V-13)./(-1+exp(-(V-13)/25)))
+bn(V)=.0054*(V-23)./(-1+exp((V-23)/12))
+ninf(V)=an(V)./(an(V)+bn(V))
+ntau(V)=1./(an(V)+bn(V))
+n'=(ninf(V)-n)./ntau(V)
+n(0)=IC+IC_noise.*rand(Npop,1)
+IDR(V,n)=gDR.*n.^4.*(V-EDR)
+current => -IDR(V,n)

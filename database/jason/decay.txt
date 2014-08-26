@@ -1,0 +1,3 @@
+a=1;
+decay(V) = -a.*V
+term => decay(V)

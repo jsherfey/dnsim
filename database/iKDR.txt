@@ -1,0 +1,25 @@
+# KDR: fast, delayed rectifier potassium current (Kramer)
+
+# constants
+gKDR=20  # 20 for RS/IN
+KDR_V1=29.5  # 29.5 RS, 27 IN
+KDR_d1 = 10; # 10 RS, 11.5 INKDR_V2 = 10; # 10 RS, 10 INKDR_d2 = 10; # 10 RS, 10 INE_KDR = -95; # -95 RS, -100 IN
+IC=0; IC_noise=0
+# auxiliary functions
+minf(V) = 1./(1+exp((-V-KDR_V1)/KDR_d1))  # [Traub, 2003]
+#mtau(V) = .25+4.35*exp(-(V+KDR_V2)/KDR_d2)
+mtau(V) = .25+4.35*exp(-abs(V+KDR_V2)/KDR_d2)  # [Traub, 2003]
+aM(V) = minf(V) ./ mtau(V)
+bM(V) = (1-minf(V))./mtau(V)
+
+# gating dynamics
+mKDR' = aM(V).*(1-mKDR)-bM(V).*mKDR
+
+# initial conditions
+mKDR(0)=IC+IC_noise.*rand(Npop,1)
+
+# intrinsic current
+IKDR(V,m) = gKDR.*m.^4.*(V-E_KDR)
+
+# interface statement
+current => -IKDR(V,mKDR)
