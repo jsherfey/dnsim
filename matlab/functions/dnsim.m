@@ -1,5 +1,7 @@
 function dnsim(varargin)
+modeler(varargin);
 
+%{
 if nargin<1
   dnsim_loader;
 else
@@ -54,3 +56,4 @@ try
 catch err
   errordlg('error loading model; choose another.');
 end
+%}
