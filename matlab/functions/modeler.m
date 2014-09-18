@@ -2800,11 +2800,15 @@ for i=1:length(spec.cells)
   end
   parmlist={};
   for j=1:length(spec.cells(i).mechanisms)
-    parmlist=cat(1,parmlist,fieldnames(spec.cells(i).mechs(j).params));
+    if isstruct(spec.cells(i).mechs(j).params)
+      parmlist=cat(1,parmlist,fieldnames(spec.cells(i).mechs(j).params));
+    end
   end
   for k=1:length(spec.cells)
     for j=1:length(spec.connections(k,i).mechanisms)
-      parmlist=cat(1,parmlist,fieldnames(spec.connections(k,i).mechs(j).params));
+      if isstruct(spec.connections(k,i).mechs(j).params)
+        parmlist=cat(1,parmlist,fieldnames(spec.connections(k,i).mechs(j).params));
+      end
     end
   end
   parmlist=unique(parmlist);
