@@ -1,6 +1,38 @@
 function MechanismBrowser(src,evnt)
 global cfg allmechs
 
+if isempty(allmechs)
+  if exist('startup.m')
+    [BIOSIMROOT,o]=fileparts(which('startup.m'));
+  else
+    BIOSIMROOT=pwd;
+  end  
+  if ischar(BIOSIMROOT)
+    DBPATH = fullfile(BIOSIMROOT,'database');
+  else
+    DBPATH = '';
+  end
+  if ~exist(DBPATH,'dir')
+    DBPATH = pwd;
+  end  
+  [allmechlist,allmechfiles]=get_mechlist(DBPATH);
+  % load all mech data
+  global allmechs
+  cnt=1;
+  for i=1:length(allmechfiles)
+    this = parse_mech_spec(allmechfiles{i},[]);
+    [fpath,fname,fext]=fileparts(allmechfiles{i});
+    this.label = fname;
+    this.file = allmechfiles{i};
+    if cnt==1
+      allmechs = this;
+    else
+      allmechs(cnt) = this;
+    end
+    cnt=cnt+1;
+  end  
+end
+
 % get list of local mechanisms
 localmechs = {allmechs.label};
 localfiles = {allmechs.file};
@@ -14,11 +46,11 @@ if err
 end
 mym(['use ' cfg.dbname]);
 level = 'mechanism';
-if cfg.is_authenticated
-  q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
-else
+% if cfg.is_authenticated
+%   q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
+% else
   q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
-end
+% end
 remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
 remoteids=q.id';
 remotenotes=q.notes';
@@ -60,11 +92,12 @@ ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
 % if iscell(pos), pos=pos{1}; end
 % pos(4)=.8*pos(4); % [10 30 800 510]
 pos=[7 30 1354 522];
+bgcolor=[204 204 180]/255;
 h=findobj('tag','mechbrowser');
 if any(h)
   figure(h(end));
 else
-  h=figure('tag','mechbrowser','position',pos,'color',cfg.bgcolor,'name','Browse Mechanisms','NumberTitle','off','MenuBar','none');
+  h=figure('tag','mechbrowser','position',pos,'color',bgcolor,'name','Browse Mechanisms','NumberTitle','off','MenuBar','none');
 end
 % draw controls
 % mechanism table
@@ -208,6 +241,7 @@ end
 % Open ftp connection
 try
   f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+  pasv(f);
 catch err
   mym('close');
   disp('there was an error connecting (ftp) to the server.');
@@ -228,11 +262,7 @@ for i = 1:length(ModelIDs)
   usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
   modelfile=[modelfile ext];%'.json'];
   cd(f,usermedia);
-  try
-    mget(f,modelfile,target);
-  catch
-    fprintf('warning: mget error!\n');
-  end
+  mget(f,modelfile,target);
   % convert json spec to matlab spec structure
   fprintf('Model(uid=%g): converting model specification to matlab structure\n',ModelID);
   tempfile = fullfile(target,modelfile);

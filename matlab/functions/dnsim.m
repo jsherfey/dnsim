@@ -9,6 +9,7 @@ end
 
 function dnsim_loader
 global cfg
+% server info
 cfg.webhost = '104.131.218.171'; % 'infinitebrain.org','104.131.218.171'
 cfg.dbname = 'modulator';
 cfg.dbuser = 'querydb'; % have all users use root to connect to DB and self to transfer files
@@ -16,6 +17,13 @@ cfg.dbpassword = 'publicaccess'; % 'publicaccess'
 cfg.xfruser = 'publicuser';
 cfg.xfrpassword = 'publicaccess';
 cfg.ftp_port=21;
+cfg.MEDIA_PATH = '/project/infinitebrain/media';
+% user info
+cfg.username = 'anonymous';
+cfg.password = '';
+cfg.user_id = 0;
+cfg.is_authenticated = 0;
+cfg.email = '';
 
 % get list of local models
 if exist('startup.m')
@@ -31,6 +39,25 @@ end
 if ~exist(DBPATH,'dir')
   DBPATH = pwd;
 end
+
+% % load all mechanism data
+% if ~exist('allmechs')
+%   [allmechlist,allmechfiles]=get_mechlist(DBPATH);
+%   global allmechs
+%   cnt=1;
+%   for i=1:length(allmechfiles)
+%     this = parse_mech_spec(allmechfiles{i},[]);
+%     [fpath,fname,fext]=fileparts(allmechfiles{i});
+%     this.label = fname;
+%     this.file = allmechfiles{i};
+%     if cnt==1
+%       allmechs = this;
+%     else
+%       allmechs(cnt) = this;
+%     end
+%   end  
+% end
+
 d=dir(DBPATH);
 files={d.name};
 files=files(~cellfun(@isempty,regexp(files,'\w*.mat$','match')));
@@ -164,12 +191,9 @@ usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
 modelfile=[modelfile '.json'];
 % ftp
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword); 
+pasv(f);
 cd(f,usermedia); 
-try
-  mget(f,modelfile,target); 
-catch
-  fprintf('warning: mget error!\n');
-end
+mget(f,modelfile,target); 
 close(f);
 
 % convert to DNSim spec
