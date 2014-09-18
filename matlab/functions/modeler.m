@@ -318,9 +318,11 @@ txt_model = uicontrol('parent',pmodel,'style','edit','units','normalized','tag',
   'position',[0 0 1 1],'string',cfg.modeltext,'ForegroundColor','k','FontName','Monospaced','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
   % enable horizontal scrolling
   jEdit = findjobj(txt_model);
-  jEditbox = jEdit.getViewport().getComponent(0);
-  jEditbox.setWrapping(false);                % turn off word-wrapping
-  jEditbox.setEditable(false);                % non-editable
+  try
+    jEditbox = jEdit.getViewport().getComponent(0);
+    jEditbox.setWrapping(false);                % turn off word-wrapping
+    jEditbox.setEditable(false);                % non-editable
+  end
   set(jEdit,'HorizontalScrollBarPolicy',30);  % HORIZONTAL_SCROLLBAR_AS_NEEDED
   % maintain horizontal scrollbar policy which reverts back on component resize 
   hjEdit = handle(jEdit,'CallbackProperties');
