@@ -1344,7 +1344,11 @@ for i=1:length(show) % i=1:ncomp
   vars=unique(allvars(allinds==sel(i)));
   % add function labels
   vars=cat(2,vars,CURRSPEC.cells(sel(i)).functions(:,1)');
-  vind=find(~cellfun(@isempty,regexp(vars,'_V$','once')));
+  try
+    vind=find(strcmp(CURRSPEC.cells(sel(i)).var_list{1},vars),1,'first');
+  catch
+    vind=find(~cellfun(@isempty,regexp(vars,'_V$','once')));
+  end
   if isempty(vind), vind=1; end
   H.lst_vars(i) = uicontrol('parent',H.psims,'units','normalized','backgroundcolor','w',...
     'style','listbox','position',[.8 .7+(i-1)*dy .2 -.8*dy],'value',vind,'string',vars,'Callback','global cfg;cfg.changeflag=1;');  
