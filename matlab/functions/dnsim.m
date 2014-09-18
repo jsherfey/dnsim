@@ -165,7 +165,11 @@ modelfile=[modelfile '.json'];
 % ftp
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword); 
 cd(f,usermedia); 
-mget(f,modelfile,target); 
+try
+  mget(f,modelfile,target); 
+catch
+  fprintf('warning: mget error!\n');
+end
 close(f);
 
 % convert to DNSim spec
