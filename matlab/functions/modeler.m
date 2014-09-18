@@ -2965,6 +2965,7 @@ fprintf('success!\n');
 fprintf('transfering .json specification to server...');
 target='/project/infinitebrain/inbox';
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+pasv(f);
 cd(f,target);
 % mode specification
 mput(f,spec.specfile); 
@@ -3050,6 +3051,7 @@ fprintf('success!\n');
 fprintf('transfering .json specification to server...');
 target='/project/infinitebrain/inbox';
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+pasv(f);
 cd(f,target);
 % model specification
 mput(f,mechfile); 
@@ -3115,12 +3117,9 @@ usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
 modelfile=[modelfile '.json'];
 % ftp
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword); % f=ftp([cfg.webhost ':' num2str(port)],cfg.username,cfg.password);
+pasv(f);
 cd(f,usermedia); % cd(f,'/project/infinitebrain/media/user/dev/models');
-try
-  mget(f,modelfile,target); % mget('model4.json')
-catch
-  fprintf('warning: mget error!\n');
-end
+mget(f,modelfile,target); % mget('model4.json')
 close(f);
 
 % % convert to Modulator spec
@@ -3229,6 +3228,7 @@ end
 % Open ftp connection
 try
   f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+  pasv(f);
 catch err
   mym('close');
   disp('there was an error connecting (ftp) to the server.');
@@ -3249,11 +3249,7 @@ for i = 1:length(ModelIDs)
   usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
   modelfile=[modelfile ext];%'.json'];
   cd(f,usermedia);
-  try
-    mget(f,modelfile,target);
-  catch
-    fprintf('warning: mget error!\n');
-  end    
+  mget(f,modelfile,target); 
   % convert json spec to matlab spec structure
   fprintf('Model(uid=%g): converting model specification to matlab structure\n',ModelID);
   tempfile = fullfile(target,modelfile);
