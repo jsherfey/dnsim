@@ -235,6 +235,13 @@ cfg.lntype  = {'-',':','-.','--'};
 cfg.newmechs={};
 cfg.modeltext='';
 
+% cfg.bgcolor=[204 204 153]/255;
+% cfg.bgcolor=[204 204 168]/255;
+cfg.bgcolor=[204 204 180]/255;
+
+% bgcolor=[204 204 255]/255; 
+% [0.701961 0.701961 0.701961]
+
 LASTSPEC = net;
 CURRSPEC = net;
 
@@ -244,10 +251,15 @@ CURRSPEC = trimparams(CURRSPEC);
 
 %% set up GUI
 
+% bgcolor=[204 204 255]/255; 
+% bgcolor=[204 204 153]/255;
+% [0.701961 0.701961 0.701961]
+bgcolor = cfg.bgcolor;
+
 % main figure
 sz = get(0,'ScreenSize'); sz0=sz;
 sz = [.005*sz(3) .005*sz(4) .99*sz(3) .85*sz(4)];
-fig = figure('position',sz,'color','w','tag','mainfig','name','contact: jason@infinitebrain.org','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+fig = figure('position',sz,'color','w','tag','mainfig','name','contact: sherfey@bu.edu','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
 
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'Dynamic Neural Simulator'; % DNSim
@@ -257,36 +269,42 @@ titlestring = 'Dynamic Neural Simulator'; % DNSim
   bbuild=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[0 .85 .1 .04],'string','build','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pbuild''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bmodel=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.1 .85 .1 .04],'string','model','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmodel''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bsimstudy=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.2 .85 .1 .04],'string','batch','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''psimstudy''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bhistory=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.3 .85 .1 .04],'string','history','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''phistory''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bhistory=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.3 .85 .1 .04],'string','notes','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''phistory''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
 % model controls:
-  bsave=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .98 .035 .025],'string','save','backgroundcolor',[.8 .8 .8],'callback',@Save_Spec);
-  bload=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.035 .98 .035 .025],'string','load','backgroundcolor',[.8 .8 .8],'callback',@Load_File);
-  bappend=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.07 .98 .04 .025],'string','append','backgroundcolor',[.8 .8 .8],'callback',{@Load_File,[],1});
-  bundo=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.11 .98 .035 .025],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+  bsave=uicontrol('parent',fig,'visible','off','style','pushbutton','units','normalized','position',[0 .98 .035 .025],'string','save','backgroundcolor',[.8 .8 .8],'callback',@Save_Spec);
+  bload=uicontrol('parent',fig,'visible','off','style','pushbutton','units','normalized','position',[.035 .98 .035 .025],'string','load','backgroundcolor',[.8 .8 .8],'callback',@Load_File);
+  bappend=uicontrol('parent',fig,'visible','off','style','pushbutton','units','normalized','position',[.07 .98 .04 .025],'string','append','backgroundcolor',[.8 .8 .8],'callback',{@Load_File,[],1});
+  %bundo=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.11 .98 .035 .025],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
   bapply=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.35 .98 .05 .025],'string','refresh','backgroundcolor',[.8 .8 .8],'callback',{@refresh,0},'visible','off');
   
-  editusername=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.2 .98 .05 .025],'string','username','backgroundcolor','w','callback',[],'visible','on');
-  editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.25 .98 .05 .025],'string','password','backgroundcolor','w','callback',[],'visible','on');
-  blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.3 .98 .05 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
-  blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.3 .98 .05 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
-  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[.37 .98 .03 .025],'string','DB','backgroundcolor',[.8 .8 .8],'callback',@BrowseDB,'visible','on');
+%   editusername=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.25 .98 .05 .025],'string','username','backgroundcolor','w','callback',[],'visible','on');
+%   editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.3 .98 .05 .025],'string','password','backgroundcolor','w','callback',[],'visible','on');
+%   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.35 .98 .05 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
+%   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.35 .98 .05 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
+  editusername=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .94 .06 .03],'string','username','backgroundcolor','w','callback',[],'visible','on');
+  editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .91 .06 .03],'string','password','backgroundcolor','w','callback',[],'visible','on');
+  blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.34 .97 .06 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
+  blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.34 .97 .06 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
+  uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
+  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .06 .03],'string','models','backgroundcolor','c','callback',@BrowseDB,'visible','on');
+  uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .06 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 
 % left panels for cell, network, and mechanism controls
-pbuild=uipanel('parent',fig,'title','model builder','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85]);
-  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.2 .65 .2 .04],'string','mechanisms','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.4 .65 .2 .04],'string','connections','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+pbuild=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85],'fontweight','normal');
+  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.4 .65 .2 .04],'string','mechanisms','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.2 .65 .2 .04],'string','connections','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bcell=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.6 .65 .2 .04],'string','parameters','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pcell''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  pmech=uipanel('parent',pbuild,'title','mechanism editor','visible','off','tag','ptoggle2','userdata','pmech','units','normalized','position',[0 0 1 .65]);
-  pnet=uipanel('parent',pbuild,'title','network editor','visible','off','tag','ptoggle2','userdata','pnet','units','normalized','position',[0 0 1 .65]);
-  pcell=uipanel('parent',pbuild,'title','compartment/entity/connection parameters','visible','off','tag','ptoggle2','userdata','pcell','units','normalized','position',[0 0 1 .65]);
-pmodel=uipanel('parent',fig,'title','review model','visible','off','tag','ptoggle','userdata','pmodel','units','normalized','position',[0 0 .4 .85]);
-psimstudy=uipanel('parent',fig,'title','batch simulation','visible','off','tag','ptoggle','userdata','psimstudy','units','normalized','position',[0 0 .4 .85]);
-  pbatchcontrols=uipanel('parent',psimstudy,'title','','units','normalized','position',[0 .8 1 .2]);
-  pbatchspace=uipanel('parent',psimstudy,'title','search space','units','normalized','position',[0 .3 1 .5]);
-  pbatchoutputs=uipanel('parent',psimstudy,'title','outputs','units','normalized','position',[0 0 1 .3]);
-phistory=uipanel('parent',fig,'title','','visible','off','tag','ptoggle','userdata','phistory','units','normalized','position',[0 0 .4 .85]);
-  pnotes=uipanel('parent',phistory,'title','project notes','units','normalized','position',[.22 .3 .78 .7]);%,'backgroundcolor',[.5 .5 .5]);
-  pcomparison=uipanel('parent',phistory,'title','model comparison','units','normalized','position',[.22 0 .78 .3]);
+  pmech=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','mechanism editor','visible','off','tag','ptoggle2','userdata','pmech','units','normalized','position',[0 0 1 .65],'fontweight','normal');
+  pnet=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','connection mechanisms','visible','on','tag','ptoggle2','userdata','pnet','units','normalized','position',[0 0 1 .65]);
+  pcell=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','parameters','visible','off','tag','ptoggle2','userdata','pcell','units','normalized','position',[0 0 1 .65]);
+pmodel=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','off','tag','ptoggle','userdata','pmodel','units','normalized','position',[0 0 .4 .85]);
+psimstudy=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','batch simulation','visible','off','tag','ptoggle','userdata','psimstudy','units','normalized','position',[0 0 .4 .85],'fontweight','bold');
+  pbatchcontrols=uipanel('parent',psimstudy,'backgroundcolor',bgcolor,'title','','units','normalized','position',[0 .8 1 .2]);
+  pbatchspace=uipanel('parent',psimstudy,'backgroundcolor',bgcolor,'title','search space','units','normalized','position',[0 .3 1 .5],'fontweight','bold');
+  pbatchoutputs=uipanel('parent',psimstudy,'backgroundcolor',bgcolor,'title','outputs','units','normalized','position',[0 0 1 .3],'fontweight','bold');
+phistory=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','off','tag','ptoggle','userdata','phistory','units','normalized','position',[0 0 .4 .85]);
+  pnotes=uipanel('parent',phistory,'backgroundcolor',bgcolor,'title','project notes','units','normalized','position',[.22 .3 .78 .7],'fontweight','bold');%,'backgroundcolor',[.5 .5 .5]);
+  pcomparison=uipanel('parent',phistory,'backgroundcolor',bgcolor,'title','model comparison','units','normalized','position',[.22 0 .78 .3],'fontweight','bold');
 
 % make notes scrollable:
 %   pnotes=uipanel('parent',phistory,'title','project notes','units','normalized','position',[0 0 1 1]);%,'backgroundcolor',[.5 .5 .5]);
@@ -297,7 +315,7 @@ phistory=uipanel('parent',fig,'title','','visible','off','tag','ptoggle','userda
   
 % left panel: model view
 txt_model = uicontrol('parent',pmodel,'style','edit','units','normalized','tag','modeltext',...
-  'position',[0 0 1 1],'string',cfg.modeltext,'FontName','Monospaced','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
+  'position',[0 0 1 1],'string',cfg.modeltext,'ForegroundColor','k','FontName','Monospaced','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
   % enable horizontal scrolling
   jEdit = findjobj(txt_model);
   jEditbox = jEdit.getViewport().getComponent(0);
@@ -309,9 +327,14 @@ txt_model = uicontrol('parent',pmodel,'style','edit','units','normalized','tag',
   set(hjEdit, 'ComponentResizedCallback','set(gcbo,''HorizontalScrollBarPolicy'',30)')
 
 % left panel: network builder %GUI_netpanel;
-p_net_select  = uipanel('parent',pbuild,'Position',[0 .7 1 .29],'BorderWidth',.2,'BorderType','line'); % cell morphology
-p_net_connect = uipanel('parent',pnet,'Position',[0 .5 1 .5],'BorderWidth',.2,'BorderType','line','title','Population connections         [targets]'); % cell specification
-p_net_kernel  = uipanel('parent',pnet,'Position',[0 0 1 .5],'BorderWidth',.2,'BorderType','line','title','Cell connections'); % cell specification
+p_net_select  = uipanel('parent',pbuild,'BackgroundColor',bgcolor,'Position',[0 .7 1 .29],'BorderWidth',.2,'BorderType','line'); % cell morphology
+% p_net_connect = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 .5 1 .5],'BorderWidth',.2,'BorderType','line','title','','fontweight','normal'); % cell specification
+tit='                    [targets]';
+tit='                    (columns = targets)';
+tit='(columns: target nodes)';
+tit='(rows are sources, columns are targets)';
+p_net_connect = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 .5 1 .5],'BorderWidth',.2,'BorderType','line','title',tit,'fontweight','normal'); % cell specification
+p_net_kernel  = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 0 1 .5],'BorderWidth',.2,'BorderType','line','title','connection matrices'); % cell specification
 % compartment controls
 if ~isempty(net.cells) && ischar(net.cells(1).label)
   l1={net.cells.label}; 
@@ -321,13 +344,14 @@ else
   l={}; i=[];
 end
 lst_comps = uicontrol('parent',p_net_select,'units','normalized','style','listbox','position',[0 0 .2 .9],'value',i,'string',l,'BackgroundColor',[.9 .9 .9],'Max',5,'Min',0,'Callback',@SelectCells,...
-  'ButtonDownFcn',@RenameComponent,'TooltipString','Right-click to edit compartment name');
+  'ButtonDownFcn',@RenameComponent,'TooltipString','Right-click to edit node name');
 % headers for cell info
-uicontrol('parent',p_net_select,'units','normalized','style','text','position',[0 .91 .25 .09],'string','Compartments','ListboxTop',0,'HorizontalAlignment','left','fontsize',10);
-uicontrol('parent',p_net_select,'units','normalized','style','text','position',[.25 .91 .06 .09],'string','n','ListboxTop',0,'HorizontalAlignment','left','fontsize',10);
-uicontrol('parent',p_net_select,'units','normalized','style','text','position',[.59 .91 .15 .09],'string','mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10);
-uicontrol('parent',p_net_select,'units','normalized','style','text','position',[.31 .91 .13 .09],'string','dynamics','ListboxTop',0,'HorizontalAlignment','left','fontsize',10);
-
+uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[0 .91 .25 .09],'string','nodes','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.25 .91 .06 .09],'string','n','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+  
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
 if ~isempty(CURRSPEC.(cfg.focustype))
@@ -345,12 +369,12 @@ else
   u=[];
 end
 txt_comp = uicontrol('style','text','string',cl,'units','normalized','position',[.05 .95 .1 .05],'parent',pmech,'FontWeight','bold','visible','off');
-% button to apply changes to mech text
-uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.75 .97 .1 .04],'string','apply','callback',@UpdateMech,'visible','off');
-% button to create a new mechanism
-uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.85 .97 .1 .04],'string','write','callback',@SaveMech);
+% button to upload a new mechanisms
+uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.9 .97 .1 .04],'string','upload','callback',@DB_SaveMechanism,'visible','on');
+% button to write a new mechanism to disk
+uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.8 .97 .1 .04],'string','save','callback',@SaveMech);
 % button to display list of mechs in DB
-uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.95 .97 .05 .04],'string','DB','callback','global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
+%uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.95 .97 .05 .04],'string','DB','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 % edit box with mech info
 lst_mechs = uicontrol('units','normalized','position',[0 .42 .2 .55],'parent',pmech,'BackgroundColor',[.9 .9 .9],...
   'style','listbox','value',1,'string',str1,'Max',1,'Callback',@Display_Mech_Info,'ButtonDownFcn',@RenameMech,'TooltipString','Right-click to edit mechanism name');
@@ -380,13 +404,15 @@ if ~isempty(CURRSPEC.cells)
 end
 
 % right panel: simulation plots and controls %GUI_simpanel;
-psims=uipanel('parent',fig,'title','','visible','on','units','normalized','position',[.4 0 .6 1]);
+psims=uipanel('parent',fig,'title','','visible','on','units','normalized','position',[.4 0 .6 1]);%,'backgroundcolor',cfg.bgcolor);
 
 % menu %GUI_menu;
 set(fig,'MenuBar','none');
 file_m = uimenu(fig,'Label','File');
 uimenu(file_m,'Label','Load model','Callback',@Load_File);
+uimenu(file_m,'Label','Append model','Callback',{@Load_File,[],1});
 uimenu(file_m,'Label','Save model','Callback',@Save_Spec);
+uimenu(file_m,'Label','Upload model','Callback',@DB_SaveModel);
 ws_m = uimenu(file_m,'Label','Interact');
 uimenu(ws_m,'Label','Pass model (''spec'') to command window','Callback','global CURRSPEC; assignin(''base'',''spec'',CURRSPEC);');
 uimenu(ws_m,'Label','Update model (''spec'') from command window','Callback',{@refresh,1});
@@ -440,7 +466,6 @@ H.bsave = bsave; % @callback
 H.bload = bload; % @callback
 H.bapply= bapply;
 H.bappend= bappend;
-H.bundo = bundo;
 % list boxes
 H.lst_comps = lst_comps; % compartment listbox in cell view
 H.lst_mechs = lst_mechs; % mechanism listbox in mech view
@@ -727,7 +752,7 @@ for i=1:length(sel)
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function DrawNetGrid(net)
-global H
+global H cfg
 if nargin<1
   global CURRSPEC;
   net=CURRSPEC;
@@ -758,14 +783,14 @@ for i=1:length(sel)
         this(sel)=j;
         H.txt_to(j) = uicontrol('parent',H.p_net_connect,'units','normalized',...
           'style','text','position',[x+dx*(j-1) .91 .11 ht],'string',l{j},...
-          'callback',{@ShowClickMechList,this,'connections'});
+          'callback',{@ShowClickMechList,this,'connections'},'backgroundcolor',cfg.bgcolor);
       end
       if j==1 % from
         this=ones(1,max(sel));
         this(sel)=i;
         H.txt_from(i) = uicontrol('parent',H.p_net_connect,'units','normalized',...
           'style','text','position',[.01 .8+dy*(i-1) .11 ht],'string',l{i},...
-          'callback',{@ShowClickMechList,this,'connections'});
+          'callback',{@ShowClickMechList,this,'connections'},'backgroundcolor',cfg.bgcolor);
       end
       H.edit_conn_mechs(i,j) = uicontrol('parent',H.p_net_connect,'units','normalized',...
         'style','edit','position',pos,'backgroundcolor','w',...
@@ -966,6 +991,11 @@ global CURRSPEC H cfg eventdata t
 clear global eventdata
 if isequal(src,findobj('tag','start'))
   cfg.quitflag=-1;
+  set(findobj('tag','plottype'),'visible','on');
+  set(findobj('tag','autoscale'),'visible','on');
+  set(findobj('tag','pause'),'visible','on');
+  set(findobj('tag','stop'),'visible','on');
+  set(findobj('tag','publish'),'visible','on');
 end
 DrawSimPlots;
 % reset plottype to trace
@@ -1336,7 +1366,7 @@ for i=1:length(show) % i=1:ncomp
   end
   H.simdat_LFP(i)=line('color',cfg.colors(max(1,mod(k,length(cfg.colors)))),'LineStyle',cfg.lntype{max(1,mod(k,length(cfg.lntype)))},'erase','background','xdata',cfg.T,'ydata',zeros(1,cfg.buffer),'zdata',[],'linewidth',2);
   axis([cfg.T(1) cfg.T(end) -100 30]); 
-  if i==length(show), xlabel('time (ms)'); end
+  if i==length(show), xlabel('time'); end
   titlestr=sprintf('%s (n=%g/%g)',strrep(vars{vind},'_','\_'),min(numcells(sel(i)),cfg.ncellshow),numcells(sel(i)));
   title(titlestr);
   %H.ax_state_title(i) = title(titlestr);
@@ -1356,36 +1386,36 @@ if isempty(findobj('tag','speed'))
 end
 if ~isfield(H,'edit_notes')
   H.edit_notes = uicontrol('style','edit','units','normalized','Position',[.02 .03 0.55 .13],'parent',H.psims,...
-    'Callback',@RecordNotes,'string','[record observations here; review in history tab]','BackgroundColor','w','fontsize',10,'HorizontalAlignment','Left','Max',100);
+    'Callback',@RecordNotes,'string','type notes here...','BackgroundColor','w','fontsize',10,'HorizontalAlignment','Left','Max',100);
 end
 
 if isempty(findobj('tag','start'))
   % btn: start <=> reset        
   uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.75  0.05 0.04 0.05],...
+            'Position',[0.80  0.05 0.04 0.05],... 
             'String','start','tag','start','Callback',{@simulate,'restart'}); % start <=> pause
 end
 if isempty(findobj('tag','pause'))
   % btn: pause <=> resume
   uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.80  0.05 0.04 0.05],...
+            'Position',[0.85  0.11 0.04 0.05],'visible','off',...
             'String','pause','tag','pause','Callback','global cfg;cfg.pauseflag;cfg.pauseflag=-cfg.pauseflag;');
 end
 if isempty(findobj('tag','publish'))
-  uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.9 0.05 0.075 0.05],... % [0.85  0.11 0.04 0.05]
+  uicontrol('Style','pushbutton', 'Units','normalized','visible','off', ...
+            'Position',[0.9 0.05 0.075 0.05],'tag','publish',... % [0.85  0.11 0.04 0.05]
             'String','get sim_data','Callback','global cfg;cfg.publish=1;');
 end
 if isempty(findobj('tag','stop'))
   % btn: stop
-  uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.85  0.05 0.04 0.05],...
+  uicontrol('Style','pushbutton', 'Units','normalized','visible','off', ...
+            'Position',[.8 .11 .04 .05],...
             'String','stop','tag','stop','Callback','global cfg;cfg.quitflag=1;');
 end     
 if isempty(findobj('tag','plottype'))
   % btn: stop
-  uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.85  0.11 0.04 0.05],...
+  uicontrol('Style','pushbutton', 'Units','normalized','visible','off', ...
+            'Position',[0.85  0.05 0.04 0.05],...
             'String','image','tag','plottype','Callback','global cfg;cfg.plotchange=1;');
 end     
 if isempty(findobj('tag','dtlabel'))
@@ -1393,23 +1423,23 @@ if isempty(findobj('tag','dtlabel'))
 end
 if isempty(findobj('tag','dt'))
   % btn: start <=> reset        
-  uicontrol('Style','edit','Units','normalized', ...
+  uicontrol('Style','edit','Units','normalized','backgroundcolor','w', ...
             'Position',[0.75  0.11 0.04 0.03],...
             'String',num2str(cfg.dt),'tag','dt','Callback','global cfg; cfg.dt=str2num(get(gcbo,''string''));'); % start <=> pause
 end        
 if isempty(findobj('tag','bufferlabel'))
-  uicontrol('style','text','tag','bufferlabel','string','#points','Units','normalized','position',[.8 .14 .04 .02]);
-end
+  uicontrol('style','text','tag','bufferlabel','string','buffer','Units','normalized','position',[.75 .08 .04 .02]);
+end                                                   % '#points'
 if isempty(findobj('tag','buffer'))
   % btn: start <=> reset        
   uicontrol('Style','edit', 'Units','normalized', ...
-            'Position',[0.8  0.11 0.04 0.03],...
+            'Position',[0.75  0.05 0.04 0.03],'backgroundcolor','w',...
             'String',num2str(cfg.buffer),'tag','buffer','Callback','global cfg; cfg.buffer=str2num(get(gcbo,''string''));'); % start <=> pause
 end     
 % autoscale       
 uicontrol('Style','pushbutton', 'Units','normalized', ...
-          'Position',[0.9 0.11 0.075 0.05],...
-          'String','autoscale','Callback',{@setlimits,'autoscale'});
+          'Position',[0.9 0.11 0.075 0.05],'visible','off',...
+          'String','autoscale','tag','autoscale','Callback',{@setlimits,'autoscale'});
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function setlimits(src,evnt,action)
 global cfg H CURRSPEC
@@ -1997,6 +2027,7 @@ end
 function DrawUserParams(src,evnt,jnk,movetabs)
 if nargin<4, movetabs=0; end
 global CURRSPEC cfg H
+bgcolor=cfg.bgcolor;
 if movetabs
   % switch to cellview:
   set(findobj('tag','ptoggle'),'visible','off'); 
@@ -2039,7 +2070,7 @@ if ~isfield(H,'lst_parms') || ~ishandle(H.lst_parms)
   H.lst_parms = uicontrol('parent',H.pcell,'units','normalized','BackgroundColor',[.9 .9 .9],'Max',1,'TooltipString','Right-click to edit parameter name. Hit ''d'' to delete.',...
     'position',[0 0 .2 1],'style','listbox','value',parmind,'string',parmlabels,...
     'ButtonDownFcn',@RenameParm,'Callback',{@UpdateParams,'show'},'KeyPressFcn',{@UpdateParams,'delete'},'userdata',uparm);
-  uicontrol('style','text','parent',H.pcell,'units','normalized','string','add/update parameter:',...
+  uicontrol('style','text','BackgroundColor',bgcolor,'parent',H.pcell,'units','normalized','string','add/update parameter:',...
     'position',[.3 .85 .6 .05],'HorizontalAlign','Left');
   H.edit_parmadd = uicontrol('parent',H.pcell,'units','normalized','style','edit','TooltipString','format: source-target.param = value',...
     'position',[.3 .8 .6 .05],'backgroundcolor','w','string','name = value',...
@@ -2151,34 +2182,36 @@ else
   study.values = '';  
   cfg.study = study;
 end
+bgcolor=cfg.bgcolor;
+bgcolor2='w';
 % H.pbatchcontrols = pbatchcontrols;
 % H.pbatchspace = pbatchspace;
 % H.pbatchoutputs = pbatchoutputs;
 if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
   % controls
   yshift=-.05; ht=.17;
-  uicontrol('parent',H.pbatchcontrols,'units','normalized',...
+  uicontrol('parent',H.pbatchcontrols,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.05 .75+yshift .13 .2],'string','machine',...
     'HorizontalAlignment','left');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchcontrols,'units','normalized',...
+  uicontrol('parent',H.pbatchcontrols,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.5 .75+yshift .13 .2],'string','memlimit',...
     'HorizontalAlignment','right');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchcontrols,'units','normalized',...
+  uicontrol('parent',H.pbatchcontrols,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.05 .5+yshift .13 .2],'string','timelimits',...
     'HorizontalAlignment','left');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchcontrols,'units','normalized',...
+  uicontrol('parent',H.pbatchcontrols,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.05 .3+yshift .13 .2],'string','solver',...
     'HorizontalAlignment','left');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchcontrols,'units','normalized',...
+  uicontrol('parent',H.pbatchcontrols,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.3 .3+yshift .13 .2],'string','dt',...
     'HorizontalAlignment','right');%,'backgroundcolor','w'
   uicontrol('parent',H.pbatchcontrols,'units','normalized',...
-    'style','text','position',[.05 .1+yshift .13 .2],'string','#repeats',...
+    'style','text','position',[.05 .1+yshift .13 .2],'string','#repeats','backgroundcolor',bgcolor,...
     'HorizontalAlignment','left');%,'backgroundcolor','w'
-  H.rad_machine=uibuttongroup('visible','off','units','normalized','Position',[.18 .8+yshift .3 .2],'parent',H.pbatchcontrols);
-  H.rad_machine_1=uicontrol('style','radiobutton','string','local','parent',H.rad_machine,'HandleVisibility','off',...
+  H.rad_machine=uibuttongroup('visible','off','units','normalized','backgroundcolor',bgcolor2,'Position',[.18 .8+yshift .3 .2],'parent',H.pbatchcontrols);
+  H.rad_machine_1=uicontrol('style','radiobutton','backgroundcolor',bgcolor2,'string','local','parent',H.rad_machine,'HandleVisibility','off',...
     'units','normalized','pos',[0 0 .4 1]);
-  H.rad_machine_2=uicontrol('style','radiobutton','string','cluster','parent',H.rad_machine,'HandleVisibility','off',...
+  H.rad_machine_2=uicontrol('style','radiobutton','backgroundcolor',bgcolor2,'string','cluster','parent',H.rad_machine,'HandleVisibility','off',...
     'units','normalized','pos',[.45 0 .5 1]);
   set(H.rad_machine,'SelectedObject',H.rad_machine_1);  % No selection
   set(H.rad_machine,'Visible','on');    
@@ -2198,29 +2231,29 @@ if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
     'style','edit','position',[.18 .15+yshift .2 ht],'backgroundcolor','w','string','1',...
     'HorizontalAlignment','left');  
   % search space
-  H.text_scope = uicontrol('parent',H.pbatchspace,'units','normalized',...
+  H.text_scope = uicontrol('parent',H.pbatchspace,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.1 .9 .1 .05],'string','scope',...
     'HorizontalAlignment','center');%,'backgroundcolor','w'
-  H.text_variable = uicontrol('parent',H.pbatchspace,'units','normalized',...
+  H.text_variable = uicontrol('parent',H.pbatchspace,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.31 .9 .1 .05],'string','variable',...
     'HorizontalAlignment','center');%,'backgroundcolor','w'
-  H.text_values = uicontrol('parent',H.pbatchspace,'units','normalized',...
+  H.text_values = uicontrol('parent',H.pbatchspace,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.52 .9 .1 .05],'string','values',...
     'HorizontalAlignment','center'); %,'backgroundcolor','w'
   H.btn_batch_help = uicontrol('parent',H.pbatchspace,'units','normalized',...
     'style','pushbutton','fontsize',10,'string','help','callback','web(''https://github.com/cogrhythms/dsim/tree/master/matlab/readme'');',...
     'position',[.85 .92 .1 .06]); 
   % outputs
-  uicontrol('parent',H.pbatchoutputs,'units','normalized',...
+  uicontrol('parent',H.pbatchoutputs,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.05 .85 .13 .1],'string','rootdir',...
     'HorizontalAlignment','left');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchoutputs,'units','normalized',...
+  uicontrol('parent',H.pbatchoutputs,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.8 .85 .1 .1],'string','dsfact',...
     'HorizontalAlignment','right');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchoutputs,'units','normalized',...
+  uicontrol('parent',H.pbatchoutputs,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.05 .7 .1 .1],'string','save',...
     'HorizontalAlignment','right');%,'backgroundcolor','w'
-  uicontrol('parent',H.pbatchoutputs,'units','normalized',...
+  uicontrol('parent',H.pbatchoutputs,'units','normalized','backgroundcolor',bgcolor,...
     'style','text','position',[.3 .7 .1 .1],'string','plot',...
     'HorizontalAlignment','right');%,'backgroundcolor','w'  
   H.edit_rootdir = uicontrol('parent',H.pbatchoutputs,'units','normalized',...
@@ -2232,13 +2265,13 @@ if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
   H.btn_run_simstudy = uicontrol('parent',H.pbatchoutputs,'units','normalized',...
     'style','pushbutton','fontsize',20,'string','submit!','callback',@RunSimStudy,...
     'position',[.67 .27 .3 .4]); 
-  H.chk_savedata=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position'   ,[.13 .6 .15 .1],'string','data');
-  H.chk_savesum=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position'    ,[.13 .5 .15 .1],'string','popavg');
-  H.chk_savespikes=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position' ,[.13 .4 .15 .1],'string','spikes');
-  H.chk_saveplots=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position'  ,[.13 .3 .15 .1],'string','plots');
-  H.chk_plottraces=uicontrol('style','checkbox','value',1,'parent',H.pbatchoutputs,'units','normalized','position' ,[.38 .6 .15 .1],'string','state vars');
-  H.chk_plotrates=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position'  ,[.38 .5 .17 .1],'string','spike rates');
-  H.chk_plotspectra=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'units','normalized','position',[.38 .4 .15 .1],'string','spectrum');
+  H.chk_savedata=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'   ,[.13 .6 .15 .1],'string','data');
+  H.chk_savesum=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'    ,[.13 .5 .15 .1],'string','popavg');
+  H.chk_savespikes=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position' ,[.13 .4 .15 .1],'string','spikes');
+  H.chk_saveplots=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'  ,[.13 .3 .15 .1],'string','plots');
+  H.chk_plottraces=uicontrol('style','checkbox','value',1,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position' ,[.38 .6 .17 .1],'string','state vars');
+  H.chk_plotrates=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'  ,[.38 .5 .17 .1],'string','spike rates');
+  H.chk_plotspectra=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position',[.38 .4 .17 .1],'string','spectrum');
 end
 if isfield(H,'edit_scope') 
   if ishandle(H.edit_scope)
@@ -2375,7 +2408,7 @@ end
 % CURRSPEC.history(end+1)=notes;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function UpdateHistory(src,evnt)
-global CURRSPEC H
+global CURRSPEC H cfg
 
 if ~isfield(H,'lst_notes') || ~ishandle(H.lst_notes)
   notes=[]; ids={};
@@ -2432,10 +2465,10 @@ for i=1:length(notes)
     changed_flag=0; fontweight='normal';
   end
   if changed_flag
-    H.chk_notes(i) = uicontrol('style','checkbox','value',0,'parent',H.pnotes,'units','normalized','userdata',notes(i),...
+    H.chk_notes(i) = uicontrol('style','checkbox','value',0,'parent',H.pnotes,'units','normalized','userdata',notes(i),'backgroundcolor',cfg.bgcolor,...
       'position',[.05 ypos .7 ht],'string',sprintf('Model %s (%s)',ids{sel(i)},notes(i).date),'visible','on','foregroundcolor',fontcolor,'tag','note','fontweight',fontweight); % ['Model ' ids{sel(i)} ' (' notes(i).date ')']
   else
-    H.chk_notes(i) = uicontrol('style','checkbox','value',0,'parent',H.pnotes,'units','normalized','userdata',notes(i),...
+    H.chk_notes(i) = uicontrol('style','checkbox','value',0,'parent',H.pnotes,'units','normalized','userdata',notes(i),'backgroundcolor',cfg.bgcolor,...
       'position',[.05 ypos .7 ht],'string',sprintf('Model %s (%s)',ids{sel(i)},notes(i).date),'visible','on','foregroundcolor',fontcolor,'tag','note','fontweight',fontweight); % ['Model ' ids{sel(i)} ' (' notes(i).date ')']    
   end
   H.btn_revert(i) = uicontrol('parent',H.pnotes,'units','normalized','style','pushbutton','fontsize',10,'visible','on','tag','note',...
@@ -2794,7 +2827,7 @@ fig=findobj('tag','server');
 if any(fig)
   figure(fig);
 else
-  fig=figure('name','Server Portal','tag','server');
+  fig=figure('name','InfiniteBrain.org','tag','server','position',[315 270 600 380],'color',cfg.bgcolor,'NumberTitle','off','MenuBar','none');
 end
 if isfield(H,'rad_authorscope') && ishandle(H.rad_authorscope), delete(H.rad_authorscope); end
 
@@ -2802,15 +2835,16 @@ if isfield(H,'rad_authorscope') && ishandle(H.rad_authorscope), delete(H.rad_aut
 if any(findobj('tag','list'))
   try delete(findobj('tag','list')); end
 end
-uicontrol('style','listbox','tag','list','units','normalized','position',[0 0 .4 .8],'background',[.9 .9 .9],'Max',20);
+uicontrol('style','listbox','tag','list','units','normalized','position',[0 0 .6 .8],'background',[.9 .9 .9],'Max',20,'ButtonDownFcn','i=get(gcbo,''userdata''); v=get(gcbo,''value''); web(sprintf(''http://infinitebrain.org/models/%g/'',i(v(1))));','TooltipString','right-click to open model web page for discussion');
+
 % button - update list
 %uicontrol('style','pushbutton','units','normalized','position',[.5 .8 .4 .1],'string','update list','callback',@DB_UpdateList);
 % button - load/append model
-uicontrol('style','text','units','normalized','position',[.5 .7 .4 .05],'string','Download select models','fontsize',12);
-uicontrol('style','pushbutton','units','normalized','position',[.5 .6 .2 .1],'string','load','callback',{@download_models,1},'TooltipString','replace active model with one or more selected models','fontsize',15);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_LoadModel);
-uicontrol('style','pushbutton','units','normalized','position',[.7 .6 .2 .1],'string','append','callback',{@download_models,0},'TooltipString','combine one or more selected models with the active model','fontsize',15);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_AppendModel);
+uicontrol('style','text','units','normalized','position',[.63 .7 .33 .05],'string','Download (multi)selected','fontsize',12,'backgroundcolor',cfg.bgcolor,'HorizontalAlignment','center');
+uicontrol('style','pushbutton','units','normalized','position',[.65 .6 .3 .09],'string','as new model','callback',{@download_models,1},'TooltipString','replace active model with one or more selected models','fontsize',12);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_LoadModel);
+uicontrol('style','pushbutton','units','normalized','position',[.65 .5 .3 .09],'string','appended to model','callback',{@download_models,0},'TooltipString','combine one or more selected models with the active model','fontsize',12);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_AppendModel);
 % button - save model
-uicontrol('style','pushbutton','units','normalized','position',[.5 .2 .4 .1],'string','Upload model','callback',@DB_SaveModel,'fontsize',15);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');
+%uicontrol('style','pushbutton','units','normalized','position',[.5 .2 .4 .1],'string','Upload model','callback',@DB_SaveModel,'fontsize',13);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');
 % checkbox - whether to save simulation with model
 uicontrol('visible','off','style','checkbox','units','normalized','position',[.5 .15 .15 .05],'string','simulate');
 uicontrol('visible','off','style','text','units','normalized','position',[.65 .15 .1 .05],'string','tspan');
@@ -2823,20 +2857,20 @@ else
   visible='off';
 end
 % which user's models to display
-H.rad_authorscope=uibuttongroup('visible',visible,'units','normalized','Position',[0 .9 .4 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList);
+H.rad_authorscope=uibuttongroup('visible',visible,'units','normalized','Position',[0 .9 .6 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList,'backgroundcolor','w');
 H.rad_authorscope_1=uicontrol('style','radiobutton','string','public','parent',H.rad_authorscope,'HandleVisibility','off',...
-    'units','normalized','pos',[0 0 .4 1]);
+    'units','normalized','pos',[0 0 .4 1],'backgroundcolor','w');
 H.rad_authorscope_2=uicontrol('style','radiobutton','string',[cfg.username],'parent',H.rad_authorscope,'HandleVisibility','off',...
-    'units','normalized','pos',[.41 0 .5 1]);
+    'units','normalized','pos',[.41 0 .5 1],'backgroundcolor','w');
 set(H.rad_authorscope,'SelectedObject',H.rad_authorscope_2);  % No selection    
 % which type of model to display
-H.rad_modellevel=uibuttongroup('units','normalized','Position',[0 .8 .4 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList);
+H.rad_modellevel=uibuttongroup('units','normalized','Position',[0 .8 .6 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList,'backgroundcolor','w');
 H.rad_modellevel_1=uicontrol('style','radiobutton','string','network','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[0 0 .4 1]);
-H.rad_modellevel_2=uicontrol('style','radiobutton','string','cell','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[.41 0 .2 1]);
-H.rad_modellevel_2=uicontrol('style','radiobutton','string','mech','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[.68 0 .3 1]);
+    'units','normalized','pos',[0 0 .4 1],'backgroundcolor','w');
+H.rad_modellevel_2=uicontrol('style','radiobutton','string','node','parent',H.rad_modellevel,'HandleVisibility','off',...
+    'units','normalized','pos',[.41 0 .2 1],'backgroundcolor','w');
+H.rad_modellevel_2=uicontrol('style','radiobutton','string','mechanism','parent',H.rad_modellevel,'HandleVisibility','off',...
+    'units','normalized','pos',[.68 0 .3 1],'backgroundcolor','w');
 set(H.rad_modellevel,'SelectedObject',H.rad_modellevel_1);  % No selection  
 
 DB_UpdateList;
@@ -2886,7 +2920,7 @@ spec.username = cfg.username;
 if any(~cellfun(@isempty,{spec.connections.mechanisms}))
   spec.level='network';
 else
-  spec.level = 'cell';
+  spec.level = 'node';
 end
 if ~isfield(spec,'parent_uids')
   spec.parent_uids=[];
@@ -2942,6 +2976,93 @@ end
 if exist(spec.readmefile)
   mput(f,spec.readmefile); 
   delete(spec.readmefile);
+end
+close(f);
+fprintf('success!\n');
+
+if ~isdeployed
+  % update database
+  fprintf('updating database...\n');
+  command = 'bash /project/infinitebrain/inbox/trigger.sh';
+  channel = sshfrommatlab(cfg.xfruser,cfg.webhost,cfg.xfrpassword);
+  [channel,result] = sshfrommatlabissue(channel,command);
+  for l=1:length(result)
+    fprintf('\t%s\n',result{l});
+  end
+  channel = sshfrommatlabclose(channel);
+  fprintf('success!\n');
+end
+fprintf('Model pushed to server successfully.\n\n');
+% -------------------------------------------------------------------------
+function DB_SaveMechanism(src,evnt) % (depends on server inbox/addmodel.py)
+global cfg H
+tempfile=['temp' datestr(now,'YYMMDDhhmmss')];
+ud=get(H.txt_mech,'userdata');
+
+% validate mech text
+UpdateMech;
+txt = get(H.txt_mech,'string');
+if isempty(txt)
+  msgbox('empty mechanism. nothing to write.');
+  return;
+end
+
+% get model name
+answer=inputdlg({'Model name:','Tags','Notes'},'Metadata',1,{ud.mechlabel,'',''});
+if isempty(answer), return; end
+modelname=answer{1};
+tags=answer{2};
+notes=answer{3};
+if isempty(modelname)
+  warndlg('Model name required. Nothing was uploaded.');
+  return; 
+end
+
+% write temporary mech file (mechfile)
+mechfile=[tempfile '_' modelname '_mech.txt'];
+fid = fopen(mechfile,'wt');
+for i=1:length(txt)
+  fprintf(fid,[txt{i} '\n']);
+end
+fclose(fid);
+
+% add Django model attributes (modelname, username, level, notes, d3file, readmefile)
+mech.modelname = modelname;
+mech.username = cfg.username;
+mech.level='mechanism';
+mech.source=[];
+mech.notes=notes; 
+mech.specfile=mechfile;
+mech.d3file='';
+mech.readmefile='';
+mech.tags=tags;
+% todo: add checkbox-optional auto-list of tags from cell and mech labels
+
+% convert model to temporary json
+jsonfile=[tempfile '_' modelname '_mech.json'];
+fprintf('converting metadata to .json format...');
+json=savejson('',mech,jsonfile);
+fprintf('success!\n');
+
+% transfer files to server
+fprintf('transfering .json specification to server...');
+target='/project/infinitebrain/inbox';
+f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+cd(f,target);
+% model specification
+mput(f,mechfile); 
+delete(mechfile);
+mput(f,jsonfile); 
+delete(jsonfile);
+% d3 graphical model schematic
+if exist(mech.d3file)
+  mput(f,mech.d3file); 
+  delete(mech.d3file);
+end
+% human-readable model description + equations
+if exist(mech.readmefile)
+  mput(f,mech.readmefile); 
+  delete(mech.readmefile);
 end
 close(f);
 fprintf('success!\n');
@@ -3115,16 +3236,25 @@ for i = 1:length(ModelIDs)
   q = mym(['select file from modeldb_modelspec where model_id=' num2str(ModelID)]);
   jsonfile = q.file{1};
   % retrieve json spec file
-  [usermedia,modelfile] = fileparts(jsonfile); % remote server media directory
+  [usermedia,modelfile,ext] = fileparts(jsonfile); % remote server media directory
+  if isempty(ext)
+    ext='.json';
+  end
   usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
-  modelfile=[modelfile '.json'];
+  modelfile=[modelfile ext];%'.json'];
   cd(f,usermedia);
   mget(f,modelfile,target);
   % convert json spec to matlab spec structure
   fprintf('Model(uid=%g): converting model specification to matlab structure\n',ModelID);
   tempfile = fullfile(target,modelfile);
-  [spec,jsonspec] = json2spec(tempfile);
-  spec.model_uid=ModelID;
+  if isequal(ext,'.json')
+    [spec,jsonspec] = json2spec(tempfile);
+    spec.model_uid=ModelID;
+  elseif isequal(ext,'.txt')
+    spec = parse_mech_spec(tempfile,[]);
+  else
+    spec = [];
+  end
   specs{end+1}=spec;
   % clean up
   delete(tempfile);
@@ -3261,4 +3391,140 @@ if ~isfield(spec.cells,'parent')
     spec.cells(j).parent=spec.cells(j).label;
   end
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function MechanismBrowser(src,evnt)
+global cfg allmechs
+
+% get list of local mechanisms
+localmechs = {allmechs.label};
+localfiles = {allmechs.file};
+
+% get list of remote mechanisms
+err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+if err
+  disp('there was an error opening the db.'); 
+  mym('close');
+  return;
+end
+mym(['use ' cfg.dbname]);
+level = 'mechanism';
+if cfg.is_authenticated
+  q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
+else
+  q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
+end
+remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
+remoteids=q.id';
+remotenotes=q.notes';
+mym('close');
+
+% find "files" elements that are actually primary keys of remote mech models prefixed by "#"
+localremote_ind = find(~cellfun(@isempty,regexp(localfiles,'^#\d+'))); 
+% remove remote mechs that are already present in the local allmechs struct
+if any(localremote_ind)
+  redundant_ids = cellfun(@(x)strrep(x,'#',''),localfiles(localremote_ind),'unif',0);
+  redundant_ids = cellfun(@str2num,redundant_ids);
+  rmidx = ismember(remoteids,redundant_ids);
+  remotemechs(rmidx)=[];
+  remoteids(rmidx)=[];
+  remotenotes(rmidx)=[];
+end
+
+% prepare table data
+header = {'name','local','site','id','notes'};%{'id','name','local','site'};
+format= {'char','logical','char','numeric','char'};%{'numeric','char','logical','char'};
+editable=[1 0 0 0 1]==1;%[0 1 0 0]==1;
+localnotes=repmat({''},[1 length(localmechs)]);
+localids=zeros(1,length(localmechs));
+if any(localremote_ind)
+  localids(localremote_ind)=redundant_ids;
+end
+ids=[remoteids localids];
+names=cat(2,remotemechs,localmechs);
+local=[zeros(1,length(remoteids)) ones(1,length(localmechs))]==1;
+gosite=repmat({'link'},[1 length(local)]);
+[gosite{ids==0}]=deal(''); % remove links for mechs without key in DB (ie, w/o Django site)
+allnotes=cat(2,remotenotes,localnotes);
+data=cat(2,names',num2cell(local'),gosite',num2cell(ids'),allnotes');%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
+ud.storage=cat(2,num2cell(remoteids),localfiles);
+ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
+
+% draw figure
+pos=get(findobj('tag','mainfig'),'position');
+if iscell(pos), pos=pos{1}; end
+pos(4)=.8*pos(4); % [10 30 800 510]
+h=findobj('tag','mechbrowser');
+if any(h)
+  figure(h(end));
+else
+  h=figure('tag','mechbrowser','position',pos,'color',cfg.bgcolor,'name','Browse Mechanisms','NumberTitle','off','MenuBar','none');
+end
+% draw controls
+% mechanism table
+uitable('parent',h,'units','normalized','position',[0 0 .35 1],'tag','mechtable','userdata',ud,...
+  'ColumnName',header,'ColumnFormat',format,'ColumnEditable',editable,'data',data,'CellSelectionCallback',@BrowserSelection,'CellEditCallback',@BrowserChange);
+% mechanism text box
+uicontrol('parent',h,'style','text','units','normalized','position',[.38 0 .59 .9],'tag','mechtext','BackgroundColor',[.9 .9 .9],'string','','FontName','Monospaced','FontSize',10,'HorizontalAlignment','Left');
+% -------------------------------------------------------------------------
+function BrowserSelection(src,evnt)
+if isempty(evnt.Indices)
+  return;
+end
+global allmechs cfg
+row=evnt.Indices(1);
+col=evnt.Indices(2);
+dat=get(src,'Data'); % {id, name, islocal}
+if col==3 % site
+  if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+    % goto model detail page
+    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+  end
+end
+if isequal(row,get(findobj('tag','mechtext'),'userdata'))
+  return;
+end
+ud=get(src,'userdata'); % storage (sql:id, disk:file), mechindex (index into allmechs struct)
+store=ud.storage{row}; % numeric id or filename
+index=ud.mechindex(row); % index in allmechs or 0
+
+id=dat{row,4};
+name=dat{row,1};
+islocal=(dat{row,2}==true);
+if islocal
+  mech = allmechs(index);
+  set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+else
+  % download & convert mech.txt to mech structure; add to allmechs
+  %mech = getmechfromdb(id);
+  mech = download_get_models(id,cfg);
+  if iscell(mech), mech = mech{1}; end
+  mech.label = name;
+  mech.file = sprintf('#%g',id);
+  allmechs(end+1)=mech;
+  set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+  ud.mechindex(row)=length(allmechs);
+  set(src,'userdata',ud);
+  dat{row,2}=true;
+  set(src,'Data',dat);
+end
+% -------------------------------------------------------------------------
+function BrowserChange(src,evnt)
+global allmechs
+row=evnt.Indices(1);
+col=evnt.Indices(2);
+dat=get(src,'Data'); 
+ud=get(src,'userdata');
+switch col % {name, islocal, site, id}
+  case 1 % mechanism name column
+    ind=ud.mechindex(row);
+    if ind>0
+      allmechs(ind).label = dat{row,col};
+    end
+  case 3
+    if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+      % goto model detail page
+      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+    end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
