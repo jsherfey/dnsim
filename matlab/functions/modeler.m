@@ -208,7 +208,6 @@ end
 % end
 % initialize config
 cfg.focuscomp = 1; % index to component-of-focus in spec.cells (start w/ root)
-cfg.focusmech = focusmech;
 cfg.focusconn = 1;
 cfg.focustype = 'cells';
 cfg.focus=1;
@@ -356,14 +355,14 @@ uicontrol('parent',p_net_select,'style','pushbutton','units','normalized','posit
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
-if ~isempty(CURRSPEC.(cfg.focustype))
+if ~isempty(CURRSPEC.(cfg.focustype)) && ~isempty(CURRSPEC.(cfg.focustype)(cfg.focus).mechanisms)
   tmp=CURRSPEC.(cfg.focustype)(cfg.focus);
   str1=tmp.mechanisms;
-  str2=mech_spec2str(tmp.mechs(cfg.focusmech));
+  str2=mech_spec2str(tmp.mechs(1));
   cl=tmp.label;
   u.focustype=cfg.focustype; 
   u.focus=cfg.focus; 
-  u.mechlabel=[tmp.mechanisms{cfg.focusmech}]; 
+  u.mechlabel=[tmp.mechanisms{1}]; 
 else
   str1='';
   str2='';
@@ -1524,7 +1523,6 @@ cfg.focusconn = 1;
 if cfg.focuscomp>=ind
   cfg.focuscomp = max(1,cfg.focuscomp-1);
 end
-%cfg.focusmech = 1;
 updatemodel(newspec);
 SelectCells(src,evnt);
 DrawAuxView;
@@ -1587,11 +1585,11 @@ m=umech(newvalue);
 if isempty(m), return; end
 cfg.focus=find(cellfun(@(x)isequal(m.celllabel,x),{CURRSPEC.(m.type).label}));
 cfg.focustype=m.type;
-cfg.focusmech=find(strcmp(m.mechlabel,CURRSPEC.(m.type)(cfg.focus).mechanisms));
+focusmech=find(strcmp(m.mechlabel,CURRSPEC.(m.type)(cfg.focus).mechanisms));
 u.focustype=cfg.focustype;
 u.focus=cfg.focus;
 u.mechlabel=m.mechlabel;
-mech = CURRSPEC.(cfg.focustype)(cfg.focus).mechs(cfg.focusmech);
+mech = CURRSPEC.(cfg.focustype)(cfg.focus).mechs(focusmech);
 set(H.txt_mech,'string',mech_spec2str(mech),'userdata',u);
 
 % update mech plot
