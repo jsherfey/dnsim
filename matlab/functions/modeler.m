@@ -2893,7 +2893,7 @@ else
   if cfg.is_authenticated && isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
     q = mym(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
   else
-    q = mym(sprintf('select id,name,level from modeldb_model where level=''%s''',level));
+    q = mym(sprintf('select id,name,level from modeldb_model where level=''%s''',level));% and privacy=''public''',level));
   end
   list_of_models = q.name;  
   ids=q.id;
