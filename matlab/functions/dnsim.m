@@ -73,8 +73,8 @@ if err
   ids=[];
 else
   mym(['use ' cfg.dbname]);
-  r = mym('select id,name from modeldb_model where level=''node''');
-  q = mym('select id,name from modeldb_model where level=''network''');
+  r = mym('select id,name from modeldb_model where level=''node''');% and privacy=''public''');
+  q = mym('select id,name from modeldb_model where level=''network''');% and privacy=''public''');
   remote_list_of_models = cat(1,q.name,r.name);  
   remote_ids=[q.id; r.id];
   %remote_notes=cat(1,q.notes,r.notes);
