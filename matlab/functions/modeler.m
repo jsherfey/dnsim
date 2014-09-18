@@ -263,8 +263,8 @@ fig = figure('position',sz,'color','w','tag','mainfig','name','contact: sherfey@
 
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'Dynamic Neural Simulator'; % DNSim
-  uicontrol('parent',fig,'style','text','string',titlestring,'fontsize',19,'units','normalized','position',[.08 .895 .25 .07],'backgroundcolor','w');
-  txt_user=uicontrol('parent',fig,'style','text','string',['user: ' cfg.username],'fontsize',12,'units','normalized','position',[.08 .86 .25 .07],'backgroundcolor','w');
+  uicontrol('parent',fig,'style','text','string',titlestring,'fontsize',19,'units','normalized','position',[.085 .895 .25 .07],'backgroundcolor','w');
+  txt_user=uicontrol('parent',fig,'style','text','string',['user: ' cfg.username],'fontsize',12,'units','normalized','position',[.085 .86 .25 .07],'backgroundcolor','w');
 % tabs:
   bbuild=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[0 .85 .1 .04],'string','build','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pbuild''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bmodel=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.1 .85 .1 .04],'string','model','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmodel''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
@@ -286,8 +286,8 @@ titlestring = 'Dynamic Neural Simulator'; % DNSim
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.34 .97 .06 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.34 .97 .06 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
   uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
-  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .06 .03],'string','models','backgroundcolor','c','callback',@BrowseDB,'visible','on');
-  uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .06 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
+  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .08 .03],'string','models','backgroundcolor','c','callback',@BrowseDB,'visible','on');
+  uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .08 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 
 % left panels for cell, network, and mechanism controls
 pbuild=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85],'fontweight','normal');
