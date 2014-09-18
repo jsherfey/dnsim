@@ -29,6 +29,11 @@ if isfield(spec,'d3file') , s.d3file = spec.d3file;   end
 if isfield(spec,'readmefile') , s.readmefile = spec.readmefile;   end
 if isfield(spec,'tags') , s.tags = spec.tags;   end
 if isfield(spec,'parent_uids') , s.source = spec.parent_uids;   end
+if isfield(spec,'privacy'),
+  s.privacy = spec.privacy;   
+else
+  s.privacy = 'public';
+end
 
 % outputs
 if ~isempty(outfile)

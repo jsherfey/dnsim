@@ -2937,6 +2937,11 @@ spec.d3file=[tempfile '_d3.json'];
 spec.readmefile=[tempfile '_report.txt'];
 spec.tags=tags;
   % todo: add checkbox-optional auto-list of tags from cell and mech labels
+if strcmp(cfg.username,'anonymous')
+  spec.privacy='public';
+else
+  spec.privacy='unlisted';
+end
 
 % convert model to d3
 fprintf('preparing model d3 .json...');
@@ -3041,6 +3046,11 @@ mech.specfile=mechfile;
 mech.d3file='';
 mech.readmefile='';
 mech.tags=tags;
+if strcmp(cfg.username,'anonymous')
+  mech.privacy='public';
+else
+  mech.privacy='unlisted';
+end
 % todo: add checkbox-optional auto-list of tags from cell and mech labels
 
 % convert model to temporary json
