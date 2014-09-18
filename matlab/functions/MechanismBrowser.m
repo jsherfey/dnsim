@@ -228,7 +228,11 @@ for i = 1:length(ModelIDs)
   usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
   modelfile=[modelfile ext];%'.json'];
   cd(f,usermedia);
-  mget(f,modelfile,target);
+  try
+    mget(f,modelfile,target);
+  catch
+    fprintf('warning: mget error!\n');
+  end
   % convert json spec to matlab spec structure
   fprintf('Model(uid=%g): converting model specification to matlab structure\n',ModelID);
   tempfile = fullfile(target,modelfile);
