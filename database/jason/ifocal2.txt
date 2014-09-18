@@ -1,6 +1,0 @@
-sigonset2=0; sigoffset2=inf; sigspan=.25; sigamp2=20;
-sigma = ceil(sigspan*Npop);
-mask = circshift([ones(1,sigma) zeros(1,Npop-sigma)]',floor(Npop/4-sigma/4));
-mask = flipud(mask);
-Ifocal2(t) = sigamp2*(t>sigonset2 & t<sigoffset2).*mask
-current => Ifocal2(t)
