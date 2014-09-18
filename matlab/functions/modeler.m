@@ -322,11 +322,11 @@ txt_model = uicontrol('parent',pmodel,'style','edit','units','normalized','tag',
     jEditbox = jEdit.getViewport().getComponent(0);
     jEditbox.setWrapping(false);                % turn off word-wrapping
     jEditbox.setEditable(false);                % non-editable
+    set(jEdit,'HorizontalScrollBarPolicy',30);  % HORIZONTAL_SCROLLBAR_AS_NEEDED
+    % maintain horizontal scrollbar policy which reverts back on component resize 
+    hjEdit = handle(jEdit,'CallbackProperties');
+    set(hjEdit, 'ComponentResizedCallback','set(gcbo,''HorizontalScrollBarPolicy'',30)')
   end
-  set(jEdit,'HorizontalScrollBarPolicy',30);  % HORIZONTAL_SCROLLBAR_AS_NEEDED
-  % maintain horizontal scrollbar policy which reverts back on component resize 
-  hjEdit = handle(jEdit,'CallbackProperties');
-  set(hjEdit, 'ComponentResizedCallback','set(gcbo,''HorizontalScrollBarPolicy'',30)')
 
 % left panel: network builder %GUI_netpanel;
 p_net_select  = uipanel('parent',pbuild,'BackgroundColor',bgcolor,'Position',[0 .7 1 .29],'BorderWidth',.2,'BorderType','line'); % cell morphology
