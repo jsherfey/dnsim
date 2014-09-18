@@ -61,19 +61,41 @@ function c=copyfields(s)
       m.functions(k).lhs = a.functions{k,1};
       m.functions(k).rhs = a.functions{k,2};
     end    
-    flds={'statevars','odes','ic'};
-    for f=1:length(flds)
-      fd=flds{f};
-      if iscell(a.(fd)) && numel(a.(fd))==1 % remove: (address in json2spec)
-        m.(fd) = a.(fd){1};
-      elseif numel(a.(fd))>1 % keep:
-        m.(fd) = cell2mat(a.(fd));
-      elseif numel(a.(fd))==0
-        m.(fd) = [];
-      else
-        m.(fd) = a.(fd);
-      end    
+    m.statevars = [];
+    for k=1:length(a.statevars)
+      m.statevars(k).value = a.statevars{k};
     end
+    m.odes = [];
+    for k=1:length(a.odes)
+      m.odes(k).value = a.odes{k};
+    end
+    m.ic = [];
+    if isnumeric(a.ic) || ischar(a.ic)
+      m.ic = a.ic;
+    elseif iscell(a.ic)
+      for k=1:length(a.ic)
+        m.ic(k).value = a.ic{k};
+      end
+    end            
+%     flds={'statevars','odes','ic'};
+%     for f=1:length(flds)
+%       fd=flds{f};
+%       if iscell(a.(fd)) && numel(a.(fd))==1 % remove: (address in json2spec)
+%         m.(fd) = a.(fd){1};
+%       elseif numel(a.(fd))>1 % keep:
+%         if iscell(a.(fd))
+%           for ff=1:numel(a.(fd))
+%             m.(fd)(ff).name=a.(fd){ff};
+%           end
+%         else
+%           m.(fd) = cell2mat(a.(fd));
+%         end
+%       elseif numel(a.(fd))==0
+%         m.(fd) = [];
+%       else
+%         m.(fd) = a.(fd);
+%       end    
+%     end
     m.substitute = [];
     for k=1:size(a.substitute,1)
       m.substitute(k).lhs = a.substitute{k,1};

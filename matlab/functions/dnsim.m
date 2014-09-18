@@ -139,6 +139,12 @@ if exist(file)
   try
     spec=data.(flds{1});
     if isstruct(spec)
+      %[model,IC,functions,auxvars,spec] = buildmodel2(spec,'verbose',0);
+%       for i=1:length(spec.cells)
+%         if isempty(spec.cells(i).mechanisms) && iscell(spec.cells(i).mechanisms)
+%           spec.cells(i).mechanisms=[];
+%         end
+%       end
       modeler(spec);
       close(findobj('tag','loader'));
     end
