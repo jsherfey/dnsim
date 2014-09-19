@@ -2850,7 +2850,7 @@ uicontrol('style','listbox','tag','list','units','normalized','position',[0 0 .6
 % button - load/append model
 uicontrol('style','text','units','normalized','position',[.63 .7 .33 .05],'string','Download (multi)selected','fontsize',12,'backgroundcolor',cfg.bgcolor,'HorizontalAlignment','center');
 uicontrol('style','pushbutton','units','normalized','position',[.65 .6 .3 .09],'string','as new model','callback',{@download_models,1},'TooltipString','replace active model with one or more selected models','fontsize',12);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_LoadModel);
-uicontrol('style','pushbutton','units','normalized','position',[.65 .5 .3 .09],'string','appended to model','callback',{@download_models,0},'TooltipString','combine one or more selected models with the active model','fontsize',12);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_AppendModel);
+uicontrol('style','pushbutton','units','normalized','position',[.65 .5 .3 .09],'string','append to model','callback',{@download_models,0},'TooltipString','combine one or more selected models with the active model','fontsize',12);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');%@DB_AppendModel);
 % button - save model
 %uicontrol('style','pushbutton','units','normalized','position',[.5 .2 .4 .1],'string','Upload model','callback',@DB_SaveModel,'fontsize',13);%,'ForegroundColor','c','fontweight','bold','backgroundcolor','m');
 % checkbox - whether to save simulation with model
