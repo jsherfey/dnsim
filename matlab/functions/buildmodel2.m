@@ -418,9 +418,15 @@ for i=1:N
       prefix = [EL{i} '_' Mlabels{mcnt}];
     end
     if ~isempty(E.parameters{m})  % USER PARAMETERS
-      n=length(E.parameters{m})/2; I=pcnt+(1:n);
-      tmp=E.parameters{m}(1:2:end); [Pdata{I,1}]=deal(tmp{:});
-      tmp=E.parameters{m}(2:2:end); [Pdata{I,2}]=deal(tmp{:});
+      if numel(E.parameters)==numel(E.mechanisms)
+        n=length(E.parameters{m})/2; I=pcnt+(1:n);
+        tmp=E.parameters{m}(1:2:end); [Pdata{I,1}]=deal(tmp{:});
+        tmp=E.parameters{m}(2:2:end); [Pdata{I,2}]=deal(tmp{:});
+      else
+        n=floor(length(E.parameters)/2); I=pcnt+(1:n);
+        tmp=E.parameters(1:2:2*n); [Pdata{I,1}]=deal(tmp{:});
+        tmp=E.parameters(2:2:2*n); [Pdata{I,2}]=deal(tmp{:});        
+      end
       %[Pdata{I,1}]=deal(E.parameters{m}{1:2:end});  % user param key
       %[Pdata{I,2}]=deal(E.parameters{m}{2:2:end});  % user param value
       Ppop(I)=i;
@@ -612,7 +618,7 @@ for e=1:length(E)
   Sodes(idx)=o;
 end
 
-if parms.nofunctions
+if 0%parms.nofunctions
   % Substitute functions into functions
   keep_going=1; cnt=0;
   while keep_going
