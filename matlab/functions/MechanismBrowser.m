@@ -69,9 +69,9 @@ if any(localremote_ind)
 end
 
 % prepare table data
-header = {'name','local','site','id','notes'};%{'id','name','local','site'};
-format= {'char','logical','char','numeric','char'};%{'numeric','char','logical','char'};
-editable=[1 0 0 0 1]==1;%[0 1 0 0]==1;
+header = {'name','site','notes','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
+format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
+editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
 localnotes=repmat({''},[1 length(localmechs)]);
 localids=zeros(1,length(localmechs));
 if any(localremote_ind)
@@ -83,7 +83,8 @@ local=[zeros(1,length(remoteids)) ones(1,length(localmechs))]==1;
 gosite=repmat({'link'},[1 length(local)]);
 [gosite{ids==0}]=deal(''); % remove links for mechs without key in DB (ie, w/o Django site)
 allnotes=cat(2,remotenotes,localnotes);
-data=cat(2,names',num2cell(local'),gosite',num2cell(ids'),allnotes');%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
+data=cat(2,names',gosite',allnotes',num2cell(local'),num2cell(ids'));%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
+%data=cat(2,names',num2cell(local'),gosite',num2cell(ids'),allnotes');%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
 ud.storage=cat(2,num2cell(remoteids),localfiles);
 ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
 
@@ -113,11 +114,11 @@ end
 global allmechs cfg
 row=evnt.Indices(1);
 col=evnt.Indices(2);
-dat=get(src,'Data'); % {id, name, islocal}
-if col==3 % site
-  if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+dat=get(src,'Data'); % {name,site,notes,local,id}
+if col==2 % site
+  if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
     % goto model detail page
-    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
   end
 end
 if isequal(row,get(findobj('tag','mechtext'),'userdata'))
@@ -127,9 +128,9 @@ ud=get(src,'userdata'); % storage (sql:id, disk:file), mechindex (index into all
 store=ud.storage{row}; % numeric id or filename
 index=ud.mechindex(row); % index in allmechs or 0
 
-id=dat{row,4};
+id=dat{row,5};
 name=dat{row,1};
-islocal=(dat{row,2}==true);
+islocal=(dat{row,4}==true);
 if islocal
   mech = allmechs(index);
   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
@@ -144,7 +145,7 @@ else
   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
   ud.mechindex(row)=length(allmechs);
   set(src,'userdata',ud);
-  dat{row,2}=true;
+  dat{row,4}=true;
   set(src,'Data',dat);
 end
 % -------------------------------------------------------------------------
@@ -154,16 +155,16 @@ row=evnt.Indices(1);
 col=evnt.Indices(2);
 dat=get(src,'Data'); 
 ud=get(src,'userdata');
-switch col % {name, islocal, site, id}
+switch col % {name,site,notes,local,id}
   case 1 % mechanism name column
     ind=ud.mechindex(row);
     if ind>0
       allmechs(ind).label = dat{row,col};
     end
-  case 3
-    if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+  case 2
+    if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
       % goto model detail page
-      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
     end
 end
 
