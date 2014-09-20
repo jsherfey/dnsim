@@ -347,11 +347,11 @@ end
 lst_comps = uicontrol('parent',p_net_select,'units','normalized','style','listbox','position',[0 0 .2 .9],'value',i,'string',l,'BackgroundColor',[.9 .9 .9],'Max',5,'Min',0,'Callback',@SelectCells,...
   'ButtonDownFcn',@RenameComponent,'TooltipString','Right-click to edit node name');
 % headers for cell info
-uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[0 .91 .25 .09],'string','nodes','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
-uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.25 .91 .06 .09],'string','n','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
-uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
-uicontrol('parent',p_net_select,'BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
-uicontrol('parent',p_net_select,'style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[0 .91 .25 .09],'string','nodes','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.25 .91 .06 .09],'string','n','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
+uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
@@ -370,6 +370,8 @@ else
   u=[];
 end
 txt_comp = uicontrol('style','text','string',cl,'units','normalized','position',[.05 .95 .1 .05],'parent',pmech,'FontWeight','bold','visible','off');
+% button to expand/collapse mechanism editor
+H.btn_resizemech=uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.45 .97 .1 .04],'string','expand','callback',@ResizeMechEditor,'visible','on');
 % button to upload a new mechanisms
 uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.9 .97 .1 .04],'string','upload','callback',@DB_SaveMechanism,'visible','on');
 % button to write a new mechanism to disk
@@ -451,6 +453,7 @@ H.pbatchspace = pbatchspace;
 H.pbatchoutputs = pbatchoutputs;
 H.pnotes = pnotes;
 H.pcomparison = pcomparison;
+H.H.btn_resizemech = H.btn_resizemech;
 % H.p_cell_morph  = p_cell_morph;
 % H.p_cell_spec   = p_cell_spec;
 % H.p_cell_parms  = p_cell_parms;
@@ -498,6 +501,40 @@ UpdateHistory;
 Display_Mech_Info;
 
 %% FUNCTIONS
+
+function ResizeMechEditor(src,evnt)
+global H
+if strcmp(get(src,'string'),'expand')
+  set(src,'string','collapse');
+  set(H.pmech,'position',[0 0 1 1]);
+  set(H.txt_mech,'position',[0 .26 1 .71]);
+  set(H.p_static_plots,'position',[0 0 1 .25]);
+  % toggle visibility
+  set(H.btn_comp_copy,'visible','off');
+  set(H.btn_comp_delete,'visible','off');
+  set(H.edit_comp_N,'visible','off');
+  set(H.edit_comp_mechs,'visible','off');
+  set(H.edit_comp_dynamics,'visible','off');
+  set(H.lst_comps,'visible','off');
+  set(H.lst_mechs,'visible','off');
+  set(findobj('tag','nodecontrols'),'visible','off');
+  set(findobj('tag','tab2'),'visible','off');
+else
+  set(src,'string','expand');
+  set(H.pmech,'position',[0 0 1 .65]);
+  set(H.txt_mech,'position',[.2 .42 .8 .55]);
+  set(H.p_static_plots,'position',[0 0 1 .4]);
+  % toggle visibility
+  set(H.btn_comp_copy,'visible','on');
+  set(H.btn_comp_delete,'visible','on');
+  set(H.edit_comp_N,'visible','on');
+  set(H.edit_comp_mechs,'visible','on');
+  set(H.edit_comp_dynamics,'visible','on');
+  set(H.lst_comps,'visible','on');
+  set(H.lst_mechs,'visible','on');
+  set(findobj('tag','nodecontrols'),'visible','on');
+  set(findobj('tag','tab2'),'visible','on');
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function Load_File(src,evnt,path,append_flag)
@@ -3453,9 +3490,9 @@ if any(localremote_ind)
 end
 
 % prepare table data
-header = {'name','local','site','id','notes'};%{'id','name','local','site'};
-format= {'char','logical','char','numeric','char'};%{'numeric','char','logical','char'};
-editable=[1 0 0 0 1]==1;%[0 1 0 0]==1;
+header = {'name','site','notes','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
+format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
+editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
 localnotes=repmat({''},[1 length(localmechs)]);
 localids=zeros(1,length(localmechs));
 if any(localremote_ind)
@@ -3467,7 +3504,7 @@ local=[zeros(1,length(remoteids)) ones(1,length(localmechs))]==1;
 gosite=repmat({'link'},[1 length(local)]);
 [gosite{ids==0}]=deal(''); % remove links for mechs without key in DB (ie, w/o Django site)
 allnotes=cat(2,remotenotes,localnotes);
-data=cat(2,names',num2cell(local'),gosite',num2cell(ids'),allnotes');%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
+data=cat(2,names',gosite',allnotes',num2cell(local'),num2cell(ids'));%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
 ud.storage=cat(2,num2cell(remoteids),localfiles);
 ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
 
@@ -3495,11 +3532,11 @@ end
 global allmechs cfg
 row=evnt.Indices(1);
 col=evnt.Indices(2);
-dat=get(src,'Data'); % {id, name, islocal}
-if col==3 % site
-  if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+dat=get(src,'Data'); % {name,site,notes,local,id}
+if col==2 % site
+  if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
     % goto model detail page
-    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
   end
 end
 if isequal(row,get(findobj('tag','mechtext'),'userdata'))
@@ -3509,9 +3546,9 @@ ud=get(src,'userdata'); % storage (sql:id, disk:file), mechindex (index into all
 store=ud.storage{row}; % numeric id or filename
 index=ud.mechindex(row); % index in allmechs or 0
 
-id=dat{row,4};
+id=dat{row,5};
 name=dat{row,1};
-islocal=(dat{row,2}==true);
+islocal=(dat{row,4}==true);
 if islocal
   mech = allmechs(index);
   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
@@ -3526,7 +3563,7 @@ else
   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
   ud.mechindex(row)=length(allmechs);
   set(src,'userdata',ud);
-  dat{row,2}=true;
+  dat{row,4}=true;
   set(src,'Data',dat);
 end
 % -------------------------------------------------------------------------
@@ -3536,16 +3573,16 @@ row=evnt.Indices(1);
 col=evnt.Indices(2);
 dat=get(src,'Data'); 
 ud=get(src,'userdata');
-switch col % {name, islocal, site, id}
+switch col % {name,site,notes,local,id}
   case 1 % mechanism name column
     ind=ud.mechindex(row);
     if ind>0
       allmechs(ind).label = dat{row,col};
     end
-  case 3
-    if dat{row,4}>0 % has a primary key to a DB mech model in InfiniteBrain
+  case 2
+    if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
       % goto model detail page
-      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,4}));
+      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
