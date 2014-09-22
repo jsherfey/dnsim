@@ -43,7 +43,9 @@ else
   end
 end
 if ~isempty(Vin)
-  Vin = Vin(~ismember(VinFunc,subst(:,2)));
+  if ~isempty(subst)
+    Vin = Vin(~ismember(VinFunc,subst(:,2)));
+  end
   Vin = unique({Vin{:} aux_Vin{:}});
   try
     tmp=cellfun(@(x)splitstr(x,','),Vin,'uniformoutput',false);
@@ -79,13 +81,19 @@ end
 if nargin>1 && ~isempty(cfg)
   [params,IC] = update(params,IC,vars,cfg); 
 end
-
+for k=1:length(IC)
+  if isempty(IC{k})
+    IC{k}=0;
+  end
+end
 sub = {};
 for k = 1:size(subst,1)
   sub{k,1} = subst{k,1};
   sub{k,2} = [subst{k,2} subst{k,3}];
 end
-
+if isempty(sub)
+  sub = {'null','null'};
+end
 out.params = params;
 out.auxvars = precalcs; %out.precalcs = precalcs;
 out.functions = funcs; %out.funcs = funcs;

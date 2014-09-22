@@ -177,12 +177,23 @@ for i=1:N % loop over entities
   sys.entities(i).mechanisms = mechs;
 %   if isempty(p1) || (iscell(p1) && isempty([p1{:}])), p1={}; end % added 23-May-2014
 %   if isempty(p2) || (iscell(p2) && isempty([p2{:}])), p2={}; end % added 23-May-2014
+
+%   if ~isempty(p1) && iscell(p1)
+%     p1=p1(~cellfun(@isempty,p1));
+%   end
+%   if ~isempty(p2) && iscell(p2)
+%     p2=p2(~cellfun(@isempty,p2));
+%   end
+
   sys.entities(i).parameters = cat(2,p1,p2);
+%   if isempty(sys.entities(i).parameters)
+%     sys.entities(i).parameters=[];
+%   end
 %   if ~isempty(sys.entities(i).parameters) && iscellstr(sys.entities(i).parameters(1:2:end))
 %     sys.entities(i).parameters={sys.entities(i).parameters};     % added 23-May-2014
 %   end
   sys.entities(i).inputs = cat(2,inp1,inp2);
-  if ~iscell(sys.entities(i).dynamics)
+  if ~iscell(sys.entities(i).dynamics) && ~isempty(sys.entities(i).dynamics)
     sys.entities(i).dynamics = splitstr(sys.entities(i).dynamics,' ');
   end
   M=length(mechs);
@@ -618,7 +629,9 @@ for e=1:length(E)
   Sodes(idx)=o;
 end
 
-if 0%parms.nofunctions
+Hfunc0=Hfunc; Sodes0=Sodes; Tsubst0=Tsubst;
+if parms.nofunctions
+  try
   % Substitute functions into functions
   keep_going=1; cnt=0;
   while keep_going
@@ -707,6 +720,11 @@ if 0%parms.nofunctions
       expr = substitute(vars,subvars,expr);
       Tsubst{t,2} = strrep(Tsubst{t,2},submatch{1},['(' expr{1} ')']); 
     end
+  end
+  catch
+    Hfunc=Hfunc0;
+    Sodes=Sodes0;
+    Tsubst=Tsubst0;
   end
 end
 
@@ -873,14 +891,22 @@ for i=1:N
   sys.variables.entity=[sys.variables.entity i*ones(1,nhere)];
   if any(mechtype{i}==0) % connection mechanisms
     sys.entities(i).connection_mechanisms = sys.entities(i).mechanisms(mechtype{i}==0);
-    sys.entities(i).connection_parameters = sys.entities(i).parameters(mechtype{i}==0);
+    if iscell(sys.entities(i).parameters) && ~isempty(sys.entities(i).parameters) && iscell(sys.entities(i).parameters{1})
+      sys.entities(i).connection_parameters = sys.entities(i).parameters(mechtype{i}==0);
+    else
+      sys.entities(i).connection_parameters = [];
+    end
     sys.entities(i).connection_mechs = sys.entities(i).mechs(mechtype{i}==0);
     connis=find(mechtype{i}==0);
     for j=1:length(connis)
       ii=mechsrc{i}(connis(j));
       jj=mechdst{i}(connis(j));
       sys.connections(ii,jj).label=[EL{ii} '-' EL{jj}];
-      sys.connections(ii,jj).parameters = sys.entities(i).connection_parameters{j};
+      if ~isempty(sys.entities(i).connection_parameters)
+        sys.connections(ii,jj).parameters = sys.entities(i).connection_parameters{j};
+      else
+        sys.connections(ii,jj).parameters = [];
+      end
       if 0%isempty(sys.connections(ii,jj).parameters) % pull default params from mech structure
         p = sys.entities(i).connection_mechs(j).params;
         keys = fieldnames(p); 
@@ -906,6 +932,9 @@ for i=1:N
     sys.entities(i).mechanisms = sys.entities(i).mechanisms(mechtype{i}==1);
     sys.entities(i).parameters = sys.entities(i).parameters{find(mechtype{i}==1,1,'first')};
     sys.entities(i).mechs = sys.entities(i).mechs(mechtype{i}==1);
+  else
+    sys.entities(i).mechanisms = {};
+    sys.entities(i).mechs = [];
   end
   if iscell(sys.entities(i).parameters) && ~isempty(sys.entities(i).parameters) && isempty(sys.entities(i).parameters{1})
     sys.entities(i).parameters=[];
