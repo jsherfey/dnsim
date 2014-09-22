@@ -90,7 +90,7 @@ hfig=figure('tag','loader','color',bgcolor,'name','','NumberTitle','off','MenuBa
 uicontrol('style','text','string','Dynamic Neural Simulator','fontsize',19,'units','normalized','position',[.1 .895 .8 .07],'backgroundcolor',bgcolor);
 % build model
 % uicontrol callback: @builmodel
-uicontrol('style','pushbutton','units','normalized','position',[.1 .72 .8 .15],'string','Build new model','callback','try modeler; close(findobj(''tag'',''loader'')); end','fontsize',fontsize,'fontweight',fontweight);
+uicontrol('style','pushbutton','units','normalized','position',[.1 .72 .8 .15],'string','Build new model','callback','modeler; close(findobj(''tag'',''loader''));','fontsize',fontsize,'fontweight',fontweight);
 % load model from disk
 % uicontrol callback: @loadmodel
 uicontrol('style','text','string','local models','units','normalized','position',[.1 .6 .35 .07],'backgroundcolor',bgcolor,'fontweight','normal','fontsize',fontsize);

@@ -166,7 +166,7 @@ end
 if isempty(net.cells)
   net.cells.label='a';
   net.cells.multiplicity=1;
-  net.cells.dynamics='V''=0';
+  net.cells.dynamics={};%'';%'V''=0';
   net.cells.mechanisms={};
   net.cells.parameters=[];
   net.cells.parent='x';
@@ -258,7 +258,7 @@ bgcolor = cfg.bgcolor;
 % main figure
 sz = get(0,'ScreenSize'); sz0=sz;
 sz = [.005*sz(3) .005*sz(4) .99*sz(3) .85*sz(4)];
-fig = figure('position',sz,'color','w','tag','mainfig','name','contact: sherfey@bu.edu','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
 
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'Dynamic Neural Simulator'; % DNSim
@@ -735,6 +735,11 @@ for i=1:length(sel)
   else
     str=m{1}; for j=2:length(m), str=[str ', ' m{j}]; end
   end
+  if ~isempty(net.cells(sel(i)).dynamics)
+    compdynamics=[net.cells(sel(i)).dynamics{:}];
+  else
+    compdynamics='';
+  end
   if ~isfield(H,'edit_comp_label') || length(H.edit_comp_label)<length(sel) || ~ishandle(H.edit_comp_label(i))
     H.edit_comp_parent(i) = uicontrol('parent',H.p_net_select,'units','normalized',...
       'style','edit','position',[.24 .8+dy*(i-1) .09 ht],'backgroundcolor','w','string',p{i},...
@@ -749,7 +754,7 @@ for i=1:length(sel)
       'style','edit','position',[.24 .8+dy*(i-1) .06 ht],'backgroundcolor','w','string',N(i),...
       'HorizontalAlignment','left','Callback',{@UpdateCells,l{i},'multiplicity'},'TooltipString',l{i});
     H.edit_comp_dynamics(i) = uicontrol('parent',H.p_net_select,'units','normalized',...
-      'style','edit','position',[.3 .8+dy*(i-1) .28 ht],'backgroundcolor','w','string',[net.cells(sel(i)).dynamics{:}],...
+      'style','edit','position',[.3 .8+dy*(i-1) .28 ht],'backgroundcolor','w','string',compdynamics,...
       'HorizontalAlignment','left','Callback',{@UpdateCells,l{i},'dynamics'},...
       'ButtonDownFcn',{@Display_Mech_Info,l{i},{},'cells'},'fontsize',9,'TooltipString',l{i});    
     H.edit_comp_mechs(i) = uicontrol('parent',H.p_net_select,'units','normalized',...
@@ -768,7 +773,7 @@ for i=1:length(sel)
     % update properties
     set(H.edit_comp_parent(i),'string',p{i},'visible','off','Callback',{@UpdateCells,l{i},'parent'});
     set(H.edit_comp_label(i),'string',l{i},'visible','off','Callback',{@UpdateCells,l{i},'label'});
-    set(H.edit_comp_dynamics(i),'string',[net.cells(sel(i)).dynamics{:}],'visible','on','Callback',{@UpdateCells,l{i},'dynamics'},'TooltipString',l{i});
+    set(H.edit_comp_dynamics(i),'string',compdynamics,'visible','on','Callback',{@UpdateCells,l{i},'dynamics'},'TooltipString',l{i});
     set(H.edit_comp_N(i),'string',N(i),'visible','on','Callback',{@UpdateCells,l{i},'multiplicity'},'TooltipString',l{i});
     set(H.edit_comp_mechs(i),'string',str,'visible','on','Callback',{@UpdateCells,l{i},'mechanisms'},'ButtonDownFcn',{@Display_Mech_Info,l{i},{},'cells'},'TooltipString',l{i});
     set(H.btn_comp_copy(i),'callback',{@CopyCell,l{i}},'visible','on','TooltipString',l{i});
@@ -1370,10 +1375,10 @@ if isfield(H,'ax_state_plot')
   delete(H.ax_state_plot(ishandle(H.ax_state_plot)));
   delete(H.ax_state_img(ishandle(H.ax_state_img)));
   %delete(H.ax_state_title(ishandle(H.ax_state_title)));
-  delete(H.simdat_LFP_power(ishandle(H.simdat_LFP_power)));
+%   delete(H.simdat_LFP_power(ishandle(H.simdat_LFP_power)));
   delete(H.lst_vars(ishandle(H.lst_vars)));
   %delete(H.ax_state_power(ishandle(H.ax_state_power)));
-  H=rmfield(H,{'simdat_alltrace','simdat_LFP','ax_state_plot','simdat_LFP_power'});%,'ax_state_title','ax_state_power'});
+  H=rmfield(H,{'simdat_alltrace','simdat_LFP','ax_state_plot'});%,'simdat_LFP_power'});%,'ax_state_title','ax_state_power'});
 end
 for i=1:length(show) % i=1:ncomp
   % get var labels
@@ -1409,12 +1414,16 @@ for i=1:length(show) % i=1:ncomp
   H.simdat_LFP(i)=line('color',cfg.colors(max(1,mod(k,length(cfg.colors)))),'LineStyle',cfg.lntype{max(1,mod(k,length(cfg.lntype)))},'erase','background','xdata',cfg.T,'ydata',zeros(1,cfg.buffer),'zdata',[],'linewidth',2);
   axis([cfg.T(1) cfg.T(end) -100 30]); 
   if i==length(show), xlabel('time'); end
-  titlestr=sprintf('%s (n=%g/%g)',strrep(vars{vind},'_','\_'),min(numcells(sel(i)),cfg.ncellshow),numcells(sel(i)));
+  if ~isempty(vars)
+    titlestr=sprintf('%s (n=%g/%g)',strrep(vars{vind},'_','\_'),min(numcells(sel(i)),cfg.ncellshow),numcells(sel(i)));
+  else
+    titlestr='';
+  end
   title(titlestr);
   %H.ax_state_title(i) = title(titlestr);
   %title(strrep(vars{vind},'_','\_'));%[show{i} '.V']);  %ylabel([show{i} '.V']);  
   %H.ax_state_power(i) = subplot('position',[.7 .7+(i-1)*dy .25 -.8*dy],'parent',H.psims); 
-  H.simdat_LFP_power(i)=line('color','k','LineStyle','-','erase','background','xdata',cfg.f,'ydata',zeros(size(cfg.f)),'zdata',[],'linewidth',2);
+%   H.simdat_LFP_power(i)=line('color','k','LineStyle','-','erase','background','xdata',cfg.f,'ydata',zeros(size(cfg.f)),'zdata',[],'linewidth',2);
 end
 % % slider control
 if isempty(findobj('tag','speed'))
@@ -1608,7 +1617,7 @@ else
   newvalue=oldvalue;
   newmechs=oldmechs;
 end
-if isempty(newvalue) && length(newmechs)>1
+if isempty(newvalue) && length(newmechs)>0%1
   newvalue=1;
 end
 % update mech list
@@ -1631,6 +1640,11 @@ set(H.txt_mech,'string',mech_spec2str(mech),'userdata',u);
 
 % update mech plot
 DrawAuxFunctions;
+
+% if isempty(newmechs) && ~isempty(cfg.newmechs)
+%   Display_Mech_Info; %newmechs=cfg.newmechs;
+% end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function SaveMech(src,evnt)
 global CURRSPEC cfg H allmechs
@@ -1937,6 +1951,9 @@ for i=1:size(mech.odes,1)
 end
 % print interface statements
 for i=1:size(mech.substitute,1)
+  if size(mech.substitute,1)==1 && strcmp(mech.substitute{i,1},'null') && strcmp(mech.substitute{i,2},'null')
+    break;
+  end
   if i==1, n=n+1; txt{n}=sprintf('%% Substitution:'); end%Expose and/or insert into compartment dynamics:'); end
   n=n+1; txt{n}=sprintf('%s => %s',mech.substitute{i,:});
   if i==size(mech.substitute,1), n=n+1; txt{n}=sprintf(' '); end
@@ -1980,6 +1997,12 @@ function changename(src,evnt)
 global currspec
 name=get(src,'string');
 [currspec.cells.parent]=deal(name);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function disperror(err)
+  fprintf('Error: %s\n',err.message);
+  for i=1:length(err.stack)
+    fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
+  end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function seladj(src,evnt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2807,18 +2830,20 @@ global CURRSPEC LASTSPEC cfg
 LASTSPEC = CURRSPEC;
 CURRSPEC = newspec;
 if 1
-  % remove all connections for which gCOM=0 before building the model
-  % ...
-  [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel2(CURRSPEC,'verbose',0);
-  if isfield(CURRSPEC,'entities') && ~isfield(CURRSPEC,'cells')
-    CURRSPEC.cells=CURRSPEC.entities; CURRSPEC=rmfield(CURRSPEC,'entities'); 
-  end
-  cfg.modeltext = txt;
-  h=findobj('tag','modeltext');
-  if ~isempty(h)
-    set(h,'string',cfg.modeltext);
-  end
-  %fprintf('model updated successfully\n');
+  try
+    [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel2(CURRSPEC,'verbose',0);
+    if isfield(CURRSPEC,'entities') && ~isfield(CURRSPEC,'cells')
+      CURRSPEC.cells=CURRSPEC.entities; CURRSPEC=rmfield(CURRSPEC,'entities'); 
+    end
+    cfg.modeltext = txt;
+    h=findobj('tag','modeltext');
+    if ~isempty(h)
+      set(h,'string',cfg.modeltext);
+    end
+    %fprintf('model updated successfully\n');
+  catch err
+    disperror(err);
+  end  
 end
 if nargin>2
   CURRSPEC.history = LASTSPEC.history; % hold onto history since the reverted model
