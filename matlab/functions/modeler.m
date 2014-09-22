@@ -1698,7 +1698,7 @@ this = spec.(u.focustype)(u.focus);
 if ~iscell(this.mechanisms), this.mechanisms={this.mechanisms}; end
 mech_i = find(strcmp(u.mechlabel,this.mechanisms));
 if ~isempty(mech_i)
-  newmech = rmfield(newmech,setdiff(fieldnames(newmech),fieldnames(this.mechs)))
+  newmech = rmfield(newmech,setdiff(fieldnames(newmech),fieldnames(this.mechs)));
   this.mechs(mech_i) = newmech;
 else
   this.mechs(end+1)=newmech;
