@@ -1832,6 +1832,7 @@ for i=1:length(mechadded)
 %   else
     newmech = rmfield(newmech,'file');
     if ~isempty(CURRSPEC.(type)(index)) && isfield(CURRSPEC.(type)(index),'mechs') && isstruct(CURRSPEC.(type)(index).mechs)
+      newmech = rmfield(newmech,setdiff(fieldnames(newmech),fieldnames(CURRSPEC.(type)(index).mechs)));      
       CURRSPEC.(type)(index).mechs(end+1)=newmech;
     else
       CURRSPEC.(type)(index).mechs = newmech;
