@@ -72,7 +72,7 @@ catch
   err=1;
 end
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   remote_list_of_models='';
   remote_ids=[];
 else
@@ -181,7 +181,7 @@ ModelID = ids(v);
 fprintf('getting file name on server...\n');
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   return;
 else
   mym(['use ' cfg.dbname]);
