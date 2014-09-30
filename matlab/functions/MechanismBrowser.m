@@ -1,6 +1,15 @@
 function MechanismBrowser(src,evnt)
 global cfg allmechs
 
+% test remote connection
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+  mym('close');
+catch
+  msgbox('Database connection cannot be established.');
+  return;
+end
+
 if isempty(allmechs)
   if exist('startup.m')
     [BIOSIMROOT,o]=fileparts(which('startup.m'));
