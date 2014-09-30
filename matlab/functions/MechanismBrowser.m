@@ -1,15 +1,6 @@
 function MechanismBrowser(src,evnt)
 global cfg allmechs
 
-% test remote connection
-try
-  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-  mym('close');
-catch
-  msgbox('Database connection cannot be established.');
-  return;
-end
-
 if isempty(allmechs)
   if exist('startup.m')
     [BIOSIMROOT,o]=fileparts(which('startup.m'));
@@ -47,23 +38,24 @@ localmechs = {allmechs.label};
 localfiles = {allmechs.file};
 
 % get list of remote mechanisms
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-if err
-  disp('there was an error opening the database.'); 
-  mym('close');
-  return;
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+  mym(['use ' cfg.dbname]);
+  level = 'mechanism';
+  % if cfg.is_authenticated
+  %   q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
+  % else
+    q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
+  % end
+  remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
+  remoteids=q.id';
+  remotenotes=q.notes';
+  mym('close');    
+catch
+  remotemechs = '';
+  remoteids=[];
+  remotenotes='';
 end
-mym(['use ' cfg.dbname]);
-level = 'mechanism';
-% if cfg.is_authenticated
-%   q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
-% else
-  q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
-% end
-remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
-remoteids=q.id';
-remotenotes=q.notes';
-mym('close');
 
 % find "files" elements that are actually primary keys of remote mech models prefixed by "#"
 localremote_ind = find(~cellfun(@isempty,regexp(localfiles,'^#\d+'))); 
