@@ -40,7 +40,7 @@ localfiles = {allmechs.file};
 % get list of remote mechanisms
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   mym('close');
   return;
 end
@@ -234,7 +234,7 @@ specs={};
 % Open MySQL DB connection
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   return;
 else
   mym(['use ' cfg.dbname]);

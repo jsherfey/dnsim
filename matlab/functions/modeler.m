@@ -2956,7 +2956,7 @@ global cfg H
 % remote connection
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   list_of_models='';
   ids=[];
 else
@@ -2965,7 +2965,7 @@ else
   if cfg.is_authenticated && isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
     q = mym(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
   else
-    q = mym(sprintf('select id,name,level from modeldb_model where level=''%s''',level));% and privacy=''public''',level));
+    q = mym(sprintf('select id,name,level from modeldb_model where level=''%s'' and privacy=''public''',level));% and privacy=''public''',level));
   end
   list_of_models = q.name;  
   ids=q.id;
@@ -3107,16 +3107,18 @@ fprintf('Model pushed to server successfully.\n\n');
 close(findobj('tag','uploadfig'));
 
 % goto web page
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-if err
-  disp('there was an error opening the db to get the new model ID.'); 
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+  if err
+    disp('there was an error opening the database to get the new model ID.'); 
+    mym('close');
+    return;
+  end
+  mym(['use ' cfg.dbname]);
+  q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
   mym('close');
-  return;
+  web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)));
 end
-mym(['use ' cfg.dbname]);
-q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
-mym('close');
-web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)));
 
 % -------------------------------------------------------------------------
 function DB_SaveMechanism(src,evnt) % (depends on server inbox/addmodel.py)
@@ -3224,7 +3226,7 @@ ModelID = ids(v);
 fprintf('getting file name on server...\n');
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   return;
 else
   mym(['use ' cfg.dbname]);
@@ -3269,7 +3271,7 @@ p=get(H.editpassword,'string');
 % authentication
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('authentication failed: there was an error opening the db for user authentication.'); 
+  disp('authentication failed: there was an error opening the database for user authentication.'); 
   return;
 else
   mym(['use ' cfg.dbname]);
@@ -3347,7 +3349,7 @@ specs={};
 % Open MySQL DB connection
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   return;
 else
   mym(['use ' cfg.dbname]);
@@ -3535,7 +3537,7 @@ localfiles = {allmechs.file};
 % get list of remote mechanisms
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
-  disp('there was an error opening the db.'); 
+  disp('there was an error opening the database.'); 
   mym('close');
   return;
 end
