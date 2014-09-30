@@ -293,9 +293,9 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
 
 % left panels for cell, network, and mechanism controls
 pbuild=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85],'fontweight','normal');
-  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.2 .65 .19 .04],'string','connections','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.39 .65 .22 .04],'string','mechanisms','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bcell=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.61 .65 .19 .04],'string','parameters','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pcell''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.21 .65 .22 .04],'string','connections','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.43 .65 .22 .04],'string','mechanisms','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bcell=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.65 .65 .22 .04],'string','parameters','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pcell''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   pmech=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','mechanism editor','visible','off','tag','ptoggle2','userdata','pmech','units','normalized','position',[0 0 1 .65],'fontweight','normal');
   pnet=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','connection mechanisms','visible','on','tag','ptoggle2','userdata','pnet','units','normalized','position',[0 0 1 .65]);
   pcell=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','parameters','visible','off','tag','ptoggle2','userdata','pcell','units','normalized','position',[0 0 1 .65]);
@@ -374,11 +374,11 @@ else
 end
 txt_comp = uicontrol('style','text','string',cl,'units','normalized','position',[.05 .95 .1 .05],'parent',pmech,'FontWeight','bold','visible','off');
 % button to expand/collapse mechanism editor
-H.btn_resizemech=uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.45 .97 .1 .04],'string','expand','callback',@ResizeMechEditor,'visible','on');
+H.btn_resizemech=uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.4 .97 .2 .04],'string','expand','callback',@ResizeMechEditor,'visible','on');
 % button to upload a new mechanisms
-uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.9 .97 .1 .04],'string','upload','callback',@DB_SaveMechanism,'visible','on');
+uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.85 .97 .15 .04],'string','upload','callback',@DB_SaveMechanism,'visible','on');
 % button to write a new mechanism to disk
-uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.8 .97 .1 .04],'string','save','callback',@SaveMech);
+uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.75 .97 .1 .04],'string','save','callback',@SaveMech);
 % button to display list of mechs in DB
 %uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.95 .97 .05 .04],'string','DB','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 % edit box with mech info
