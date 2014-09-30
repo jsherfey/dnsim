@@ -66,11 +66,15 @@ local_list_of_models=cellfun(@(x)strrep(x,'.mat',''),files,'unif',0);
 
 % get list of remote models
 % remote connection
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+catch
+  err=1;
+end
 if err
   disp('there was an error opening the db.'); 
-  list_of_models='';
-  ids=[];
+  remote_list_of_models='';
+  remote_ids=[];
 else
   mym(['use ' cfg.dbname]);
   r = mym('select id,name from modeldb_model where level=''node''');% and privacy=''public''');
@@ -78,8 +82,8 @@ else
   remote_list_of_models = cat(1,q.name,r.name);  
   remote_ids=[q.id; r.id];
   %remote_notes=cat(1,q.notes,r.notes);
+  mym('close');
 end; 
-mym('close');
 
 %% draw figure
 bgcolor=[204 204 180]/255;
