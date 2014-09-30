@@ -2899,6 +2899,17 @@ CURRSPEC=spec;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function BrowseDB(src,evnt)
 global H cfg
+
+% test remote connection
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+  mym('close');
+catch
+  msgbox('Database connection cannot be established.');
+  return;
+end
+
+% set up figure
 fig=findobj('tag','server');
 if any(fig)
   figure(fig);
@@ -3529,6 +3540,15 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function MechanismBrowser(src,evnt)
 global cfg allmechs
+
+% test remote connection
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+  mym('close');
+catch
+  msgbox('Database connection cannot be established.');
+  return;
+end
 
 % get list of local mechanisms
 localmechs = {allmechs.label};
