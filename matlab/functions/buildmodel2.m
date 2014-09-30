@@ -604,6 +604,13 @@ for m=1:nmech
   end
   [o,t]=substitute(old3,new3,o,t);
   [o,t]=substitute(old2,new2,o,t);  
+  % substitute IN & OUT
+  newOUT=Svars(Spop==E & Stype==0,2); if ~isempty(newOUT), newOUT=newOUT{1}; end
+  newIN=Svars(Spop==k1 & Stype==0,2); if ~isempty(newIN), newIN=newIN{1}; end
+  old={'IN','OUT'};
+  new={newIN,newOUT};
+  [o,t]=substitute(old,new,o,t);  
+  % update model arrays
   Hfunc(Hmech==m,3)=f; 
   Cexpr(Cmech==m,3)=e; 
   Sodes(Smech==m)=o; 
