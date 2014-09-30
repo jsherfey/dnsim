@@ -36,7 +36,8 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'saveplot_flag',1,[],...
                       'plotvars_flag',1,[],...
                       'plotrates_flag',1,[],...
-                      'plotpower_flag',1,[],...                      
+                      'plotpower_flag',1,[],...      
+                      'addpath',[],[],...
                    }, false);
 
 % get search space
@@ -131,13 +132,17 @@ if spec.simulation.sim_cluster_flag % run on cluster
   %end
   % create jobs
   jobs={};
+  auxcmd = '';
+  if ischar(p.addpath)
+    auxcmd=sprintf('addpath(genpath(''%s'')); ',p.addpath);
+  end
   for k=1:length(allspecs)
     modelspec=allspecs{k};
     specfile = sprintf('spec%g.mat',k);
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'which startup.m; load(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g);\n',specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag);
     fprintf(fileID,'exit\n');
     fclose(fileID);
   end

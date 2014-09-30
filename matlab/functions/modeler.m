@@ -25,6 +25,9 @@ cfg.password = '';
 cfg.user_id = 0;
 cfg.is_authenticated = 0;
 cfg.email = '';
+cfg.uploadname='';
+cfg.uploadnotes='';
+cfg.uploadtags='';
 % local user info
 [o,r]=system('echo $HOME'); % get home directory
 if numel(r)>1
@@ -261,9 +264,9 @@ sz = [.005*sz(3) .005*sz(4) .99*sz(3) .85*sz(4)];
 fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
 
 % global controls (i.e., always present in main figure in all views)
-titlestring = 'Dynamic Neural Simulator'; % DNSim
-  uicontrol('parent',fig,'style','text','string',titlestring,'fontsize',19,'units','normalized','position',[.085 .895 .25 .07],'backgroundcolor','w');
-  txt_user=uicontrol('parent',fig,'style','text','string',['user: ' cfg.username],'fontsize',12,'units','normalized','position',[.085 .86 .25 .07],'backgroundcolor','w');
+titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
+  uicontrol('parent',fig,'style','text','string',titlestring,'fontsize',19,'units','normalized','position',[.085 .91 .25 .07],'backgroundcolor','w');
+  txt_user=uicontrol('parent',fig,'style','text','string',['user: ' cfg.username],'fontsize',12,'units','normalized','position',[.085 .87 .25 .07],'backgroundcolor','w');
 % tabs:
   bbuild=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[0 .85 .1 .04],'string','build','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pbuild''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bmodel=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.1 .85 .1 .04],'string','model','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmodel''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
@@ -415,7 +418,7 @@ file_m = uimenu(fig,'Label','File');
 uimenu(file_m,'Label','Load model','Callback',@Load_File);
 uimenu(file_m,'Label','Append model','Callback',{@Load_File,[],1});
 uimenu(file_m,'Label','Save model','Callback',@Save_Spec);
-uimenu(file_m,'Label','Upload model','Callback',@DB_SaveModel);
+uimenu(file_m,'Label','Upload model','Callback',@GetUploadInfo);%DB_SaveModel);
 ws_m = uimenu(file_m,'Label','Interact');
 uimenu(ws_m,'Label','Pass model (''spec'') to command window','Callback','global CURRSPEC; assignin(''base'',''spec'',CURRSPEC);');
 uimenu(ws_m,'Label','Update model (''spec'') from command window','Callback',{@refresh,1});
@@ -2375,7 +2378,7 @@ global cfg
 cfg.study(end+1) = cfg.study(index);
 DrawStudyInfo;
 function RunSimStudy(src,evnt)
-global cfg CURRSPEC H BACKUPFILE
+global cfg CURRSPEC H BACKUPFILE BIOSIMROOT
 if isempty(CURRSPEC.cells), return; end
 if isempty([cfg.study.scope])
   cfg.study.scope=CURRSPEC.cells(1).label;
@@ -2453,7 +2456,8 @@ for i=1:nrepeats
   [allspecs,timestamp]=simstudy(tmpspec,scope,variable,values,'dt',dt,'rootdir',dir,'memlimit',mem,...
     'timelimits',lims,'dsfact',dsfact,'sim_cluster_flag',clusterflag,'timestamp',timestamp,...
     'savedata_flag',get(H.chk_savedata,'value'),'savepopavg_flag',get(H.chk_savesum,'value'),'savespikes_flag',get(H.chk_savespikes,'value'),'saveplot_flag',get(H.chk_saveplots,'value'),...
-    'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'));
+    'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'),...
+    'addpath',fullfile(BIOSIMROOT,'matlab'));
   clear tmpspec
 end
 % autosave
@@ -2970,20 +2974,49 @@ mym('close');
 set(findobj('tag','list'),'string',list_of_models);
 set(findobj('tag','list'),'userdata',ids);
 % -------------------------------------------------------------------------
+function GetUploadInfo(src,evnt)
+global cfg
+figure('name','Upload model to infinitebrain.org','NumberTitle','off','MenuBar','none','tag','uploadfig');
+uicontrol('style','text','units','normalized','position',[.1 .9 .8 .05],'string','Model name (required)');
+uicontrol('style','edit','units','normalized','position',[.1 .8 .8 .1],'string',cfg.uploadname,'backgroundcolor','w','horizontalalignment','left','tag','uploadname');
+uicontrol('style','text','units','normalized','position',[.1 .7 .8 .05],'string','Description (optional)');
+uicontrol('style','edit','units','normalized','position',[.1 .5 .8 .2],'string',cfg.uploadnotes,'max',3,'backgroundcolor','w','horizontalalignment','left','tag','uploadnotes');
+uicontrol('style','text','units','normalized','position',[.1 .4 .8 .05],'string','Tags (optional)');
+uicontrol('style','edit','units','normalized','position',[.1 .3 .8 .1],'string',cfg.uploadtags,'backgroundcolor','w','horizontalalignment','left','tag','uploadtags');
+uicontrol('style','text','units','normalized','position',[.1 .2 .3 .05],'string',['Privacy (' cfg.username '):']);
+if strcmp(cfg.username,'anonymous')
+  uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');
+else
+  uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Unlisted','Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');  
+end
+uicontrol('style','pushbutton','units','normalized','position',[.6 .1 .3 .15],'string','Upload','fontsize',14,'callback',@DB_SaveModel,'busyaction','cancel','Interruptible','off');
+% -------------------------------------------------------------------------
 function DB_SaveModel(src,evnt) % (depends on server inbox/addmodel.py)
 global cfg CURRSPEC
 spec = CURRSPEC;
 if isfield(spec,'history'), spec=rmfield(spec,'history'); end
 
-% get model name
-answer=inputdlg({'Model name:','Tags','Notes'},'Metadata');
-if isempty(answer), return; end
-modelname=answer{1};
-tags=answer{2};
-notes=answer{3};
+% get model info
+modelname = get(findobj('tag','uploadname'),'string');
+tags = get(findobj('tag','uploadtags'),'string');
+notes = get(findobj('tag','uploadnotes'),'string');
+str = get(findobj('tag','uploadprivacy'),'string');
+val = get(findobj('tag','uploadprivacy'),'value');
+privacy = str{val};
 if isempty(modelname)
   warndlg('Model name required. Nothing was uploaded.');
   return; 
+end
+cfg.uploadname = modelname;
+cfg.uploadnotes = notes;
+cfg.uploadtags = tags;
+
+tempfile=['temp' datestr(now,'YYMMDDhhmmss')];
+
+% save spec MAT file
+matfile = [tempfile '_spec.mat'];
+if 1
+  save(matfile,'spec');
 end
 
 % add Django model attributes (modelname, username, level, notes, d3file, readmefile)
@@ -2999,17 +3032,12 @@ if ~isfield(spec,'parent_uids')
 end
 spec.notes=notes; 
   % todo: construct notes from CURRSPEC.history
-tempfile=['temp' datestr(now,'YYMMDDhhmmss')];
 spec.specfile=[tempfile '_spec.json'];
 spec.d3file=[tempfile '_d3.json'];
 spec.readmefile=[tempfile '_report.txt'];
 spec.tags=tags;
   % todo: add checkbox-optional auto-list of tags from cell and mech labels
-if strcmp(cfg.username,'anonymous')
-  spec.privacy='public';
-else
-  spec.privacy='unlisted';
-end
+spec.privacy=privacy;
 
 % convert model to d3
 fprintf('preparing model d3 .json...');
@@ -3042,9 +3070,14 @@ target='/project/infinitebrain/inbox';
 f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
 pasv(f);
 cd(f,target);
-% mode specification
+% model specification
 mput(f,spec.specfile); 
 delete(spec.specfile);
+% mat-file specification
+if exist(matfile)
+  mput(f,matfile);
+  delete(matfile);
+end
 % d3 graphical model schematic
 if exist(spec.d3file)
   mput(f,spec.d3file); 
@@ -3071,6 +3104,20 @@ if ~isdeployed
   fprintf('success!\n');
 end
 fprintf('Model pushed to server successfully.\n\n');
+close(findobj('tag','uploadfig'));
+
+% goto web page
+err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+if err
+  disp('there was an error opening the db to get the new model ID.'); 
+  mym('close');
+  return;
+end
+mym(['use ' cfg.dbname]);
+q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
+mym('close');
+web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)));
+
 % -------------------------------------------------------------------------
 function DB_SaveMechanism(src,evnt) % (depends on server inbox/addmodel.py)
 global cfg H
@@ -3086,7 +3133,7 @@ if isempty(txt)
 end
 
 % get model name
-answer=inputdlg({'Model name:','Tags','Notes'},'Metadata',1,{ud.mechlabel,'',''});
+answer=inputdlg({'Model name:','Tags','Description'},'Metadata',1,{ud.mechlabel,'',''});
 if isempty(answer), return; end
 modelname=answer{1};
 tags=answer{2};
