@@ -3280,9 +3280,14 @@ global cfg H
 u=get(H.editusername,'string');
 p=get(H.editpassword,'string');
 % authentication
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+try
+  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+catch
+  err=1;
+end
 if err
   disp('authentication failed: there was an error opening the database for user authentication.'); 
+  msgbox('LOGIN FAILED. You can upload models as ANONYMOUS user (File -> Upload)');
   return;
 else
   mym(['use ' cfg.dbname]);
