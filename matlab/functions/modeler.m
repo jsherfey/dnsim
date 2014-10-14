@@ -739,7 +739,11 @@ for i=1:length(sel)
     str=m{1}; for j=2:length(m), str=[str ', ' m{j}]; end
   end
   if ~isempty(net.cells(sel(i)).dynamics)
-    compdynamics=[net.cells(sel(i)).dynamics{:}];
+    if iscell(net.cells(sel(i)).dynamics)
+      compdynamics=[net.cells(sel(i)).dynamics{:}];
+    else
+      compdynamics=net.cells(sel(i)).dynamics;
+    end
   else
     compdynamics='';
   end
@@ -3063,8 +3067,10 @@ end
 % convert model to human-readable descriptive report
 try
   txt=cfg.modeltext;
-  fid = fopen(spec.readmefile,'wt');
-  fprintf(fid,txt);
+  txt=regexp(txt,'.*Specification files:','match');
+  txt=strrep(txt{1},'Specification files:','');
+  fid = fopen(spec.readmefile,'w+');
+  fprintf(fid,'%s\n',txt);
   fclose(fid);
 catch
   spec.readmefile='';
