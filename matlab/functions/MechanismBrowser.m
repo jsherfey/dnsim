@@ -70,7 +70,7 @@ if any(localremote_ind)
 end
 
 % prepare table data
-header = {'name','site','notes','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
+header = {'name','site','description','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
 format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
 editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
 localnotes=repmat({''},[1 length(localmechs)]);
