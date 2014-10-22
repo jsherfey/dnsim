@@ -1,21 +1,24 @@
-% high-threshold noninactivating calcium current
-
-# constants
+% iCaH: high-threshold noninactivating calcium current (ref: Kramer/Kopell 2008)
+% Tags: calcium, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
 gCaH=6.5; tauCaH=1/3; c_CaHaM=1; c_CaHbM=1;
 IC=0; IC_noise=0
 
-# auxiliary functions
-aM(V) = c_CaHaM.*(1.6./(1+exp(-.072*(V-5))))
-bM(V) = c_CaHbM.*(.02*(V+8.9)./(exp((V+8.9)/5)-1))
+% Functions
+aM(IN) = c_CaHaM.*(1.6./(1+exp(-.072*(IN-5))))
+bM(IN) = c_CaHbM.*(.02*(IN+8.9)./(exp((IN+8.9)/5)-1))
+ICaH(IN,m) = gCaH.*m.^2.*(-125+IN)
 
-# gating dynamics
-mCaH' = (aM(V).*(1-mCaH)-bM(V).*mCaH)/tauCaH
-
-# initial conditions
+% ODEs
+mCaH' = (aM(IN).*(1-mCaH)-bM(IN).*mCaH)/tauCaH
 mCaH(0)=IC+IC_noise.*rand(Npop,1)
 
-# intrinsic current
-ICaH(V,m) = gCaH.*m.^2.*(-125+V)
+% Interface
+current => -ICaH(IN,mCaH)
 
-# interface statement
-current => -ICaH(V,mCaH)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References: 
+% Kramer, M. A., Roopun, A. K., Carracedo, L. M., Traub, R. D., Whittington, M. A., & Kopell, N. J. (2008). Rhythm generation through period concatenation in rat somatosensory cortex. PLoS computational biology, 4(9), e1000169. (http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000169)
+% Traub RD, Buhl EH, Gloveli T, Whittington MA (2003) Fast rhythmic bursting can be induced in layer 2/3 cortical neurons by enhancing persistent Na+ conductance or by blocking BK channels. J Neurophysiol 89:909–921.
+

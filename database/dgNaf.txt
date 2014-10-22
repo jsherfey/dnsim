@@ -1,19 +1,28 @@
 % iNaf in Poirazi 2013; Na in Durstewitz & Gabriel 2007
-gNaf=100; ENaf=55; IC=.1; IC_noise=.1;
+% Tags: sodium, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gNaf=100; ENaf=55; IC=0; IC_noise=0;
 
-ma(V)=(-.2816*(V+28))./(-1+exp((-V+28)/9.3))
-mb(V)=(.2464*(V+1))./(-1+exp((V+1)/6))
-minf(V)=ma(V)./(ma(V)+mb(V))
-mtau(V)=1./(ma(V)+mb(V))
-ha(V)=.098*exp(-(V+43.1)/20)
-hb(V)=1.4./(1+exp(-(V+13.1)/10))
-hinf(V)=ha(V)./(ha(V)+hb(V))
-htau(V)=1./(ha(V)+hb(V))
-m'=(minf(V)-m)./mtau(V)
-h'=(hinf(V)-h)./htau(V)
+% Functions
+ma(IN)=(-.2816*(IN+28))./(-1+exp((-IN+28)/9.3))
+mb(IN)=(.2464*(IN+1))./(-1+exp((IN+1)/6))
+minf(IN)=ma(IN)./(ma(IN)+mb(IN))
+mtau(IN)=1./(ma(IN)+mb(IN))
+ha(IN)=.098*exp(-(IN+43.1)/20)
+hb(IN)=1.4./(1+exp(-(IN+13.1)/10))
+hinf(IN)=ha(IN)./(ha(IN)+hb(IN))
+htau(IN)=1./(ha(IN)+hb(IN))
+INaf(IN,m,h)=gNaf.*m.^3.*h.*(IN-ENaf)
+
+% ODEs
+m'=(minf(IN)-m)./mtau(IN)
+h'=(hinf(IN)-h)./htau(IN)
 m(0)=IC+IC_noise.*rand(Npop,1)
 h(0)=IC+IC_noise.*rand(Npop,1)
-INaf(V,m,h)=gNaf.*m.^3.*h.*(V-ENaf)
-current => -INaf(V,m,h)
 
+% Interface
+current => -INaf(IN,m,h)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
 

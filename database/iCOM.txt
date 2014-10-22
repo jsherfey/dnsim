@@ -1,20 +1,18 @@
-# ohmic intercompartmental current
-
-# constants
+% iCOM: Simple ohmic intercompartmental current
+% Tags: multicompartment, ohmic, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
 g_COM=.2; comspan=.5;
 
-# precompute linear positions (index)
+% Connectivity
 UB = max(Npre,Npost)
-Xpre = linspace(1,UB,Npre)'*ones(1,Npost)
-Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'
-# Npre,Npost are reserved variables = entity multiplicities
+Xpre = linspace(1,UB,Npre)'*ones(1,Npost)	% linear positions (sources)
+Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'	% linear positions (targets)
+mask = abs(Xpre-Xpost)<=comspan			% adjacency matrix
+%mask = mask-diag(diag(mask))			% remove connections to self
 
-# compute mask
-mask = abs(Xpre-Xpost)<=comspan
-#mask = mask-diag(diag(mask))
-
-# intrinsic current
+% Functions
 ICOM(V1,V2) = g_COM.*sum(((V1*ones(1,size(V1,1)))'-(V2*ones(1,size(V2,1)))).*mask,2)
 
-# interface statement
-current => ICOM(Vpost,Vpre)
+% Interface
+current => ICOM(OUT,IN)

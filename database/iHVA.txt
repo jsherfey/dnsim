@@ -1,17 +1,31 @@
-% iHVA (Durstewitz and Sejnowski 2000)
-gHVA=.35; % .34 (PY soma); .7 (PY prox dend)
-Cao=2; % extracellular calcium concentration
-IC=.1; IC_noise=.1;
-uinf(V)=1./(1+exp(-(V+24.6)/11.3))
-utau(V)=1.25*sech(-.031*(V+37.1))
-vinf(V)=1./(1+exp((V+12.6)/18.9))
-vtau(V)=420
-u'=(uinf(V)-u)./utau(V)
-v'=(vinf(V)-v)./vtau(V)
+% iHVA: high voltage-activated L-type calcium current (ref: Durstewitz and Sejnowski 2000)
+% Requires: calcium concentration "caHVA" (e.g., exposed by CaHVA mechanism)
+% Exposes: calcium current "IHVA" for other mechanisms (e.g., required by CaHVA mechanism)
+% Tags: calcium, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gHVA=.35; 	% .34 (PY soma); .7 (PY prox dend)
+Cao=2; 		% extracellular calcium concentration
+IC=.1; 
+IC_noise=.1;
+
+% Functions
+uinf(IN)=1./(1+exp(-(IN+24.6)/11.3))
+utau(IN)=1.25*sech(-.031*(IN+37.1))
+vinf(IN)=1./(1+exp((IN+12.6)/18.9))
+vtau(IN)=420
+ECa(caHVA)=12.5*log(Cao./caHVA)
+IHVA(IN,u,v,caHVA)=gHVA.*u.^2.*v.*(IN-ECa(caHVA))
+
+% ODEs
+u'=(uinf(IN)-u)./utau(IN)
+v'=(vinf(IN)-v)./vtau(IN)
 u(0)=IC+IC_noise.*rand(Npop,1)
 v(0)=IC+IC_noise.*rand(Npop,1)
-ECa(caHVA)=12.5*log(Cao./caHVA)
-IHVA(V,u,v,caHVA)=gHVA.*u.^2.*v.*(V-ECa(caHVA))
-current => -IHVA(V,u,v,caHVA)
-IHVA => IHVA(V,u,v,caHVA)
+
+% Interface
+current => -IHVA(IN,u,v,caHVA)
+IHVA => IHVA(IN,u,v,caHVA)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
 

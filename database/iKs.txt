@@ -1,12 +1,21 @@
-# IKs: slow potassium current
-gKs=2; EKs=-80;
-qinf(V)=1./(1+exp(-(V+34)/6.5))
-qtau(V)=8./(exp(-(V+55)/30)+exp((V+55)/30))
-rinf(V)=1./(1+exp((V+65)/6.6))
-rtau(V)=100+100./(1+exp(-(V+65)/6.8))
-qKs' = (qinf(V)-qKs)./qtau(V)
-rKs' = (rinf(V)-rKs)./rtau(V)
+% iKs: slow potassium current (source: unknown)
+% Tags: potassium, current, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gKs=30; EKs=-80;
+
+% Functions
+qinf(IN)=1./(1+exp(-(IN+34)/6.5))
+qtau(IN)=8./(exp(-(IN+55)/30)+exp((IN+55)/30))
+rinf(IN)=1./(1+exp((IN+65)/6.6))
+rtau(IN)=100+100./(1+exp(-(IN+65)/6.8))
+IKs(IN,q,r)=gKs.*q.*r.*(IN-EKs);
+
+% ODEs
+qKs' = (qinf(IN)-qKs)./qtau(IN)
+rKs' = (rinf(IN)-rKs)./rtau(IN)
 qKs(0)=rand(Npop,1)
 rKs(0)=rand(Npop,1)
-IKs(V,q,r)=gKs.*q.*r.*(V-EKs);
-current => -IKs(V,qKs,rKs)
+
+% Interface
+current => -IKs(IN,qKs,rKs)

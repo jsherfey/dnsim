@@ -260,7 +260,7 @@ bgcolor = cfg.bgcolor;
 
 % main figure
 sz = get(0,'ScreenSize'); sz0=sz;
-sz = [.005*sz(3) .005*sz(4) .99*sz(3) .85*sz(4)];
+sz = [.005*sz(3) .005*sz(4) .97*sz(3) .85*sz(4)];
 fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
 
 % global controls (i.e., always present in main figure in all views)
@@ -355,6 +355,7 @@ uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+uicontrol('parent',p_net_select,'tag','substfunctions','style','checkbox','value',0,'units','normalized','position',[.85 .93 .04 .08],'backgroundcolor',[.8 .8 .8],'tooltipstring','check to consolidate; consolidation speeds up simulation but slows down model processing');
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
@@ -521,6 +522,7 @@ if strcmp(get(src,'string'),'expand')
   set(H.lst_comps,'visible','off');
   set(H.lst_mechs,'visible','off');
   set(findobj('tag','nodecontrols'),'visible','off');
+  set(findobj('tag','substfunctions'),'visible','off');
   set(findobj('tag','tab2'),'visible','off');
 else
   set(src,'string','expand');
@@ -536,6 +538,7 @@ else
   set(H.lst_comps,'visible','on');
   set(H.lst_mechs,'visible','on');
   set(findobj('tag','nodecontrols'),'visible','on');
+  set(findobj('tag','substfunctions'),'visible','on');
   set(findobj('tag','tab2'),'visible','on');
 end
 
@@ -1913,7 +1916,7 @@ Display_Mech_Info;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function printmodel(src,evnt)
 global CURRSPEC
-buildmodel2(CURRSPEC,'verbose',1);
+buildmodel2(CURRSPEC,'verbose',1,'nofunctions',get(findobj('tag','substfunctions'),'value'));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function txt = mech_spec2str(mech)
 % Purpose: prepare text to display mech model parameters and equations
@@ -1963,7 +1966,7 @@ for i=1:size(mech.substitute,1)
   if size(mech.substitute,1)==1 && strcmp(mech.substitute{i,1},'null') && strcmp(mech.substitute{i,2},'null')
     break;
   end
-  if i==1, n=n+1; txt{n}=sprintf('%% Substitution:'); end%Expose and/or insert into compartment dynamics:'); end
+  if i==1, n=n+1; txt{n}=sprintf('%% Interface:'); end%Expose and/or insert into compartment dynamics:'); end
   n=n+1; txt{n}=sprintf('%s => %s',mech.substitute{i,:});
   if i==size(mech.substitute,1), n=n+1; txt{n}=sprintf(' '); end
 end
@@ -2841,7 +2844,7 @@ LASTSPEC = CURRSPEC;
 CURRSPEC = newspec;
 if 1
   try
-    [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel2(CURRSPEC,'verbose',0);
+    [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel2(CURRSPEC,'verbose',0,'nofunctions',get(findobj('tag','substfunctions'),'value'));
     if isfield(CURRSPEC,'entities') && ~isfield(CURRSPEC,'cells')
       CURRSPEC.cells=CURRSPEC.entities; CURRSPEC=rmfield(CURRSPEC,'entities'); 
     end
@@ -3589,7 +3592,7 @@ if any(localremote_ind)
 end
 
 % prepare table data
-header = {'name','site','notes','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
+header = {'name','site','description','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
 format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
 editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
 localnotes=repmat({''},[1 length(localmechs)]);

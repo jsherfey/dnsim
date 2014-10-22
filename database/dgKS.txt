@@ -1,12 +1,24 @@
 % D in Poirazi 2013; KS in Durstewitz and Grabriel 2007
-gKS=.24; EKS=-80; IC=.1; IC_noise=.1;
-ainf(V)=1./(1+exp(-(V+34)/6.5))
-atau(V)=10
-binf(V)=1./(1+exp((V+65)/6.6))
-btau(V)=200+(3200./(1+exp(-(V+63.6)/4)))
-a'=(ainf(V)-a)./atau(V)
-b'=(binf(V)-b)./btau(V)
+% Tags: potassium, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gKS=.24; EKS=-80; IC=0; IC_noise=0;
+
+% Functions
+ainf(IN)=1./(1+exp(-(IN+34)/6.5))
+atau(IN)=10
+binf(IN)=1./(1+exp((IN+65)/6.6))
+btau(IN)=200+(3200./(1+exp(-(IN+63.6)/4)))
+IKS(IN,a,b) = gKS.*a.*b.*(IN-EKS)
+
+% ODEs
+a'=(ainf(IN)-a)./atau(IN)
+b'=(binf(IN)-b)./btau(IN)
 a(0)=IC+IC_noise.*rand(Npop,1)
 b(0)=IC+IC_noise.*rand(Npop,1)
-IKS(V,a,b) = gKS.*a.*b.*(V-EKS)
-current => -IKS(V,a,b)
+
+% Interface
+current => -IKS(IN,a,b)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
+

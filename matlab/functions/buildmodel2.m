@@ -631,6 +631,12 @@ for e=1:length(E)
   % ----------------------------------
   tmp=ismember(Tsubst(:,1),Hfunc(:,1));
   old=Tsubst(tmp,1); new=Tsubst(tmp,2);
+  % ---
+  % additive substitution (17-Oct-2014)
+  for k=1:numel(new)
+      new{k}=['((' new{k} ')+' old{k} ')'];
+  end
+  % ---
   o=substitute(old,new,o);
   % ----------------------------------
   Sodes(idx)=o;
@@ -651,24 +657,26 @@ if parms.nofunctions
       for f=1:length(funcinds)
         keep_going=1;
         ind = funcinds(f);
-        submatch = regexp(target,[Hfunc{ind,2} '\([\w\s,]*\)'],'match');      
+        submatch = regexp(target,[Hfunc{ind,2} '\([\w\s,]*\)'],'match');
         %submatch = regexp(target,[Hfunc{ind,2} '[\w\s,]*'],'match');      
         %submatch = regexp(target,[Hfunc{ind,2} '\(.*\)'],'match');
         %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\([a-zA-Z]\w*\)','match');
-        subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
-        subvars = unique([subvars{:}]);
-        subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
-        subvars = cellfun(@(s)strrep(s,')',''),subvars,'unif',0);
-        str = Hfunc{ind,3};
-        vars = regexp(str,'@\([\s\w,]*\)','match');
-        expr = strtrim(strrep(str,vars,''));
-        vars = regexp(vars,'\w+','match');
-        vars = [vars{:}];
-        if length(vars)~=length(subvars)
-          error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+        if ~isempty(submatch)
+            subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
+            subvars = unique([subvars{:}]);
+            subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
+            subvars = cellfun(@(s)strrep(s,')',''),subvars,'unif',0);
+            str = Hfunc{ind,3};
+            vars = regexp(str,'@\([\s\w,]*\)','match');
+            expr = strtrim(strrep(str,vars,''));
+            vars = regexp(vars,'\w+','match');
+            vars = [vars{:}];
+            if length(vars)~=length(subvars)
+              error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+            end
+            expr = substitute(vars,subvars,expr);
+            target = strrep(target,submatch{1},['(' expr{1} ')']); 
         end
-        expr = substitute(vars,subvars,expr);
-        target = strrep(target,submatch{1},['(' expr{1} ')']); 
       end
       Hfunc{t,3}=target;
     end
@@ -685,20 +693,22 @@ if parms.nofunctions
       submatch = regexp(target,[Hfunc{ind,2} '\([\w\s,]*\)'],'match');       %submatch = regexp(target,[Hfunc{ind,2} '\(.*\)'],'match');
 %       if isempty(submatch), continue; end
       %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\([a-zA-Z]\w*\)','match');
-      subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
-      subvars = [subvars{:}];
-      subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
-      subvars = cellfun(@(s)strrep(s,')',''),subvars,'unif',0);
-      str = Hfunc{ind,3};
-      vars = regexp(str,'@\([\s\w,]*\)','match');
-      expr = strtrim(strrep(str,vars,''));
-      vars = regexp(vars,'\w+','match');
-      vars = [vars{:}];
-      if length(vars)~=length(subvars)
-        error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+      if ~isempty(submatch)
+          subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
+          subvars = [subvars{:}];
+          subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
+          subvars = cellfun(@(s)strrep(s,')',''),subvars,'unif',0);
+          str = Hfunc{ind,3};
+          vars = regexp(str,'@\([\s\w,]*\)','match');
+          expr = strtrim(strrep(str,vars,''));
+          vars = regexp(vars,'\w+','match');
+          vars = [vars{:}];
+          if length(vars)~=length(subvars)
+            error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+          end
+          expr = substitute(vars,subvars,expr);
+          target = strrep(target,submatch{1},['(' expr{1} ')']); 
       end
-      expr = substitute(vars,subvars,expr);
-      target = strrep(target,submatch{1},['(' expr{1} ')']); 
     end
     Sodes{t,1}=target;
   end  
@@ -713,19 +723,21 @@ if parms.nofunctions
       ind = funcinds(f);
       submatch = regexp(Tsubst{t,2},[Hfunc{ind,2} '\(.*\)'],'match');
 %       if isempty(submatch), continue; end
-      subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-z_A-Z]\w*','match');
-      %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\w+','match');
-      subvars = [subvars{:}];
-      str = Hfunc{ind,3};
-      vars = regexp(str,'@\([\s\w,]*\)','match');
-      expr = strtrim(strrep(str,vars,''));
-      vars = regexp(vars,'\w+','match');
-      vars = [vars{:}];
-      if length(vars)~=length(subvars)
-        error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+      if ~isempty(submatch)
+          subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-z_A-Z]\w*','match');
+          %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\w+','match');
+          subvars = [subvars{:}];
+          str = Hfunc{ind,3};
+          vars = regexp(str,'@\([\s\w,]*\)','match');
+          expr = strtrim(strrep(str,vars,''));
+          vars = regexp(vars,'\w+','match');
+          vars = [vars{:}];
+          if length(vars)~=length(subvars)
+            error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
+          end
+          expr = substitute(vars,subvars,expr);
+          Tsubst{t,2} = strrep(Tsubst{t,2},submatch{1},['(' expr{1} ')']); 
       end
-      expr = substitute(vars,subvars,expr);
-      Tsubst{t,2} = strrep(Tsubst{t,2},submatch{1},['(' expr{1} ')']); 
     end
   end
   catch

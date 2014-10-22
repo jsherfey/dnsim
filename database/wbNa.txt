@@ -1,12 +1,23 @@
-% Na: (transient sodium in Wang-Buzsaki interneuron model, 1996)
-wbgNa=35; wbENa=55; wbphi=5; IC=.54; IC_noise=.1;
-ah(V)=.07*exp(-(V+58)/20)
-bh(V)=1./(exp(-.1*(V+28))+1)
-am(V)=-.1*(V+35)./(exp(-.1*(V+35))-1)
-bm(V)=4*exp(-(V+60)/18)
-minf(V)=am(V)./(am(V)+bm(V))
-h'=wbphi*(ah(V).*(1-h)-bh(V).*h)
+% Na: transient sodium current (ref: Wang-Buzsaki interneuron model, 1996)
+% Tags: sodium, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+wbgNa=35; wbENa=55; wbphi=5; IC_noise=0; IC=0; % IC=.54;
+
+% Functions
+ah(IN)=.07*exp(-(IN+58)/20)
+bh(IN)=1./(exp(-.1*(IN+28))+1)
+am(IN)=-.1*(IN+35)./(exp(-.1*(IN+35))-1)
+bm(IN)=4*exp(-(IN+60)/18)
+minf(IN)=am(IN)./(am(IN)+bm(IN))
+INa(IN,h)=wbgNa.*minf(IN).^3.*h.*(IN-wbENa)
+
+% ODEs
+h'=wbphi*(ah(IN).*(1-h)-bh(IN).*h)
 h(0)=IC+IC_noise*rand(Npop,1)
-INa(V,h)=wbgNa.*minf(V).^3.*h.*(V-wbENa)
-current => -INa(V,h)
+
+% Interface
+current => -INa(IN,h)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
 

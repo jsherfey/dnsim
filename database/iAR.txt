@@ -1,24 +1,26 @@
-% ih: anomalous rectifier (rat somatosensory cortex)
-
-# constants
+% iAR: anomalous rectifier current (ref: Kramer/Kopell 2008)
+% Tags: h-current, channel, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
 AR_V12=-87.5; AR_k=-5.5; gAR=25; E_AR=-35; c_ARaM=1; c_ARbM=1; AR_L=1; AR_R=1;
-
 IC=0; IC_noise=0
 
-# auxiliary functions
-minf(V) = 1 ./ (1+exp((AR_V12-V)/AR_k))
-mtau(V) = 1./(AR_L.*exp(-14.6-.086*V)+AR_R.*exp(-1.87+.07*V))
-aM(V) = c_ARaM.*(minf(V) ./ mtau(V))
-bM(V) = c_ARbM.*((1-minf(V))./mtau(V))
+% Functions
+minf(IN) = 1 ./ (1+exp((AR_V12-IN)/AR_k))
+mtau(IN) = 1./(AR_L.*exp(-14.6-.086*IN)+AR_R.*exp(-1.87+.07*IN))
+aM(IN) = c_ARaM.*(minf(IN) ./ mtau(IN))
+bM(IN) = c_ARbM.*((1-minf(IN))./mtau(IN))
+IAR(IN,m) = gAR.*m.*(IN-E_AR)
 
-# gating dynamics
-mAR' = aM(V).*(1-mAR)-bM(V).*mAR
-
-# initial conditions
+% ODEs
+mAR' = aM(IN).*(1-mAR)-bM(IN).*mAR
 mAR(0)=IC+IC_noise.*rand(Npop,1)
 
-# intrinsic current
-IAR(V,m) = gAR.*m.*(V-E_AR)
+% Interface
+current => -IAR(IN,mAR)
 
-# interface statement
-current => -IAR(V,mAR)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References: 
+% Kramer, M. A., Roopun, A. K., Carracedo, L. M., Traub, R. D., Whittington, M. A., & Kopell, N. J. (2008). Rhythm generation through period concatenation in rat somatosensory cortex. PLoS computational biology, 4(9), e1000169. (http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000169)
+% Traub RD, Buhl EH, Gloveli T, Whittington MA (2003) Fast rhythmic bursting can be induced in layer 2/3 cortical neurons by enhancing persistent Na+ conductance or by blocking BK channels. J Neurophysiol 89:909–921.
+
