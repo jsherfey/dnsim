@@ -18,6 +18,9 @@ for d=1:nbatches
     if mod(f,25)==0, fprintf('file %g of %g\n',f,nfiles); end
     r=load(fullfile(specdir,files{f}));
     allfiles{d}{f,1}=fullfile(specdir,files{f});
+    if ~isfield(r.spec,'entities') && isfield(r.spec,'cells')
+        r.spec.entities=r.spec.cells;
+    end
     l={r.spec.entities.label};
     scope   =regexp(r.spec.simulation.scope,'([\w-,]+)','match');
     variable=regexp(r.spec.simulation.variable,'([\w-,]+)','match');

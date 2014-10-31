@@ -11,6 +11,9 @@ parms = mmil_args2parms( varargin, ...
 if ~isfield(spec,'entities') && isfield(spec,'cells')
   spec.entities=spec.cells;
 end
+if ~isfield(spec,'entities') && isfield(spec,'nodes')
+  spec.entities=spec.nodes;
+end
 npop = length(spec.entities);
 
 % Fill screen with subplots:
@@ -33,7 +36,8 @@ if parms.plot_flag
   cnt=1;
   screensize = get(0,'screensize');
   fig=figure('position',screensize);
-  set(gca,'Units','normalized','Position',[0 0 1 1]);
+  pause(1)
+  %set(gca,'Units','normalized','Position',[0 0 1 1]);
   for i = 1:nplots
     xi = mod(i-1,ncols)+1;
     yi = floor((i-1)./ncols)+1;
@@ -41,7 +45,10 @@ if parms.plot_flag
     pop = ceil(i/ncols); % index to this population
     labels = {data(pop).sensor_info.label};
     if isempty(parms.var)
-      var = find(~cellfun(@isempty,regexp(labels,['_' parms.varlabel '$'])),1,'first');
+      var = find(strcmp(labels,parms.varlabel));
+      if isempty(var)
+        var = find(~cellfun(@isempty,regexp(labels,['_' parms.varlabel '$'])),1,'first');
+      end
     else
       var = parms.var;
     end

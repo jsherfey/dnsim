@@ -5,9 +5,17 @@ function report=modeldiff(m1,m2)
 % m2=CURRSPEC.history(end).spec;
 
 report={};
+% standardize structures before comparison
 if isfield(m1,'entities'), m1.cells=m1.entities; end
 if isfield(m2,'entities'), m2.cells=m2.entities; end
+if isfield(m1,'nodes'), m1.cells=m1.nodes; end
+if isfield(m2,'nodes'), m2.cells=m2.nodes; end
+if ~issubfield(m1,'cells.mechs') [a,b,c,d,m1]=buildmodel2(m1,'verbose',0); m1.cells=m1.entities; m1=rmfield(m1,'entities'); end
+if ~issubfield(m2,'cells.mechs') [a,b,c,d,m2]=buildmodel2(m2,'verbose',0); m2.cells=m2.entities; m2=rmfield(m2,'entities'); end
+m1=rmfield(m1,setdiff(fieldnames(m1),{'cells','connections'}));
+m2=rmfield(m2,setdiff(fieldnames(m2),{'cells','connections'}));
 
+% compare models
 if isequal(m1.cells,m2.cells) && isequal(m1.connections,m2.connections)
   report{end+1} = 'same model';
   return;

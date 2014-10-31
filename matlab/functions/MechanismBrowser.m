@@ -134,7 +134,21 @@ name=dat{row,1};
 islocal=(dat{row,4}==true);
 if islocal
   mech = allmechs(index);
-  set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+  if exist(mech.file)
+    fid=fopen(mech.file); % open local mechanism file
+    txt={};
+    while (~feof(fid))
+      this = fgetl(fid);
+      if this == -1, break; end      
+      txt{end+1}=this;
+    end
+    fclose(fid); % close mech file
+    set(findobj('tag','mechtext'),'string',txt,'userdata',row);
+  else
+    set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+  end  
+%   mech = allmechs(index);
+%   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
 else
   % download & convert mech.txt to mech structure; add to allmechs
   %mech = getmechfromdb(id);

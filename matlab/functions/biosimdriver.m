@@ -17,11 +17,13 @@ parms = mmil_args2parms( varargin, ...
                             'plot_flag',1,[],...
                             'batchdir',pwd,[],...
                             'jobname','job.m',[],...
+                            'overwrite_flag',0,[],...
                          }, false);
 
 plot_flag = parms.plotvars_flag || parms.plotrates_flag || parms.plotpower_flag; % whether to plot anything at all
 save_flag = parms.savedata_flag || parms.savepopavg_flag || parms.savespikes_flag || (parms.saveplot_flag && plot_flag); % whether to save anything at all
 analysis_flag = parms.plotrates_flag || parms.plotpower_flag || parms.savepopavg_flag || parms.savespikes_flag; % whether to create an analysis directory
+overwrite_flag = parms.overwrite_flag;
 
 logfid = parms.logfid;
 reply_address = parms.reply_address;  % FROM address on the emails that get generated. 
@@ -38,6 +40,11 @@ try
   
 %% prepare output directory
 if save_flag
+  datafile = fullfile(rootoutdir,'data',[prefix '_sim_data.mat']);
+  if exist(datafile,'file') && ~overwrite_flag
+    fprintf('Aborting simulation. \nsim_data already exists: %s\n',datafile);
+    return;
+  end
   % create rootoutdir
   if ~exist(rootoutdir,'dir'), mkdir(rootoutdir); end
   if ~exist(fullfile(rootoutdir,'model'),'dir'), mkdir(fullfile(rootoutdir,'model')); end
@@ -61,7 +68,6 @@ args = mmil_parms2args(spec.simulation);
 % save simulated data with prefix
 if parms.savedata_flag
   if ~exist(fullfile(rootoutdir,'data'),'dir'), mkdir(fullfile(rootoutdir,'data')); end
-  datafile = fullfile(rootoutdir,'data',[prefix '_sim_data.mat']);
   save(datafile,'sim_data','spec','parms');%,'-v7.3');
   fprintf(logfid,'Simulated data saved to: %s\n',datafile);
 end

@@ -67,12 +67,21 @@ end
 
 warning off
 
-if nargin<1 && isempty(varargin)
+if (nargin<1 && isempty(varargin)) || ischar(varargin{1})
   net=[];
 else
   net = varargin{1};
 end
+if ~isempty(varargin) && ischar(varargin{1}) && strcmp(varargin{1},'load_models')
+  load_models_flag=1;
+else
+  load_models_flag=0;
+end
 % ----------------------------------
+if isfield(net,'nodes')
+  net.cells=net.nodes;
+  net=rmfield(net,'nodes');
+end
 if ~isfield(net,'cells')
   if isfield(net,'entities')
     net.cells = net.entities;
@@ -167,7 +176,7 @@ if ~isfield(net,'parent_uids');
   net.parent_uids=[];
 end
 if isempty(net.cells)
-  net.cells.label='a';
+  net.cells.label='node';
   net.cells.multiplicity=1;
   net.cells.dynamics={};%'';%'V''=0';
   net.cells.mechanisms={};
@@ -261,8 +270,12 @@ bgcolor = cfg.bgcolor;
 % main figure
 sz = get(0,'ScreenSize'); sz0=sz;
 sz = [.005*sz(3) .005*sz(4) .97*sz(3) .85*sz(4)];
-fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
-
+fig = findobj('tag','mainfig');
+if any(fig)
+  figure(fig);
+else
+  fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+end
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
   uicontrol('parent',fig,'style','text','string',titlestring,'fontsize',19,'units','normalized','position',[.085 .91 .25 .07],'backgroundcolor','w');
@@ -271,7 +284,7 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
   bbuild=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[0 .85 .1 .04],'string','build','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pbuild''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bmodel=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.1 .85 .1 .04],'string','model','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmodel''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bsimstudy=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.2 .85 .1 .04],'string','batch','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''psimstudy''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bhistory=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.3 .85 .1 .04],'string','notes','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''phistory''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bhistory=uicontrol('parent',fig,'style','pushbutton','tag','tab','units','normalized','position',[.3 .85 .1 .04],'string','history','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle''),''visible'',''off''); set(findobj(''tag'',''tab''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''phistory''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
 % model controls:
   bsave=uicontrol('parent',fig,'visible','off','style','pushbutton','units','normalized','position',[0 .98 .035 .025],'string','save','backgroundcolor',[.8 .8 .8],'callback',@Save_Spec);
   bload=uicontrol('parent',fig,'visible','off','style','pushbutton','units','normalized','position',[.035 .98 .035 .025],'string','load','backgroundcolor',[.8 .8 .8],'callback',@Load_File);
@@ -284,7 +297,7 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
 %   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.35 .98 .05 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
 %   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.35 .98 .05 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
   editusername=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .94 .06 .03],'string','username','backgroundcolor','w','callback',[],'visible','on');
-  editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .91 .06 .03],'string','password','backgroundcolor','w','callback',[],'visible','on');
+  editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .91 .06 .03],'string','password','backgroundcolor','w','callback',[],'visible','on','KeyPressFcn',@EnterPassword,'UserData','password');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.34 .97 .06 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.34 .97 .06 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
   uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
@@ -293,11 +306,11 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
 
 % left panels for cell, network, and mechanism controls
 pbuild=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85],'fontweight','normal');
-  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.21 .65 .22 .04],'string','connections','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.43 .65 .22 .04],'string','mechanisms','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bnet=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.21 .65 .22 .04],'string','connections','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pnet''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
+  bmech=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.43 .65 .22 .04],'string','mechanisms','backgroundcolor',[.7 .7 .7],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pmech''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
   bcell=uicontrol('parent',pbuild,'style','pushbutton','tag','tab2','units','normalized','position',[.65 .65 .22 .04],'string','parameters','backgroundcolor',[1 1 1],'callback','set(findobj(''tag'',''ptoggle2''),''visible'',''off''); set(findobj(''tag'',''tab2''),''backgroundcolor'',[1 1 1]); set(findobj(''userdata'',''pcell''),''visible'',''on''); set(gcbo,''backgroundcolor'',[.7 .7 .7]);');
-  pmech=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','mechanism editor','visible','off','tag','ptoggle2','userdata','pmech','units','normalized','position',[0 0 1 .65],'fontweight','normal');
-  pnet=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','connection mechanisms','visible','on','tag','ptoggle2','userdata','pnet','units','normalized','position',[0 0 1 .65]);
+  pmech=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','mechanism editor','visible','on','tag','ptoggle2','userdata','pmech','units','normalized','position',[0 0 1 .65],'fontweight','normal');
+  pnet=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','connection mechanisms','visible','off','tag','ptoggle2','userdata','pnet','units','normalized','position',[0 0 1 .65]);
   pcell=uipanel('parent',pbuild,'backgroundcolor',bgcolor,'title','parameters','visible','off','tag','ptoggle2','userdata','pcell','units','normalized','position',[0 0 1 .65]);
 pmodel=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','off','tag','ptoggle','userdata','pmodel','units','normalized','position',[0 0 .4 .85]);
 psimstudy=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','batch simulation','visible','off','tag','ptoggle','userdata','psimstudy','units','normalized','position',[0 0 .4 .85],'fontweight','bold');
@@ -337,8 +350,9 @@ tit='                    [targets]';
 tit='                    (columns = targets)';
 tit='(columns: target nodes)';
 tit='(rows are sources, columns are targets)';
-p_net_connect = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 .5 1 .5],'BorderWidth',.2,'BorderType','line','title',tit,'fontweight','normal'); % cell specification
-p_net_kernel  = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 0 1 .5],'BorderWidth',.2,'BorderType','line','title','connection matrices'); % cell specification
+tit='';
+p_net_connect = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 .6 1 .4],'BorderWidth',.2,'BorderType','line','title',tit,'fontweight','normal'); % cell specification
+p_net_kernel  = uipanel('parent',pnet,'BackgroundColor',bgcolor,'Position',[0 0 1 .6],'BorderWidth',.2,'BorderType','line','title','view and edit connectivity'); % cell specification
 % compartment controls
 if ~isempty(net.cells) && ischar(net.cells(1).label)
   l1={net.cells.label}; 
@@ -355,7 +369,6 @@ uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
-uicontrol('parent',p_net_select,'tag','substfunctions','style','checkbox','value',0,'units','normalized','position',[.85 .93 .04 .08],'backgroundcolor',[.8 .8 .8],'tooltipstring','check to consolidate; consolidation speeds up simulation but slows down model processing');
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
@@ -391,12 +404,18 @@ txt_mech = uicontrol('parent',pmech,'style','edit','units','normalized','Backgro
 p_static_plots = uipanel('parent',pmech,'Position',[0 0 1 .4],'BackgroundColor','white','BorderWidth',.2,'BorderType','line','title','');
 lst_static_funcs = uicontrol('units','normalized','position',[0 0 .2 .95],'parent',p_static_plots,'BackgroundColor',[.9 .9 .9],...
   'style','listbox','value',1:5,'string',{},'Max',50,'Callback',@DrawAuxFunctions);
-ax_static_plot = subplot('position',[.2 0 .8 .95],'parent',p_static_plots,'linewidth',3,'color','w','fontsize',6); box on; 
+ax_static_plot = subplot('position',[.23 .1 .77 .78],'parent',p_static_plots,'linewidth',3,'color','w','fontsize',6); box on; 
+title('functions of one variable');
 % lst_static_funcs = uicontrol('units','normalized','position',[.04 .02 .9 .35],'parent',p_static_plots,...
 %   'style','listbox','value',1:5,'string',{},'Max',50,'Callback',@DrawAuxFunctions);
-edit_static_lims=uicontrol('Style','edit', 'Units','normalized','Position',[0.85 0.075 0.13 0.1],...
+edit_static_lims=uicontrol('Style','edit', 'Units','normalized','Position',[0.865 0.075 0.13 0.1],'backgroundcolor','w',...
           'String',sprintf('[%g,%g]',min(cfg.V),max(cfg.V)),'Callback',{@DrawAuxFunctions,1},'parent',p_static_plots);
-if ~isempty(CURRSPEC.cells)
+btn_static_autoscale=uicontrol('style','pushbutton','fontsize',10,'string','autoscale','parent',p_static_plots,...
+          'Units','normalized','Position',[0.865 0 0.13 0.075],'callback',@StaticAutoscale);    
+uicontrol('style','text','parent',p_static_plots,'Units','normalized','Position',[0.84 .09 0.02 0.075],'string','x','backgroundcolor','w');
+uicontrol('style','text','parent',p_static_plots,'Units','normalized','Position',[0.84 0 0.02 0.075],'string','y','backgroundcolor','w');
+
+if ~isempty(CURRSPEC.cells) && isfield(CURRSPEC.cells,'functions')
   maxlhs=20; maxlen=150; % limit how much is shown in the listbox
   funcs = CURRSPEC.cells(cfg.focuscomp).functions;
   len = min(maxlhs,max(cellfun(@length,funcs(:,1))));
@@ -412,29 +431,39 @@ end
 
 % right panel: simulation plots and controls %GUI_simpanel;
 psims=uipanel('parent',fig,'title','','visible','on','units','normalized','position',[.4 0 .6 1]);%,'backgroundcolor',cfg.bgcolor);
-
+uicontrol('parent',psims,'style','text','units','normalized','position',[.3 .93 .2 .05],'string','simulations','fontsize',20);
 % menu %GUI_menu;
 set(fig,'MenuBar','none');
 file_m = uimenu(fig,'Label','File');
-uimenu(file_m,'Label','Load model','Callback',@Load_File);
-uimenu(file_m,'Label','Append model','Callback',{@Load_File,[],1});
+%uimenu(file_m,'Label','Load model','Callback',@Load_File);
+%uimenu(file_m,'Label','Append model','Callback',{@Load_File,[],1});
+uimenu(file_m,'Label','Load model(s)','Callback',{@load_models,1,'file'});
+uimenu(file_m,'Label','Append model(s)','Callback',{@load_models,0,'file'});
 uimenu(file_m,'Label','Save model','Callback',@Save_Spec);
 uimenu(file_m,'Label','Upload model','Callback',@GetUploadInfo);%DB_SaveModel);
+uimenu(file_m,'Label','Write Matlab script','Callback','global CURRSPEC; write_dnsim_script(CURRSPEC);');
+% uimenu(file_m,'Label','Write ODEFUN script','Callback',@write_odefun_script);
+
 ws_m = uimenu(file_m,'Label','Interact');
 uimenu(ws_m,'Label','Pass model (''spec'') to command window','Callback','global CURRSPEC; assignin(''base'',''spec'',CURRSPEC);');
-uimenu(ws_m,'Label','Update model (''spec'') from command window','Callback',{@refresh,1});
+uimenu(ws_m,'Label','Update model (''spec'') from base workspace','Callback',{@refresh,1});
 uimenu(ws_m,'Label','Pass ''sim_data'' (during interactive simulation) to command window','Callback','global cfg;cfg.publish=1;');
-import_m = uimenu(file_m,'Label','Import');
-uimenu(import_m,'Label','XPP (wip)','Callback','not implemented yet');
-export_m = uimenu(file_m,'Label','Export');
-uimenu(export_m,'Label','XPP (wip)','Callback','not implemented yet');
-uimenu(export_m,'Label','NEURON (wip)','Callback','not implemented yet');
-uimenu(export_m,'Label','CellML (wip)','Callback','not implemented yet');
+if 0
+  import_m = uimenu(file_m,'Label','Import');
+  uimenu(import_m,'Label','XPP (wip)','Callback','not implemented yet');
+  export_m = uimenu(file_m,'Label','Export');
+  uimenu(export_m,'Label','XPP (wip)','Callback','not implemented yet');
+  uimenu(export_m,'Label','NEURON (wip)','Callback','not implemented yet');
+  uimenu(export_m,'Label','CellML (wip)','Callback','not implemented yet');
+end
+uimenu(file_m,'Label','Refresh GUI','Callback','global CURRSPEC H; close(H.fig); modeler(CURRSPEC);');
 uimenu(file_m,'Label','Exit','Callback','global CURRSPEC H cfg; close(H.fig); clear CURRSPEC H cfg; warning on');
 plot_m = uimenu(fig,'Label','Plot');
-uimenu(plot_m,'Label','plotv','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotv(evalin(''base'',''sim_data''),CURRSPEC); else disp(''load data to plot''); end');
-uimenu(plot_m,'Label','plotpow','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotpow(evalin(''base'',''sim_data''),CURRSPEC,''spectrogram_flag'',0); else disp(''load data to plot''); end');
-uimenu(plot_m,'Label','plotspk','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotspk(evalin(''base'',''sim_data''),CURRSPEC,''window_size'',30/1000,''dW'',5/1000); else disp(''load data to plot''); end');
+uimenu(plot_m,'Label','quick plot','Callback',['global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotv(evalin(''base'',''sim_data''),CURRSPEC,''varlabel'',sprintf(''%s'',CURRSPEC.variables.global_oldlabel{1})); else disp(''load data to plot''); end']);
+if 0
+  uimenu(plot_m,'Label','plotpow','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotpow(evalin(''base'',''sim_data''),CURRSPEC,''spectrogram_flag'',0); else disp(''load data to plot''); end');
+  uimenu(plot_m,'Label','plotspk','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), plotspk(evalin(''base'',''sim_data''),CURRSPEC,''window_size'',30/1000,''dW'',5/1000); else disp(''load data to plot''); end');
+end
 uimenu(plot_m,'Label','visualizer','Callback','global CURRSPEC; if ismember(''sim_data'',evalin(''base'',''who'')), visualizer(evalin(''base'',''sim_data'')); else disp(''load data to plot''); end');
 
 % collect object handles
@@ -504,6 +533,10 @@ DrawStudyInfo;
 UpdateHistory;
 Display_Mech_Info;
 
+if load_models_flag
+  load_models([],[],1,'file');
+end
+
 %% FUNCTIONS
 
 function ResizeMechEditor(src,evnt)
@@ -522,7 +555,7 @@ if strcmp(get(src,'string'),'expand')
   set(H.lst_comps,'visible','off');
   set(H.lst_mechs,'visible','off');
   set(findobj('tag','nodecontrols'),'visible','off');
-  set(findobj('tag','substfunctions'),'visible','off');
+  %set(findobj('tag','substfunctions'),'visible','off');
   set(findobj('tag','tab2'),'visible','off');
 else
   set(src,'string','expand');
@@ -538,7 +571,7 @@ else
   set(H.lst_comps,'visible','on');
   set(H.lst_mechs,'visible','on');
   set(findobj('tag','nodecontrols'),'visible','on');
-  set(findobj('tag','substfunctions'),'visible','on');
+  %set(findobj('tag','substfunctions'),'visible','on');
   set(findobj('tag','tab2'),'visible','on');
 end
 
@@ -671,6 +704,17 @@ global CURRSPEC
 spec=CURRSPEC;
 fprintf('Saving model specification: %s\n',outfile);
 save(outfile,'spec');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function write_odefun_script(src,evnt)
+global cfg
+answer=inputdlg('Model name:','Enter name');
+if isempty(answer)
+  return;
+end
+txt=regexp(cfg.modeltext,'%-.*%-','match');
+fid=fopen([answer{1} '_odefun.m'],'wt');
+fprintf(fid,'%s\n',txt{:});
+fclose(fid);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function SelectCells(src,evnt,null)
 global H CURRSPEC cfg
@@ -810,7 +854,8 @@ if nargin<1
   global CURRSPEC;
   net=CURRSPEC;
 end
-dx=.15; x=.13; c=1.5; dy=-.07*c; ht=.1;
+% dx=.15; x=.13; c=1.5; dy=-.07*c; ht=.1;
+dx=.15; x=.13; c=1.5; dy=-.1*c; ht=.14;
 sel = get(H.lst_comps,'value');
 net.cells = net.cells(sel);
 net.connections = net.connections(sel,:);
@@ -835,14 +880,14 @@ for i=1:length(sel)
         this=zeros(max(sel),1);
         this(sel)=j;
         H.txt_to(j) = uicontrol('parent',H.p_net_connect,'units','normalized',...
-          'style','text','position',[x+dx*(j-1) .91 .11 ht],'string',l{j},...
+          'style','text','position',[x+dx*(j-1) .88 .11 ht],'string',['--> ' l{j}],...
           'callback',{@ShowClickMechList,this,'connections'},'backgroundcolor',cfg.bgcolor);
       end
       if j==1 % from
         this=ones(1,max(sel));
         this(sel)=i;
         H.txt_from(i) = uicontrol('parent',H.p_net_connect,'units','normalized',...
-          'style','text','position',[.01 .8+dy*(i-1) .11 ht],'string',l{i},...
+          'style','text','position',[.01 .8+dy*(i-1) .11 ht],'string',[l{i} ' -->'],...
           'callback',{@ShowClickMechList,this,'connections'},'backgroundcolor',cfg.bgcolor);
       end
       H.edit_conn_mechs(i,j) = uicontrol('parent',H.p_net_connect,'units','normalized',...
@@ -853,8 +898,8 @@ for i=1:length(sel)
     H.p_conn_mechs(i,j) = uipanel('parent',H.p_net_connect,'units','normalized',...
       'position',pos,'visible','off');
     else
-      set(H.txt_to(i),'string',l{i},'visible','on');
-      set(H.txt_from(i),'string',l{i},'visible','on');
+      set(H.txt_to(i),'string',['--> ' l{i}],'visible','on');
+      set(H.txt_from(i),'string',[l{i} ' -->'],'visible','on');
       set(H.p_conn_mechs(i,j),'visible','off');
       set(H.edit_conn_mechs(i,j),'string',str,'UserData',u,'Callback',{@UpdateNet,connname},...
         'ButtonDownFcn',{@Display_Mech_Info,connname,ml,'connections'},'visible','on');
@@ -914,10 +959,11 @@ for i=1:n
     'tooltip',m{i},'ButtonDownFcn',{@Display_Mech_Info,l,m{i}});
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function DrawAuxView
-global H CURRSPEC
+function DrawAuxView(src,evnt)
+%@DrawAuxView:
+global H CURRSPEC cfg
 if isempty(CURRSPEC.cells), return; end
-
+% get strings and userdata for all mechs given CURRSPEC.(cells|connections)
 % make list of connections
 EL={CURRSPEC.cells.label};
 CL={CURRSPEC.connections.label};
@@ -925,119 +971,299 @@ sel=find(~cellfun(@isempty,CL));
 if isempty(sel) % no connections
   return; 
 end
-connlabels={};
-for i=1:length(sel)
-  m=CURRSPEC.connections(sel(i)).mechanisms;
-  if ~iscell(m), m={m}; end
-  for j=1:length(m)
-    connlabels{end+1} = [CL{sel(i)} '.' m{j}];
-  end  
-end
-connected=sel;
-
-% make list of auxvars for the first connection
-sel=strmatch([strrep(CL{sel(1)},'-','_') '_'],CURRSPEC.model.auxvars(:,1));
-auxlist=CURRSPEC.model.auxvars(sel,1);
-if isempty(auxlist), return; end
-% get auxvar matrix 
-a=CURRSPEC.model.auxvars(sel,:);
-for i=1:size(a,1)
-  key = a{i,1};
-  try
-    eval(sprintf('%s = %s;',a{i,1},a{i,2}));
-    val = eval(a{i,2});
-  catch
-    val = nan;
+allvars = CURRSPEC.model.auxvars;
+NE=numel(EL);
+NC=numel(sel);
+MECHlabel = {};
+VARlabel = {};
+SRCind = [];
+DSTind = [];
+MECHind = [];
+mechVARinds = {}; % make cell array in case a mechanism variable is set using >1 sequential expressions
+allVARinds = {};  % make cell array for indices in model.auxvars corresponding to mechVARinds
+mechlistind = [];
+varlistind = [];
+mechlistlabels = {};
+cnt=0; mechcnt=0;
+for a=1:NC
+  [i,j]=ind2sub([NE NE],sel(a));
+  c=CURRSPEC.connections(i,j);
+  for k=1:numel(c.mechanisms)
+    mechcnt=mechcnt+1;
+    thismechlabel=sprintf('%s->%s.%s',EL{i},EL{j},c.mechanisms{k});
+    mechlistlabels{mechcnt} = thismechlabel;
+    thisvars=c.mechs(k).auxvars;
+    uniqvarlabels=unique(thisvars(:,1),'stable');
+    for u=1:numel(uniqvarlabels)
+      cnt=cnt+1;
+      SRCind(cnt) = i;
+      DSTind(cnt) = j;
+      MECHind(cnt) = k;
+      tmp = sprintf('%s_%s_%s_%s',EL{i},EL{j},c.mechanisms{k},uniqvarlabels{u});
+      mechVARinds{cnt} = find(strcmp(uniqvarlabels{u},thisvars(:,1)));
+      allVARinds{cnt} = find(strcmp(tmp,allvars(:,1)));
+      MECHlabel{cnt} = thismechlabel;
+      VARlabel{cnt} = uniqvarlabels{u};
+      mechlistind(cnt) = mechcnt;
+    end
   end
-  userdata.(key).matrix = val;
-  userdata.(key).equation = a{i,2};%[a{i,1} ' = ' a{i,2}];
 end
-auxeqn=[a{i,1} ' = ' a{i,2}];
-auxmat=userdata.(auxlist{end}).matrix;
-lims=[min(auxmat(:)) max(auxmat(:))];%[.9*min(auxmat(:)) 1.1*max(auxmat(:))];
+mechlist_string = mechlistlabels; %unique(MECHlabel,'stable');
+mechlist_userdata.SRCind = SRCind;
+mechlist_userdata.DSTind = DSTind;
+mechlist_userdata.MECHind = MECHind;
+mechlist_userdata.mechVARinds = mechVARinds;
+mechlist_userdata.allVARinds = allVARinds;
+mechlist_userdata.MECHlabel = MECHlabel;
+mechlist_userdata.VARlabel = VARlabel;
+mechlist_userdata.mechlistind = mechlistind;
 
-% create controls
-H.lst_conns = uicontrol('parent',H.p_net_kernel,'units','normalized','style','listbox','userdata',connected,...
-  'position',[0 0 .2 1],'value',1,'string',connlabels,'BackgroundColor',[.9 .9 .9],'Max',1,'Callback',@UpdateAuxList);
-% listbox to select which auxvar to plot
-H.lst_auxvars = uicontrol('parent',H.p_net_kernel,'units','normalized','backgroundcolor',[.9 .9 .9],...
-  'style','listbox','position',[.21 .5 .3 .5],'string',auxlist,'value',length(auxlist),'userdata',userdata,...
-  'Callback',@UpdateAuxPlot); % 'backgroundcolor','w',
-% edit box to modify defining expressions
-H.txt_auxvar_eqn = uicontrol('parent',H.p_net_kernel,'units','normalized',...
-  'style','text','position',[.21 .31 .3 .19],'backgroundcolor',[.9 .9 .9],'string',auxeqn,...
-  'HorizontalAlignment','left','fontsize',8);%,'Callback',{@UpdateParams,'change','cells'});
-
-% create button group for predefined adjacency matrices
-if 0
-  H.rad_adj = uibuttongroup('visible','off','units','normalized','Position',[.21 0 .3 .3],'parent',H.p_net_kernel);
-  H.rad_adj_1 = uicontrol('Style','radiobutton','String','1-to-1','units','normalized',...
-      'pos',[.05 .75 .8 .2],'parent',H.rad_adj,'HandleVisibility','off');
-  H.rad_adj_2 = uicontrol('Style','radiobutton','String','all-to-all','units','normalized',...
-      'pos',[.05 .45 .8 .2],'parent',H.rad_adj,'HandleVisibility','off');
-  H.rad_adj_3 = uicontrol('Style','radiobutton','String','random','units','normalized',...
-      'pos',[.05 .15 .8 .2],'parent',H.rad_adj,'HandleVisibility','off');
-  set(H.rad_adj,'SelectionChangeFcn',@seladj);
-  set(H.rad_adj,'SelectedObject',[]);  % No selection
-  set(H.rad_adj,'Visible','on');
+% create/update uicontrols
+if ~isfield(H,'lst_auxconns') || ~ishandle(H.lst_auxconns)  
+  uicontrol('style','text','string','select mechanism','units','normalized','position',[0 .94 .2 .06],'parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor);
+  H.lst_auxconns = uicontrol('parent',H.p_net_kernel,'units','normalized','style','listbox','userdata',mechlist_userdata,...
+    'position',[0 0 .2 .94],'value',1,'string',mechlist_string,'BackgroundColor',[.9 .9 .9],'Max',1,'Callback',@ChangeAuxMechSelection);  
+else
+  value=get(H.lst_auxconns,'value');
+  if value>numel(mechlist_string), value=1; end
+  set(H.lst_auxconns,'value',value,'string',mechlist_string,'userdata',mechlist_userdata);
 end
+ChangeAuxMechSelection([],[]);
 
-% plots
-H.ax_conn_img = subplot('position',[.55 0 .45 1],'parent',H.p_net_kernel); 
-H.img_connect = imagesc(auxmat); %axis xy;
-if lims(2)>lims(1), caxis(lims); end
-colorbar
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function UpdateAuxList(src,evnt)
-global CURRSPEC H
+function ChangeAuxMechSelection(src,evnt)
+%@ChangeAuxMechSelection:
+global H CURRSPEC cfg
 if isempty(CURRSPEC.cells), return; end
-sel=get(H.lst_conns,'userdata');
-if isempty(sel), return; end
-CL={CURRSPEC.connections.label};
-% make list of auxvars for the first connection
-prefix=[strrep(CL{sel(get(H.lst_conns,'value'))},'-','_') '_'];
-sel=find(~cellfun(@isempty,regexp(CURRSPEC.model.auxvars(:,1),prefix)));
-%sel=strmatch(prefix,CURRSPEC.model.auxvars(:,1));
+% get strings and userdata for select mech (lst_auxconns.value) given lst_auxconns.userdata
+mechsel=get(H.lst_auxconns,'value');
+ud=get(H.lst_auxconns,'userdata');
+idx=(ud.mechlistind==mechsel);
+varlist_string = ud.VARlabel(idx);
+varlist_userdata.srcind=ud.SRCind(idx);
+varlist_userdata.dstind=ud.DSTind(idx);
+varlist_userdata.mechind=ud.MECHind(idx);
+varlist_userdata.mechvarinds=ud.mechVARinds(idx);
+varlist_userdata.allvarinds=ud.allVARinds(idx);
+varlist_userdata.mechlabel=ud.MECHlabel(idx);
+varlist_userdata.varlabel=ud.VARlabel(idx);
 
-auxlist=CURRSPEC.model.auxvars(sel,1);
-if isempty(auxlist), return; end
-% get auxvar matrix 
-a=CURRSPEC.model.auxvars(sel,:);
-auxlist={};
-for i=1:size(a,1)
-  keys=regexp(a{i,1},'\w+','match');
-  auxlist=cat(2,auxlist,keys);
-  try
-    eval(sprintf('%s = %s;',a{i,1},a{i,2}));
-    for i=1:length(keys)
-      userdata.(keys{i}).matrix = eval(keys{i});
-      userdata.(keys{i}).equation = a{i,2};    
-      %val = eval(a{i,2});
-    end
-  catch
-    for i=1:length(keys)
-      userdata.(keys{i}).matrix = nan;
-      userdata.(keys{i}).equation = a{i,2};   
-    end
-  end
-%   userdata.(key).matrix = val;
-%   userdata.(key).equation = a{i,2};% [a{i,1} ' = ' a{i,2}];
+% create/update uicontrols
+if ~isfield(H,'lst_auxvars') || ~ishandle(H.lst_auxvars)
+  uicontrol('style','text','string','select matrix','units','normalized','position',[.2 .94 .15 .06],'parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor);
+  H.lst_auxvars = uicontrol('parent',H.p_net_kernel,'units','normalized','backgroundcolor',[.9 .9 .9],...
+    'style','listbox','position',[.21 .66 .15 .28],'string',varlist_string,'value',length(varlist_string),'userdata',varlist_userdata,'Callback',@ChangeAuxVarSelection);
+else
+  value=get(H.lst_auxvars,'value');
+%   if isequal(index,'last') || (value>numel(varlist_string))
+    value=numel(varlist_string);
+%   end
+  set(H.lst_auxvars,'value',value,'string',varlist_string,'userdata',varlist_userdata);
 end
-set(H.lst_auxvars,'string',auxlist,'value',length(auxlist),'userdata',userdata);
-UpdateAuxPlot;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function UpdateAuxPlot(src,evnt)
+ChangeAuxVarSelection;
+
+% Structure info:
+% spec.connections(i,j).mechs(k).auxvars{ul,1} == varlabel
+% spec.connections(i,j).mechs(k).auxvars{ul,2} == expression
+%   where ul = mechVARinds{u}(l), l=1...
+% spec.model.auxvars{vl,1} == src_dst_mech_varlabel
+% spec.model.auxvars{vl,2} == expression w/ substitutions
+%   where vl = allVARinds{u}(l), l=1...
+
+function ChangeAuxVarSelection(src,evnt)
+%@ChangeAuxVarSelection:
+global H CURRSPEC cfg
+if isempty(CURRSPEC.cells), return; end
+
+% get equation, matrix, & header for select var (lst_auxvars.value) | userdata & CURRSPEC
+varsel=get(H.lst_auxvars,'value');
+varlist=get(H.lst_auxvars,'string');
+ud=get(H.lst_auxvars,'userdata');
+i=ud.srcind(varsel);
+j=ud.dstind(varsel);
+k=ud.mechind(varsel);
+varinds=ud.mechvarinds{varsel};
+varinfo=CURRSPEC.connections(i,j).mechs(k).auxvars(varinds,:);
+edit_string = '';
+for l=1:numel(varinds)
+  edit_string = [edit_string sprintf('%s=%s; ',varinfo{l,1},strrep(varinfo{l,2},';',''))];
+end
+image_header = sprintf('%s: %s',ud.mechlabel{varsel},ud.varlabel{varsel});
+
+% evaluate matrix
+for ii=1:length(ud.allvarinds)
+  for jj=1:length(ud.allvarinds{ii})
+    k=ud.allvarinds{ii}(jj);
+    a=CURRSPEC.model.auxvars(k,:);
+    eval(sprintf('%s = %s;',a{1,1},a{1,2}));
+  end
+end
+varinds=ud.allvarinds{varsel};
+varinfo=CURRSPEC.model.auxvars(varinds,:);
+try
+  val = eval(varinfo{1});
+catch
+  val = nan;
+end
+lims=[min(val(:)) max(val(:))];
+
+% whether to show checkbox for self connection
+noself = [varlist{varsel} '=' varlist{varsel} '.*(1-eye(Npop))'];
+if any(strfind(edit_string,noself))
+  noself_value=1;
+else
+  noself_value=0;
+end
+if i==j
+  self_visible='on';
+else
+  self_visible='off';
+end
+
+yshift=.16;
+% create/update uicontrols
+if ~isfield(H,'edit_auxvar_eqn') || ~ishandle(H.edit_auxvar_eqn)
+  % create uicontrol edit_auxvar_eqn (callback: @EditAuxVarEqn)
+  H.edit_auxvar_eqn = uicontrol('parent',H.p_net_kernel,'units','normalized',...
+    'style','edit','position',[.21 0 .79 .135],'backgroundcolor','w','string',edit_string,... % [.21 .48 .3 .12]
+    'HorizontalAlignment','left','fontsize',10,'Callback',@EditAuxVarEqn);
+  % create uicontrol txt_auxvar_header, img_auxvar
+  H.txt_auxvar_header = uicontrol('style','text','string',image_header,'units','normalized','position',[.57 .925 .4 .075],'parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor,'ForegroundColor','b','fontsize',12,'fontweight','bold');
+  H.ax_conn_img = subplot('position',[.6 .2 .35 .65],'parent',H.p_net_kernel); 
+  H.img_auxvar = imagesc(val); %axis xy;
+  %ylabel('ylabel'); title('title');
+  if lims(2)>lims(1), caxis(lims); end
+  colorbar
+  % create uicontrol buttons (callback: @EditAuxVarAuto)
+  uicontrol('style','text','string','redefine matrix','units','normalized','position',[.21 .56 .15 .06],'parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor);
+  uicontrol('style','pushbutton','units','normalized','position',[.21 .3+yshift .15 .1],'string','gaussian','parent',H.p_net_kernel,'callback',{@EditAuxVarAuto,'gaussian'});
+  uicontrol('style','text','units','normalized','position',      [.41 .29+yshift .15 .1],'string','stdev (%n)','parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor,'horizontalalignment','left');
+  H.edit_gaussian_sigma = uicontrol('style','edit','units','normalized','position',[.36 .3+yshift .05 .1],'string','50','parent',H.p_net_kernel,'backgroundcolor','w');
+  uicontrol('style','pushbutton','units','normalized','position',[.21 .2+yshift .15 .1],'string','random','parent',H.p_net_kernel,'callback',{@EditAuxVarAuto,'rand'});
+  uicontrol('style','text','units','normalized','position',      [.41 .19+yshift .15 .1],'string','Pr[connect]','parent',H.p_net_kernel,'backgroundcolor',cfg.bgcolor,'horizontalalignment','left');
+  H.edit_rand_p = uicontrol('style','edit','units','normalized','position',[.36 .2+yshift .05 .1],'string','.5','parent',H.p_net_kernel,'backgroundcolor','w');
+  uicontrol('style','pushbutton','units','normalized','position',[.37 .1+yshift .15 .1],'string','all-to-all','parent',H.p_net_kernel,'callback',{@EditAuxVarAuto,'all'});
+  uicontrol('style','pushbutton','units','normalized','position',[.21 .1+yshift .15 .1],'string','one-to-one','parent',H.p_net_kernel,'callback',{@EditAuxVarAuto,'one'});
+  uicontrol('style','pushbutton','units','normalized','position',[.21 0+yshift .15 .1],'string','load matrix','parent',H.p_net_kernel,'callback',{@EditAuxVarAuto,'loadmat'});
+  H.chk_selfconnect = uicontrol('style','checkbox','string','no self connect','value',noself_value,'units','normalized','position',[.37 0+yshift .2 .1],'parent',H.p_net_kernel,'visible',self_visible,'callback',{@EditAuxVarAuto,'self'},'backgroundcolor',cfg.bgcolor);
+else
+  % update uicontrols
+  set(H.chk_selfconnect,'visible',self_visible,'value',noself_value);
+  set(H.edit_auxvar_eqn,'string',edit_string);
+  set(H.txt_auxvar_header,'string',image_header);
+  set(H.img_auxvar,'cdata',val);
+  axes(H.ax_conn_img); axis tight
+  if lims(2)>lims(1)
+    set(H.ax_conn_img,'clim',lims);
+  end
+end
+% conditionally set plot text
+NE=[CURRSPEC.cells.multiplicity];
+if size(val,1)==NE(i) && size(val,2)==NE(j)
+  ylabel(CURRSPEC.cells(i).label);
+  title(CURRSPEC.cells(j).label);
+end  
+
+function EditAuxVarEqn(src,evnt)
+%@EditAuxVarEqn:
+global H CURRSPEC
+% get new auxinfo from edit_auxvar_eqn
+eqn = get(H.edit_auxvar_eqn,'string');
+if isempty(eqn), return; end
+eqn = strtrim(splitstr(eqn,';'));
+if length(eqn)<1, return; end
+eqn = eqn(~cellfun(@isempty,eqn));
+if length(eqn)<1, return; end
+
+% update CURRSPEC.connections().mechs().auxvars()
+varsel=get(H.lst_auxvars,'value');
+ud=get(H.lst_auxvars,'userdata');
+i=ud.srcind(varsel);
+j=ud.dstind(varsel);
+k=ud.mechind(varsel);
+varinds=ud.mechvarinds{varsel};
+oldauxvars=CURRSPEC.connections(i,j).mechs(k).auxvars;
+neqns=size(oldauxvars,1);
+auxvars = {};
+if min(varinds)>1 & neqns>0
+  auxvars=cat(1,auxvars,oldauxvars(1:min(varinds)-1,:));
+end
+for l=1:length(eqn)
+  ind=find(eqn{l}=='=',1,'first');
+  tmp=strtrim({eqn{l}(1:ind-1),eqn{l}(ind+1:end)});
+  auxvars=cat(1,auxvars,tmp);
+end
+if max(varinds)<neqns
+  auxvars=cat(1,auxvars,oldauxvars(max(varinds)+1:end,:));
+end
+newspec = CURRSPEC;
+newspec.connections(i,j).mechs(k).auxvars = auxvars;
+
+% update model
+updatemodel(newspec);
+DrawAuxView;
+Display_Mech_Info;
+
+function EditAuxVarAuto(src,evnt,type)
+%@EditAuxVarAuto:
 global H
-u=get(H.lst_auxvars,'userdata');
-s=get(H.lst_auxvars,'string');
-v=get(H.lst_auxvars,'value');
-auxmat=u.(s{v}).matrix;
-auxeqn=u.(s{v}).equation;
-lims=[min(auxmat(:)) max(auxmat(:))];
-set(H.img_connect,'cdata',auxmat); 
-axes(H.ax_conn_img); axis tight;
-if lims(2)>lims(1), caxis(lims); end
-set(H.txt_auxvar_eqn,'string',auxeqn);
+varsel=get(H.lst_auxvars,'value');
+varlist=get(H.lst_auxvars,'string');
+if ~strcmp(type,'self')
+  set(H.chk_selfconnect,'value',0);
+end
+% update edit_auxvar_eqn
+switch type
+  case 'rand'
+    eqn = [varlist{varsel} sprintf('=rand(Npre,Npost)<%g;',str2num(get(H.edit_rand_p,'string')))];
+  case 'all'
+    eqn = [varlist{varsel} '=ones(Npre,Npost);'];
+  case 'one'
+    eqn = [varlist{varsel} '=eye(Npre,Npost);'];
+  case 'gaussian'
+    eqn='';
+    if ~ismember('Nmax',varlist)
+      eqn='Nmax=max(Npre,Npost);';
+    end
+    if ~ismember('srcpos',varlist)
+      eqn=[eqn 'srcpos=linspace(1,Nmax,Npre)''*ones(1,Npost);'];
+    end
+    if ~ismember('dstpos',varlist)
+      eqn=[eqn 'dstpos=(linspace(1,Nmax,Npost)''*ones(1,Npre))'';'];
+    end
+    eqn=[eqn varlist{varsel} sprintf('=exp(-(srcpos-dstpos).^2/(%g*Npost)^2)',str2num(get(H.edit_gaussian_sigma,'string'))/100)];
+  case 'loadmat'
+    [filename,pathname] = uigetfile({'*.mat'},'Pick a file containing a connectivity matrix.','MultiSelect','off');
+    if isequal(filename,0) || isequal(pathname,0), return; end
+    file=fullfile(pathname,filename);
+    if ~exist(file,'file')
+      return;
+    end
+    dat=load(file);
+    flds=fieldnames(dat);
+    eqn = [varlist{varsel} sprintf('=getfield(load(''%s''),''%s'');',file,flds{1})];
+  case 'self'
+    eqn = get(H.edit_auxvar_eqn,'string');
+    noself = [varlist{varsel} '=' varlist{varsel} '.*(1-eye(Npop))'];
+    if get(H.chk_selfconnect,'value')==0 % remove identity subtraction
+      if any(strfind(eqn,noself))
+        eqn = strrep(eqn,noself,'');
+      end
+    else % append identity subtraction
+      if ~any(strfind(eqn,noself))
+        eqn=strtrim(eqn);
+        if ~strcmp(eqn(end),';')
+          eqn=[eqn ';'];
+        end
+        eqn = [eqn ' ' noself];
+      end
+    end
+    eqn=strrep(eqn,';;',';');
+  otherwise
+    eqn = get(H.edit_auxvar_eqn,'string');
+end
+set(H.edit_auxvar_eqn,'string',eqn);
+EditAuxVarEqn;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function simulate(src,evnt,action)
 global CURRSPEC H cfg eventdata t
@@ -1048,7 +1274,8 @@ if isequal(src,findobj('tag','start'))
   set(findobj('tag','autoscale'),'visible','on');
   set(findobj('tag','pause'),'visible','on');
   set(findobj('tag','stop'),'visible','on');
-  set(findobj('tag','publish'),'visible','on');
+  %set(findobj('tag','publish'),'visible','on');
+  set(findobj('tag','substfunctions'),'visible','on');
 end
 DrawSimPlots;
 % reset plottype to trace
@@ -1077,11 +1304,17 @@ for k=1:length(show)
   this=sel(k);
   list=get(H.lst_vars(k),'string');
   vind=get(H.lst_vars(k),'value');
+  if isempty(list)
+    continue;
+  end
   var = list{vind};% CURRSPEC.cells(this).ode_labels{1};
   plotvars{k}=find(cellfun(@(x)isequal(x,var),allvars));
 end
 plotfuncs=cell(size(sel));
-
+if all(cellfun(@isempty,plotvars))
+  fprintf('Nothing to simulate.\n');
+  return;
+end
 % evaluate auxiliary variables (ie., adjacency matrices)
 for k = 1:size(auxvars,1)
   %try  % added to catch mask=mask-diag(diag(mask)) when mask is not square
@@ -1401,6 +1634,9 @@ for i=1:length(show) % i=1:ncomp
     vind=find(~cellfun(@isempty,regexp(vars,'_V$','once')));
   end
   if isempty(vind), vind=1; end
+  if i==1
+    uicontrol('parent',H.psims,'style','text','units','normalized','position',[.8 .895 .2 .025],'string','what to plot?');
+  end
   H.lst_vars(i) = uicontrol('parent',H.psims,'units','normalized','backgroundcolor','w',...
     'style','listbox','position',[.8 .7+(i-1)*dy .2 -.8*dy],'value',vind,'string',vars,'Callback','global cfg;cfg.changeflag=1;');  
   % image plot
@@ -1453,7 +1689,7 @@ end
 if isempty(findobj('tag','start'))
   % btn: start <=> reset        
   uicontrol('Style','pushbutton', 'Units','normalized', ...
-            'Position',[0.80  0.05 0.04 0.05],... 
+            'Position',[0.80  0.05 0.04 0.05],'fontsize',13,... 
             'String','start','tag','start','Callback',{@simulate,'restart'}); % start <=> pause
 end
 if isempty(findobj('tag','pause'))
@@ -1462,7 +1698,13 @@ if isempty(findobj('tag','pause'))
             'Position',[0.85  0.11 0.04 0.05],'visible','off',...
             'String','pause','tag','pause','Callback','global cfg;cfg.pauseflag;cfg.pauseflag=-cfg.pauseflag;');
 end
-if isempty(findobj('tag','publish'))
+
+if isempty(findobj('tag','substfunctions'))
+  uicontrol('tag','substfunctions','style','checkbox','value',0,'string','accelerate','visible','off',...
+    'units','normalized','position',[0.9 0.05 0.075 0.05],...%'backgroundcolor',[.8 .8 .8],...
+    'tooltipstring','check to consolidate model; consolidation speeds up simulation but slows down model processing');
+end
+if 0%isempty(findobj('tag','publish'))
   uicontrol('Style','pushbutton', 'Units','normalized','visible','off', ...
             'Position',[0.9 0.05 0.075 0.05],'tag','publish',... % [0.85  0.11 0.04 0.05]
             'String','get sim_data','Callback','global cfg;cfg.publish=1;');
@@ -1519,8 +1761,10 @@ switch action
         if strcmp(cfg.plottype,'trace')
           rec = get(H.simdat_alltrace(i,:),'ydata');
           rec = [rec{:}];
+          rec(rec==0)=[];
         else
           rec = get(H.img_state(i),'cdata');
+          rec(rec==0)=[];
         end
 %       end
       ymin = min(rec(:));
@@ -1533,6 +1777,26 @@ switch action
         end
       end
     end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function StaticAutoscale(src,evnt)
+global H
+if ~isfield(H,'static_traces'), return; end
+try
+  data=get(H.static_traces,'ydata');
+catch
+  fprintf('failed to autoscale plot of one-variable functions. may lack dependencies necessary to process functions. try selecting and autoscaling different functions.\n');
+  return;
+end
+if isempty(data)
+  return;
+elseif ~iscell(data)
+  data={data};
+end
+ymin=min(cellfun(@min,data));
+ymax=max(cellfun(@max,data));
+if ymin~=ymax
+  set(H.ax_static_plot,'ylim',[ymin ymax]);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function CopyCell(src,evnt,compname)
@@ -1604,7 +1868,7 @@ for i=1:length(CURRSPEC.cells)
       umech(cnt).celllabel = CURRSPEC.connections(i,j).label;
       umech(cnt).mechlabel = CURRSPEC.connections(i,j).mechanisms{k};
       umech(cnt).type = 'connections';
-      mechlabels{end+1}=sprintf('%s.%s',umech(cnt).celllabel,umech(cnt).mechlabel);
+      mechlabels{end+1}=sprintf('%s.%s',strrep(umech(cnt).celllabel,'-','->'),umech(cnt).mechlabel);
       cnt=cnt+1;    
     end
   end
@@ -1691,6 +1955,18 @@ CURRSPEC.files{end+1}=outfile;
 function UpdateMech(src,evnt)%,htxt,connname,mechname)
 % purpose: apply user changes to the mech model
 global CURRSPEC H cfg allmechs
+if isempty(get(H.edit_comp_mechs,'string')) % create mechanism container
+  if strcmp(get(H.btn_resizemech,'string'),'expand')
+    ResizeMechEditor(H.btn_resizemech,[]);
+  end
+  set(H.edit_comp_mechs,'string','mech');
+  v=get(H.lst_comps,'value'); 
+  l=get(H.lst_comps,'string');  
+  txt = get(H.txt_mech,'string');
+  UpdateCells(H.edit_comp_mechs,[],l{v(1)},'mechanisms');
+  if ischar(txt), txt={txt}; end
+  set(H.txt_mech,'string',txt);
+end
 u=get(H.txt_mech,'userdata');
 txt = get(H.txt_mech,'string');
 newmech = parse_mech_spec(txt);
@@ -1717,6 +1993,7 @@ end
 spec.(u.focustype)(u.focus) = this;
 updatemodel(spec);
 DrawAuxFunctions;
+DrawAuxView;
 Display_Mech_Info;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function UpdateCells(src,evnt,compname,field)
@@ -2016,18 +2293,41 @@ function disperror(err)
     fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
   end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function seladj(src,evnt)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ZoomFunction(src,evnt)
-global H
-hplot=H.ax_static_plot;
-YLIM = get(hplot,'ylim'); 
-if isempty(YLIM) || YLIM(1)==YLIM(2), return; end
-if evnt.VerticalScrollCount < 0           % zoom in
-  set(hplot,'ylim',YLIM/1.5);
-else                                      % zoom out
-  set(hplot,'ylim',YLIM*1.5);
+global H cfg
+if isequal(gco,H.ax_static_plot)
+  hplot=H.ax_static_plot;
+  prop='ylim';
+elseif isequal(gco,H.img_auxvar)
+  hplot=H.ax_conn_img;
+  prop='clim';
+elseif ismember(gco,H.img_state) || ismember(gco,H.ax_state_plot) || ismember(gco,H.simdat_alltrace)
+  if strcmp(cfg.plottype,'trace')
+    if ismember(gco,H.ax_state_plot)
+      hplot=H.ax_state_plot(gco==H.ax_state_plot);
+    elseif ismember(gco,H.simdat_alltrace)
+      hplot=get(H.simdat_alltrace(H.simdat_alltrace==gco),'parent');
+    end
+    prop='ylim';
+  elseif strcmp(cfg.plottype,'image')
+    hplot=H.ax_state_img(gco==H.img_state);
+    prop='clim';
+  end  
+else
+  return;
 end
+LIM = get(hplot,prop);
+if isempty(LIM) || LIM(1)==LIM(2), return; end
+if evnt.VerticalScrollCount < 0           % zoom in
+  if LIM(1)>0, LIM(1)=LIM(1)*1.5; else LIM(1)=LIM(1)/1.5; end
+  if LIM(2)>0, LIM(2)=LIM(2)/1.5; else LIM(1)=LIM(1)*1.5; end  
+  set(hplot,prop,LIM);
+else                                      % zoom out
+  if LIM(1)>0, LIM(1)=LIM(1)/1.5; else LIM(1)=LIM(1)*1.5; end
+  if LIM(2)>0, LIM(2)=LIM(2)*1.5; else LIM(1)=LIM(1)/1.5; end
+  set(hplot,prop,LIM);
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function DrawAuxFunctions(src,evnt,limflag)
 global H cfg CURRSPEC
@@ -2041,13 +2341,15 @@ maxlhs = 20; % limit how much is shown in the listbox
 maxlen = 150;
 funcs={};
 for i=1:length(CURRSPEC.cells)
-  funcs=cat(1,funcs,CURRSPEC.cells(i).functions);
+  keep=(~cellfun(@isempty,regexp(CURRSPEC.cells(i).functions(:,2),'^@\([^,]+\) ','match')));
+  funcs=cat(1,funcs,CURRSPEC.cells(i).functions(keep,:));
 end
 %funcs = CURRSPEC.cells(cfg.focuscomp).functions;
 len = min(maxlhs,max(cellfun(@length,funcs(:,1))));
 str = {};
 for i=1:size(funcs,1)
-  str{i} = sprintf(['%-' num2str(len) 's  = %s'],funcs{i,1},strrep(funcs{i,2},' ',''));
+  str{i} = funcs{i,1};
+  %str{i} = sprintf(['%-' num2str(len) 's  = %s'],funcs{i,1},strrep(funcs{i,2},' ',''));
   if length(str{i})>maxlen, str{i}=str{i}(1:maxlen); end
 end
 % get list of functions in aux listbox
@@ -2069,6 +2371,10 @@ if isfield(H,'static_traces')
 else
   axislimits='tight';
 end
+for k=1:size(funcs,1)
+  eval(sprintf('%s=%s;',funcs{k,1},funcs{k,2}));
+end
+
 % only consider functions of one variable
 keep = zeros(size(sel));
 for k=1:length(sel)
@@ -2078,15 +2384,20 @@ for k=1:length(sel)
   end
 end
 functions = functions(keep==1,:);
-X = cfg.V; 
+X = cfg.V; cnt=1;
+keep=zeros(size(functions,1),1);
 for k=1:size(functions,1)
-  f = str2func(functions{k,2});
+  %f = str2func(functions{k,2});
   try
-    Y = f(X);
-    H.static_traces(k)=line('parent',H.ax_static_plot,'color',cfg.colors(max(1,mod(k,length(cfg.colors)))),...
+    %Y = f(X);
+    eval(sprintf('Y=%s(X);',functions{k,1}));
+    H.static_traces(cnt)=line('parent',H.ax_static_plot,'color',cfg.colors(max(1,mod(k,length(cfg.colors)))),...
       'LineStyle',cfg.lntype{max(1,mod(k,length(cfg.lntype)))},'erase','background','xdata',X,'ydata',Y,'zdata',[]);
+    cnt=cnt+1;
+    keep(k)=1;
   end
 end
+functions = functions(keep==1,:);
 funclabels=cellfun(@(x)strrep(x,'_','\_'),functions(:,1),'uni',0);
 if isfield(H,'static_traces') && ~isempty(H.static_traces)
   h=legend(H.ax_static_plot,funclabels); set(h,'fontsize',6,'location','EastOutside');
@@ -2317,7 +2628,7 @@ if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
     'style','text','position',[.52 .9 .1 .05],'string','values',...
     'HorizontalAlignment','center'); %,'backgroundcolor','w'
   H.btn_batch_help = uicontrol('parent',H.pbatchspace,'units','normalized',...
-    'style','pushbutton','fontsize',10,'string','help','callback','web(''https://github.com/cogrhythms/dsim/tree/master/matlab/readme'');',...
+    'style','pushbutton','fontsize',10,'string','help','callback','web(''https://github.com/cogrhythms/dsim/tree/master/matlab/readme'',''-browser'');',...
     'position',[.85 .92 .1 .06]); 
   % outputs
   uicontrol('parent',H.pbatchoutputs,'units','normalized','backgroundcolor',bgcolor,...
@@ -2341,6 +2652,7 @@ if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
   H.btn_run_simstudy = uicontrol('parent',H.pbatchoutputs,'units','normalized',...
     'style','pushbutton','fontsize',20,'string','submit!','callback',@RunSimStudy,...
     'position',[.67 .27 .3 .4]); 
+  H.chk_overwrite=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'   ,[.83 .75 .14 .08],'string','overwrite');
   H.chk_savedata=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'   ,[.13 .6 .15 .1],'string','data');
   H.chk_savesum=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position'    ,[.13 .5 .15 .1],'string','popavg');
   H.chk_savespikes=uicontrol('style','checkbox','value',0,'parent',H.pbatchoutputs,'backgroundcolor',bgcolor2,'units','normalized','position' ,[.13 .4 .15 .1],'string','spikes');
@@ -2387,7 +2699,7 @@ DrawStudyInfo;
 function RunSimStudy(src,evnt)
 global cfg CURRSPEC H BACKUPFILE BIOSIMROOT
 if isempty(CURRSPEC.cells), return; end
-if isempty([cfg.study.scope])
+if isempty([cfg.study.scope]) && isempty([cfg.study.variable])
   cfg.study.scope=CURRSPEC.cells(1).label;
   cfg.study.variable='N';
   cfg.study.values=sprintf('[%g]',CURRSPEC.cells(1).multiplicity);
@@ -2422,9 +2734,9 @@ for i=1:nrepeats
   timestamp=datestr(now,'yyyymmdd-HHMMSS');
   note.date=timestamp;
   if strcmp(machine,'local')
-    note.text=sprintf('BATCH: machine=%s. ',machine);
+    note.text=sprintf('%s BATCH: t=[%g %g], dt=%g. ',machine,lims,dt);
   else
-    note.text=sprintf('BATCH: machine=%s. ',machine);% rootdir=%s',machine,dir);
+    note.text=sprintf('%s BATCH: t=[%g %g], dt=%g. ',machine,lims,dt);% rootdir=%s',machine,dir);
   end
   tmp=CURRSPEC;
   if isfield(tmp.model,'eval')
@@ -2452,20 +2764,32 @@ for i=1:nrepeats
   v=[v length(s)];
   set(H.lst_notes,'string',s,'value',v);
   set(H.edit_notes,'string','');
+  note.batch.savedata = get(H.chk_savedata,'value');
+%   if id==1
+%     CURRSPEC.history = note;
+%   else
+%     CURRSPEC.history(end+1) = note;
+%   end
+%   UpdateHistory;
+  % submit to simstudy
+  tmpspec=rmfield(CURRSPEC,'history');
+  [allspecs,timestamp,rootoutdir]=simstudy(tmpspec,scope,variable,values,'dt',dt,'rootdir',dir,'memlimit',mem,...
+    'timelimits',lims,'dsfact',dsfact,'sim_cluster_flag',clusterflag,'timestamp',timestamp,...
+    'savedata_flag',get(H.chk_savedata,'value'),'savepopavg_flag',get(H.chk_savesum,'value'),'savespikes_flag',get(H.chk_savespikes,'value'),'saveplot_flag',get(H.chk_saveplots,'value'),...
+    'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'),...
+    'addpath',fullfile(BIOSIMROOT,'matlab'),'overwrite_flag',get(H.chk_overwrite,'value'));
+  clear tmpspec
+  if isempty(rootoutdir)
+    note.batch.rootoutdir = {};
+  else
+    note.batch.rootoutdir = rootoutdir{1};
+  end
   if id==1
     CURRSPEC.history = note;
   else
     CURRSPEC.history(end+1) = note;
   end
   UpdateHistory;
-  % submit to simstudy
-  tmpspec=rmfield(CURRSPEC,'history');
-  [allspecs,timestamp]=simstudy(tmpspec,scope,variable,values,'dt',dt,'rootdir',dir,'memlimit',mem,...
-    'timelimits',lims,'dsfact',dsfact,'sim_cluster_flag',clusterflag,'timestamp',timestamp,...
-    'savedata_flag',get(H.chk_savedata,'value'),'savepopavg_flag',get(H.chk_savesum,'value'),'savespikes_flag',get(H.chk_savespikes,'value'),'saveplot_flag',get(H.chk_saveplots,'value'),...
-    'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'),...
-    'addpath',fullfile(BIOSIMROOT,'matlab'));
-  clear tmpspec
 end
 % autosave
 if 1
@@ -2493,9 +2817,11 @@ if ~isfield(H,'lst_notes') || ~ishandle(H.lst_notes)
     'style','listbox','value',1:min(3,length(notes)),'string',ids,'Max',100,'Callback',@UpdateHistory,'KeyPressFcn',@NoteKeyPress);
   H.edit_comparison = uicontrol('parent',H.pcomparison,'style','edit','units','normalized','tag','modelcomparison',...
   'position',[0 0 1 .85],'string','','FontName','Courier','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
-  jEdit = findjobj(H.edit_comparison);
-  jEditbox = jEdit.getViewport().getComponent(0);
-  jEditbox.setEditable(false);                % non-editable  
+  try
+    jEdit = findjobj(H.edit_comparison);
+    jEditbox = jEdit.getViewport().getComponent(0);
+    jEditbox.setEditable(false);                % non-editable  
+  end
   H.btn_compare = uicontrol('parent',H.pcomparison,'units','normalized',...
     'style','pushbutton','fontsize',10,'string','compare','callback',@CompareModels,...
     'position',[.05 .85 .2 .15]);  
@@ -2521,7 +2847,7 @@ sel = get(H.lst_notes,'value');
 sel = sel(1:min(length(sel),length(ids)));
 if numel(sel)<1
   sel = 1;
-elseif any(sel)>length(notes)
+elseif any(sel>length(notes))
   sel(sel>length(notes))=[];
 end
 set(H.lst_notes,'value',sel);
@@ -2531,7 +2857,7 @@ delete(findobj('tag','note'));
 
 ypos=.9; ht=.05;
 for i=1:length(notes)
-  if notes(i).isbatch==1 && strcmp(notes(i).batch.machine,'cluster')
+  if notes(i).isbatch==1 && isfield(notes(i).batch,'savedata') && notes(i).batch.savedata==1 %strcmp(notes(i).batch.machine,'cluster')
     saved_flag=1; fontcolor='k';
   else
     saved_flag=0; fontcolor='k';
@@ -2558,7 +2884,11 @@ for i=1:length(notes)
   else
     if saved_flag
       H.btn_batchmanager(i) = uicontrol('parent',H.pnotes,'units','normalized','style','pushbutton','fontsize',10,...
-        'string','open','tag','note','position',[.87 ypos-ht+.01 .1 .04],'callback',{@Load_File,notes(i).batch.rootdir},'visible','on');  
+        'string','data','tag','note','position',[.87 ypos-ht+.01 .1 .04],'callback',{@Load_File,notes(i).batch.rootoutdir},'visible','on');  
+      H.btn_quickplot(i) = uicontrol('parent',H.pnotes,'units','normalized','style','pushbutton','fontsize',10,...
+        'string','plot','tag','note','position',[.75 ypos+ht .1 .04],'callback',{@QuickPlot_inputdlg,notes(i).batch.rootoutdir,notes(i).batch.space},'visible','on');  
+      uicontrol('parent',H.pnotes,'units','normalized','style','pushbutton','fontsize',10,...
+        'string','outputs','tag','note','position',[.55 ypos+ht .18 .04],'callback',['web(''' notes(i).batch.rootoutdir ''',''-browser'');'],'visible','on');  
     end
     for j=1:length(notes(i).batch.space)
       b=notes(i).batch.space(j);
@@ -2631,7 +2961,11 @@ for i=1:length(uids) % loop over models
   if ~isempty(lastmodel)
     txt{end+1}='';
     txt{end+1}=sprintf('diff(Model%g,Model%g): changes in Model%g compared to Model%g',uids(i-1),id,id,uids(i-1));
-    txt=cat(2,txt,modeldiff(lastmodel,thismodel));
+    try
+      txt=cat(2,txt,modeldiff(lastmodel,thismodel));
+    catch
+      txt=cat(2,txt,'model comparison failed...');
+    end
     txt{end+1}='';
   end    
   if i < length(uids)
@@ -2677,6 +3011,7 @@ for i=1:length(txt)
 end
 % get email address
 emailaddress=inputdlg('Email address:','Enter email address',1,{cfg.email});
+drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
 if isempty(emailaddress)
   return; 
 else
@@ -2718,6 +3053,57 @@ sendmail(emailaddress,['DNSim Report: ' timestamp],str,tmpfile);
 fprintf('report emailed to: %s\n',emailaddress);
 % remove temporary file
 delete(tmpfile);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function QuickPlot_inputdlg(src,evnt,rootoutdir,space)
+if any(findobj('tag','QuickPlot_inputdlg'))
+  figure(findobj('tag','QuickPlot_inputdlg'));
+  return;
+end
+global CURRSPEC
+if issubfield(CURRSPEC,'variables.labels') && iscell(CURRSPEC.variables.labels)
+  defaultvar=CURRSPEC.variables.labels{1};
+else
+  defaultvar='variable';
+end
+nelem = arrayfun(@(x)numel(x.values),space);
+index = find(nelem==max(nelem),1,'first');
+variable = space(index).variable;
+values = space(index).values;
+figure('tag','QuickPlot_inputdlg','name','What to plot','NumberTitle','off','MenuBar','none');
+uicontrol('style','text','units','normalized','position',[.1 .8 .8 .04],'string','Variable to plot (required)','fontsize',12);
+uicontrol('style','edit','units','normalized','position',[.1 .7 .8 .1],'string',defaultvar,'tag','quickplot_var','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+uicontrol('style','text','units','normalized','position',[.1 .65 .8 .04],'string','Parameter varied (required)','fontsize',12);
+uicontrol('style','edit','units','normalized','position',[.1 .55 .8 .1],'string',variable,'tag','quickplot_param','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+uicontrol('style','text','units','normalized','position',[.1 .5 .8 .04],'string','Parameter range/values to plot','fontsize',12);
+uicontrol('style','edit','units','normalized','position',[.1 .4 .8 .1],'string',values,'tag','quickplot_values','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+uicontrol('style','text','units','normalized','position',[.1 .35 .8 .04],'string','x-axis limits','fontsize',12);
+uicontrol('style','edit','units','normalized','position',[.1 .25 .8 .1],'string','[]','tag','quickplot_xlims','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+uicontrol('style','pushbutton','units','normalized','position',[.45 .1 .2 .1],'string','OK','callback',{@QuickPlot_sim_data,rootoutdir},'fontsize',14);
+uicontrol('style','pushbutton','units','normalized','position',[.7 .1 .2 .1],'string','Cancel','callback','close(findobj(''tag'',''QuickPlot_inputdlg''))','fontsize',14);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function QuickPlot_sim_data(src,evnt,rootoutdir)
+% answer=inputdlg(...
+%   {'Variable to plot (required)','Parameter varied (required)','Parameter range/values to plot', 'xlims'},...
+%   'What to plot',1,...
+%   {defaultvar,space(1).variable,space(1).values,'[]'});
+% drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
+answer{1} = get(findobj('tag','quickplot_var'),'string');
+answer{2} = get(findobj('tag','quickplot_param'),'string');
+answer{3} = get(findobj('tag','quickplot_values'),'string');
+answer{4} = get(findobj('tag','quickplot_xlims'),'string');
+if isempty(answer), return; end
+if isequal(answer{3},'[]') || isempty(answer{3}) || isequal(answer{3},'-1'), answer{3}=[]; end
+if isequal(answer{4},'[]') || isempty(answer{4}), answer{4}=[]; end
+if ischar(answer{3}) && isempty(regexp(answer{3},'[a-zA-Z]'))
+  answer{3}=str2num(answer{3});
+end
+if ischar(answer{4}), answer{4}=str2num(answer{4}); end
+plot_search_space(fullfile(rootoutdir,'data'),answer{1},answer{2},answer{3},'xlims',answer{4});
+close(findobj('tag','QuickPlot_inputdlg'))
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function CompareModels(src,evnt)
 global H
@@ -2734,7 +3120,11 @@ othermodels=cellfun(@(x)x.spec,notes(2:end),'uni',0);
 txt={};
 for i=1:length(othermodels)
   txt{end+1}=sprintf('diff(Model%g,Model%g): changes in Model%g compared to Model%g',notes{1}.id,notes{i+1}.id,notes{i+1}.id,notes{1}.id);
-  txt=cat(2,txt,modeldiff(basemodel,othermodels{i}));
+  try
+    txt=cat(2,txt,modeldiff(basemodel,othermodels{i}));
+  catch
+    txt=cat(2,txt,'model comparison failed...');
+  end
   txt{end+1}='------------------------------------------------';
 end
 set(H.edit_comparison,'string',txt);
@@ -2745,6 +3135,7 @@ s=get(src,'string');
 v=get(src,'value');
 if length(v)>1, return; end
 newname=inputdlg(['Rename Compartment: ' s{v}],'New name');
+drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
 if isempty(newname), return; end
 newname=newname{1};
 newspec=CURRSPEC;
@@ -2775,6 +3166,7 @@ v=get(src,'value');
 s=get(src,'string');
 if length(v)>1, return; end
 newname=inputdlg(['Rename Mechanism: ' ud(v).mechlabel ' (in ' ud(v).celllabel ')'],'New name');
+drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
 if isempty(newname), return; end
 newname=newname{1};
 newspec=CURRSPEC;
@@ -2929,7 +3321,7 @@ if isfield(H,'rad_authorscope') && ishandle(H.rad_authorscope), delete(H.rad_aut
 if any(findobj('tag','list'))
   try delete(findobj('tag','list')); end
 end
-uicontrol('style','listbox','tag','list','units','normalized','position',[0 0 .6 .8],'background',[.9 .9 .9],'Max',20,'ButtonDownFcn','i=get(gcbo,''userdata''); v=get(gcbo,''value''); web(sprintf(''http://infinitebrain.org/models/%g/'',i(v(1))));','TooltipString','right-click to open model web page for discussion');
+uicontrol('style','listbox','tag','list','units','normalized','position',[0 0 .6 .8],'background',[.9 .9 .9],'Max',20,'ButtonDownFcn','i=get(gcbo,''userdata''); v=get(gcbo,''value''); web(sprintf(''http://infinitebrain.org/models/%g/'',i(v(1))),''-browser'');','TooltipString','right-click to open model web page for discussion');
 
 % button - update list
 %uicontrol('style','pushbutton','units','normalized','position',[.5 .8 .4 .1],'string','update list','callback',@DB_UpdateList);
@@ -2951,26 +3343,35 @@ else
   visible='off';
 end
 % which user's models to display
-H.rad_authorscope=uibuttongroup('visible',visible,'units','normalized','Position',[0 .9 .6 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList,'backgroundcolor','w');
+H.rad_authorscope=uibuttongroup('visible',visible,'units','normalized','Position',[0 .9 .6 .1],'parent',fig,'SelectionChangeFcn',{@DB_UpdateList,'node'},'backgroundcolor','w');
 H.rad_authorscope_1=uicontrol('style','radiobutton','string','public','parent',H.rad_authorscope,'HandleVisibility','off',...
     'units','normalized','pos',[0 0 .4 1],'backgroundcolor','w');
 H.rad_authorscope_2=uicontrol('style','radiobutton','string',[cfg.username],'parent',H.rad_authorscope,'HandleVisibility','off',...
     'units','normalized','pos',[.41 0 .5 1],'backgroundcolor','w');
 set(H.rad_authorscope,'SelectedObject',H.rad_authorscope_2);  % No selection    
 % which type of model to display
-H.rad_modellevel=uibuttongroup('units','normalized','Position',[0 .8 .6 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList,'backgroundcolor','w');
-H.rad_modellevel_1=uicontrol('style','radiobutton','string','network','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[0 0 .4 1],'backgroundcolor','w');
-H.rad_modellevel_2=uicontrol('style','radiobutton','string','node','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[.41 0 .2 1],'backgroundcolor','w');
-H.rad_modellevel_2=uicontrol('style','radiobutton','string','mechanism','parent',H.rad_modellevel,'HandleVisibility','off',...
-    'units','normalized','pos',[.68 0 .3 1],'backgroundcolor','w');
-set(H.rad_modellevel,'SelectedObject',H.rad_modellevel_1);  % No selection  
+H.btn_db_nodes=uicontrol('style','pushbutton','units','normalized','position',[0 .8 .3 .1],'string','node','callback',{@DB_UpdateList,'node'},'fontsize',12,'backgroundcolor',[.7 .7 .7]);
+H.btn_db_networks=uicontrol('style','pushbutton','units','normalized','position',[.3 .8 .3 .1],'string','network','callback',{@DB_UpdateList,'network'},'fontsize',12,'backgroundcolor',[1 1 1]);
+% H.rad_modellevel=uibuttongroup('units','normalized','Position',[0 .8 .6 .1],'parent',fig,'SelectionChangeFcn',@DB_UpdateList,'backgroundcolor','w');
+% H.rad_modellevel_1=uicontrol('style','radiobutton','string','network','parent',H.rad_modellevel,'HandleVisibility','off',...
+%     'units','normalized','pos',[0 0 .4 1],'backgroundcolor','w');
+% H.rad_modellevel_2=uicontrol('style','radiobutton','string','node','parent',H.rad_modellevel,'HandleVisibility','off',...
+%     'units','normalized','pos',[.41 0 .2 1],'backgroundcolor','w');
+% H.rad_modellevel_2=uicontrol('style','radiobutton','string','mechanism','parent',H.rad_modellevel,'HandleVisibility','off',...
+%     'units','normalized','pos',[.68 0 .3 1],'backgroundcolor','w');
+% set(H.rad_modellevel,'SelectedObject',H.rad_modellevel_1);  % No selection  
 
-DB_UpdateList;
+DB_UpdateList([],[],'node');
 % -------------------------------------------------------------------------
-function DB_UpdateList(src,evnt)
+function DB_UpdateList(src,evnt,level)
 global cfg H
+if strcmp(level,'node')
+  set(H.btn_db_nodes,'backgroundcolor',[.7 .7 .7]);
+  set(H.btn_db_networks,'backgroundcolor',[1 1 1]);
+elseif strcmp(level,'network')
+  set(H.btn_db_networks,'backgroundcolor',[.7 .7 .7]);
+  set(H.btn_db_nodes,'backgroundcolor',[1 1 1]);
+end
 % remote connection
 err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
 if err
@@ -2979,8 +3380,8 @@ if err
   ids=[];
 else
   mym(['use ' cfg.dbname]);
-  level = get(get(H.rad_modellevel,'SelectedObject'),'string');
-  if cfg.is_authenticated && isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
+  %level = get(get(H.rad_modellevel,'SelectedObject'),'string');
+  if cfg.is_authenticated && str isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
     q = mym(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
   else
     q = mym(sprintf('select id,name,level from modeldb_model where level=''%s'' and privacy=''public''',level));% and privacy=''public''',level));
@@ -3137,7 +3538,7 @@ try
   mym(['use ' cfg.dbname]);
   q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
   mym('close');
-  web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)));
+  web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)),'-browser');
 end
 
 % -------------------------------------------------------------------------
@@ -3156,6 +3557,7 @@ end
 
 % get model name
 answer=inputdlg({'Model name:','Tags','Description'},'Metadata',1,{ud.mechlabel,'',''});
+drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
 if isempty(answer), return; end
 modelname=answer{1};
 tags=answer{2};
@@ -3328,6 +3730,30 @@ if isfield(H,'rad_authorscope') && ishandle(H.rad_authorscope)
   set(H.rad_authorscope,'visible','on');
 end
 % -------------------------------------------------------------------------
+function EnterPassword(src,evnt)
+% password=get(src,'UserData');
+% chars={'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',...
+%        'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',...
+%        '1','2','3','4','5','6','7','8','9','0',...
+%        '!','@','#','$','%','^','&','*','(',')','-','_','+','=','~','.',',','/','\','|','?','<','>','`','{','}'};
+% switch evnt.Key
+%   case 'backspace'
+%     if ~isempty(password)
+%       password = password(1:end-1);
+%     end
+%     if isempty(get(src,'string'))
+%       password = '';
+%     end
+%   otherwise
+%     if ismember(evnt.Key,chars)
+%       password = [password evnt.Key];
+%     end
+% end
+% password
+% set(src,'UserData',password);
+% set(src,'String',repmat('*',[1 length(password)]));
+
+% -------------------------------------------------------------------------
 function DB_Logout(src,evnt)
 global cfg H
 cfg.username='anonymous';
@@ -3425,6 +3851,7 @@ mym('close');
 function load_models(src,evnt,replace_flag,source_type) % Load/Append from disk
 % -- load and apply models
 if nargin<4, source_type='file'; end
+if nargin<3, replace_flag=1; end
 % what models to load:
 switch source_type
   case 'file'
@@ -3448,12 +3875,20 @@ models = load_get_models(modelfiles); % get list of models from disk
 if replace_flag
   spec = combine_models(models);
   spec.model_uid=[];
-  spec.parent_uids=unique(cellfun(@(m)m.model_uid,models));  
+  if isfield(models,'model_uid')
+    spec.parent_uids=unique(cellfun(@(m)m.model_uid,models));  
+  else
+    spec.parent_uids=[];
+  end
 else
   global CURRSPEC
   spec = combine_models({CURRSPEC,models{:}});
   spec.model_uid=[];
-  spec.parent_uids=unique([CURRSPEC.model_uid spec.parent_uids cellfun(@(m)m.model_uid,models)]);  
+  if isfield(models,'model_uid')
+    spec.parent_uids=unique([CURRSPEC.model_uid spec.parent_uids cellfun(@(m)m.model_uid,models)]);  
+  else
+    spec.parent_uids=[];
+  end
 end
 updatemodel(spec);
 refresh;
@@ -3638,7 +4073,7 @@ dat=get(src,'Data'); % {name,site,notes,local,id}
 if col==2 % site
   if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
     % goto model detail page
-    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
+    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
   end
 end
 if isequal(row,get(findobj('tag','mechtext'),'userdata'))
@@ -3653,7 +4088,19 @@ name=dat{row,1};
 islocal=(dat{row,4}==true);
 if islocal
   mech = allmechs(index);
-  set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+  if exist(mech.file)
+    fid=fopen(mech.file); % open local mechanism file
+    txt={};
+    while (~feof(fid))
+      this = fgetl(fid);
+      if this == -1, break; end      
+      txt{end+1}=this;
+    end
+    fclose(fid); % close mech file
+    set(findobj('tag','mechtext'),'string',txt,'userdata',row);
+  else
+    set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+  end
 else
   % download & convert mech.txt to mech structure; add to allmechs
   %mech = getmechfromdb(id);
@@ -3684,7 +4131,7 @@ switch col % {name,site,notes,local,id}
   case 2
     if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
       % goto model detail page
-      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}));
+      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

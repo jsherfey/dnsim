@@ -1,4 +1,4 @@
-function [allspecs,timestamp] = simstudy(spec,scope,variable,values,varargin)
+function [allspecs,timestamp,rootoutdir] = simstudy(spec,scope,variable,values,varargin)
 % allspecs = simstudy(spec,scope,variable,values)
 % allspecs = get_search_space(net,'E','multiplicity','[10:10:50]','sim_cluster','scc1.bu.edu');
 % allspecs = get_search_space(net,{'{E,I}','E'},{'mechanisms','multiplicity'},{'{iNa,iK,ileak}','[10 20 30]'})
@@ -16,7 +16,7 @@ end
 spec.simulation = mmil_args2parms( varargin, ...
                    {  'logfid',1,[],...
                       'logfile',[],[],...
-                      'sim_cluster_flag',1,[],...
+                      'sim_cluster_flag',0,[],...
                       'sim_cluster','scc2.bu.edu',[],...
                       'sim_qsubscript','qmatjobs_memlimit',[],...
                       'sim_driver','biosimdriver.m',[],...
@@ -30,21 +30,35 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'timelimits',[],[],...
                       'dsfact',[],[],...
                       'timestamp',datestr(now,'yyyymmdd-HHMMSS'),[],...
-                      'savedata_flag',1,[],...
-                      'savepopavg_flag',1,[],...
-                      'savespikes_flag',1,[],...
-                      'saveplot_flag',1,[],...
+                      'savedata_flag',0,[],...
+                      'savepopavg_flag',0,[],...
+                      'savespikes_flag',0,[],...
+                      'saveplot_flag',0,[],...
                       'plotvars_flag',1,[],...
-                      'plotrates_flag',1,[],...
-                      'plotpower_flag',1,[],...      
+                      'plotrates_flag',0,[],...
+                      'plotpower_flag',0,[],...
+                      'overwrite_flag',0,[],...
                       'addpath',[],[],...
                    }, false);
 
+if ischar(scope), scope={scope}; end
+if ischar(variable), scope={variable}; end
 % get search space
 spec.simulation.scope = scope;
 spec.simulation.variable = variable;
 spec.simulation.values = values;
-allspecs = get_search_space(spec);
+%if (isequal(variable,'mechanisms') || (iscell(variable) && isequal(variable{1},'mechanisms'))) && (isequal(values,'-1') || (iscell(values) && isequal(values{1},'-1')))
+if (iscell(variable) && isequal(variable{1},'mechanisms')) && ((iscell(values) && isequal(values{1},'-1')))
+  scope=scope{1};
+  scope=strrep(scope,'(','');
+  scope=strrep(scope,')','');
+  if ~isempty(scope)
+    scope=splitstr(scope,',');
+  end
+  allspecs = get_leaveoneout_space(spec,scope);
+else
+  allspecs = get_search_space(spec);
+end
 
 timestamp = spec.simulation.timestamp;
 p=spec.simulation;
@@ -81,7 +95,10 @@ end
 
 rootoutdir={}; prefix={};
 for i=1:length(allspecs)
-  rootoutdir{i} = fullfile(spec.simulation.rootdir,timestamp,outdirs{dirinds(i)});
+  % removed timestamp dir from path on 22-Oct-2014
+  %rootoutdir{i} = fullfile(spec.simulation.rootdir,timestamp,outdirs{dirinds(i)});
+  %rootoutdir{i} = fullfile(spec.simulation.rootdir,outdirs{dirinds(i)});
+  rootoutdir{i} = fullfile(spec.simulation.rootdir,outdirs{dirinds(i)},datestr(now,'yyyymmdd'));
   try
     scopeparts=regexp(allspecs{i}.simulation.scope,'[^\(\)]*','match');
     varparts = regexp(allspecs{i}.simulation.variable,'[^\(\)]*','match');
@@ -99,6 +116,9 @@ for i=1:length(allspecs)
   catch
     tmp=regexp(allspecs{i}.simulation.description,'[^\d_].*','match');
     prefix{i}=sprintf('job%4.4i_%s',i,strrep([tmp{:}],',','_'));
+  end
+  if ~isempty(spec.simulation.timelimits)
+    prefix{i}=sprintf('%s_time%g-%g',prefix{i},spec.simulation.timelimits);
   end
   if save_flag
     fprintf(logfid,'%s: %s\n',rootoutdir{i},prefix{i});
@@ -142,7 +162,7 @@ if spec.simulation.sim_cluster_flag % run on cluster
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
     fprintf(fileID,'exit\n');
     fclose(fileID);
   end
@@ -173,10 +193,17 @@ else
   for specnum = 1:length(allspecs) % loop over elements of search space
     modelspec = allspecs{specnum};
     fprintf(logfid,'processing simulation...');
-    biosimdriver(modelspec,'rootoutdir',rootoutdir{specnum},'prefix',prefix{specnum},'verbose',1,...
-     'savedata_flag',p.savedata_flag,'savepopavg_flag',p.savepopavg_flag,'savespikes_flag',p.savespikes_flag,...
-     'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag);
-      %'savefig_flag',0,'savedata_flag',0);
+    try
+      biosimdriver(modelspec,'rootoutdir',rootoutdir{specnum},'prefix',prefix{specnum},'verbose',1,...
+       'savedata_flag',p.savedata_flag,'savepopavg_flag',p.savepopavg_flag,'savespikes_flag',p.savespikes_flag,...
+       'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag,'overwrite_flag',p.overwrite_flag);
+        %'savefig_flag',0,'savedata_flag',0);
+    catch err
+      fprintf('Error: %s\n',err.message);
+      for i=1:length(err.stack)
+        fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
+      end      
+    end
     fprintf(logfid,'done (%g of %g)\n',specnum,length(allspecs));
   end
 end

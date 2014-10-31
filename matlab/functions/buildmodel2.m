@@ -25,6 +25,9 @@ end
 if isfield(spec,'cells') && ~isfield(spec,'entities')
   spec.entities = spec.cells;
   spec = rmfield(spec,'cells');
+elseif isfield(spec,'nodes') && ~isfield(spec,'entities')
+  spec.entities = spec.nodes;
+  spec = rmfield(spec,'nodes');  
 end
 if isempty(spec.entities)
   model=[];
@@ -607,8 +610,8 @@ for m=1:nmech
   % substitute IN & OUT
   newOUT=Svars(Spop==E & Stype==0,2); if ~isempty(newOUT), newOUT=newOUT{1}; end
   newIN=Svars(Spop==k1 & Stype==0,2); if ~isempty(newIN), newIN=newIN{1}; end
-  old={'IN','OUT'};
-  new={newIN,newOUT};
+  old={'IN','OUT','X'};
+  new={newIN,newOUT,newOUT};
   [o,t]=substitute(old,new,o,t);  
   % update model arrays
   Hfunc(Hmech==m,3)=f; 
@@ -629,7 +632,7 @@ for e=1:length(E)
   new={n0,n0,n0,dt};
   o=substitute(old,new,o);
   % ----------------------------------
-  tmp=ismember(Tsubst(:,1),Hfunc(:,1));
+  tmp=ismember(Tsubst(:,1),Hfunc(:,1))&(Tpop==E(e)); % limit to within-entity substitutions
   old=Tsubst(tmp,1); new=Tsubst(tmp,2);
   % ---
   % additive substitution (17-Oct-2014)
@@ -760,43 +763,43 @@ end
 % ADDED: 21-May-2014 (trial code - if broken, check here or where handling for no mechs was added)
 alloldvars=Svars(:,1);
 allnewvars=Svars(:,2);
-for i=1:nvar % loop over all state vars
-  if Stype(i)==1 % skip intrinsic variables
-    continue; 
-  end
-  str=Sodes{i};
-  for j=1:N % loop over all populations
-    if Spop(i)==j % do not substitute this var's label here
-      continue; 
-    end
-    % get state vars for this population
-    vars=alloldvars(Spop==j);
-    newvars=allnewvars(Spop==j);
-    types=Stype(Spop==j);
-    if isempty(vars), continue; end
-    for k=1:length(vars)
-      if types(k)==1
-        continue;
-      end
-      var=vars{k};
-      subvar=newvars{k};    
-%       var='U'; subvar='y_U';
-%       str='V./ U+E_V';%'E_V+U./';
-      ops='+-/^\.\s\*';
-      pat1=['^' var '$'];
-      pat2=['^' var '[' ops ']'];
-      pat3=['[' ops '\(]' var '[' ops '\)]'];
-      pat4=['[' ops ']' var '$'];
-      pat=sprintf('(%s|%s|%s|%s)',pat1,pat2,pat3,pat4);
-      matches=regexp(str,pat,'match');
-      for l=1:length(matches)
-        newsub=strrep(matches{l},var,subvar);
-        str=strrep(str,matches{l},newsub);
-      end
-    end
-  end
-  Sodes{i}=str;
-end
+% for i=1:nvar % loop over all state vars
+%   if Stype(i)==1 % skip intrinsic variables
+%     continue; 
+%   end
+%   str=Sodes{i};
+%   for j=1:N % loop over all populations
+%     if Spop(i)==j % do not substitute this var's label here
+%       continue; 
+%     end
+%     % get state vars for this population
+%     vars=alloldvars(Spop==j);
+%     newvars=allnewvars(Spop==j);
+%     types=Stype(Spop==j);
+%     if isempty(vars), continue; end
+%     for k=1:length(vars)
+%       if types(k)==1
+%         continue;
+%       end
+%       var=vars{k};
+%       subvar=newvars{k};    
+% %       var='U'; subvar='y_U';
+% %       str='V./ U+E_V';%'E_V+U./';
+%       ops='+-/^\.\s\*';
+%       pat1=['^' var '$'];
+%       pat2=['^' var '[' ops ']'];
+%       pat3=['[' ops '\(]' var '[' ops '\)]'];
+%       pat4=['[' ops ']' var '$'];
+%       pat=sprintf('(%s|%s|%s|%s)',pat1,pat2,pat3,pat4);
+%       matches=regexp(str,pat,'match');
+%       for l=1:length(matches)
+%         newsub=strrep(matches{l},var,subvar);
+%         str=strrep(str,matches{l},newsub);
+%       end
+%     end
+%   end
+%   Sodes{i}=str;
+% end
 
 % Evaluate ICs and determine state vector indices
 stateindx=0;
@@ -1056,9 +1059,9 @@ if parms.verbose
     %fprintf(fileID,'\t%-20s = %-40s\t%% (%-9s)\n',Hfunc{i,2},[Hfunc{i,3} ';'],functions{i,3});
     fprintf(fileID,'\t%-20s = %-40s\n',Hfunc{i,2},[Hfunc{i,3} ';']);
   end
-  fprintf(fileID,'\n%% ODE Handle, ICs, integration, and plotting:\nmodel = %s\n',model);
+  fprintf(fileID,'\n%% ODE Handle, ICs, integration, and plotting:\nODEFUN = %s\n',model);
   fprintf(fileID,'IC = [%s];\n',num2str(IC'));
-  fprintf(fileID,'\n[t,y]=ode23(model,[0 100],IC);   %% numerical integration\nfigure; plot(t,y);           %% plot all variables/functions\n');
+  fprintf(fileID,'\n[t,y]=ode23(ODEFUN,[0 100],IC);   %% numerical integration\nfigure; plot(t,y);           %% plot all variables/functions\n');
   if nvar>=1,fprintf(fileID,'try legend(''%s''',strrep(Svars{1,2},'_','\_')); end
   if nvar>=2,for k=2:nvar,fprintf(fileID,',''%s''',strrep(Svars{k,2},'_','\_')); end; end
   if nvar>=1,fprintf(fileID,'); end\n'); end
@@ -1153,9 +1156,9 @@ if nargout>7
     %txt{end+1}=sprintf('\t%-20s = %-40s\t%% (%-9s)\n',Hfunc{i,2},[Hfunc{i,3} ';'],functions{i,3});
     txt{end+1}=sprintf('\t%-20s = %-40s\n',Hfunc{i,2},[Hfunc{i,3} ';']);
   end
-  txt{end+1}=sprintf('\n%% ODE Handle, ICs, integration, and plotting:\nmodel = %s\n',model);
+  txt{end+1}=sprintf('\n%% ODE Handle, ICs, integration, and plotting:\nODEFUN = %s\n',model);
   txt{end+1}=sprintf('IC = [%s];\n',num2str(IC'));
-  txt{end+1}=sprintf('\n[t,y]=ode23(model,[0 100],IC);   %% numerical integration\nfigure; plot(t,y);           %% plot all variables/functions\n');
+  txt{end+1}=sprintf('\n[t,y]=ode23(ODEFUN,[0 100],IC);   %% numerical integration\nfigure; plot(t,y);           %% plot all variables/functions\n');
   if nvar>=1,txt{end+1}=sprintf('try legend(''%s''',strrep(Svars{1,2},'_','\_')); end
   if nvar>=2,for k=2:nvar,txt{end+1}=sprintf(',''%s''',strrep(Svars{k,2},'_','\_')); end; end
   if nvar>=1,txt{end+1}=sprintf('); end\n'); end
