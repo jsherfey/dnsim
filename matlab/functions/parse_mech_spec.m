@@ -121,6 +121,7 @@ end
     if isempty(str) || strcmp(str(1),'#') || strcmp(str(1),'%')
       return;
     end
+    % parse expressions
     if isempty(regexp(str,'\[.+;.+\]'))
       expr = strtrim(splitstr(str,';'));
     else
@@ -132,13 +133,8 @@ end
       if isempty(eqn), continue; end
       % remove trailing semicolon if present
       if isequal(eqn(end),';'), eqn(end)=[]; end
-      % make sure there is exactly one =
-  %     if length(strfind(eqn,'='))~=1
-  %       error('Invalid mechanism specification: %s\nEach equation must have exactly one equals sign\n',eqn);
-  %     end
       idx = find(eqn=='=',1,'first');
       eqn = strtrim({eqn(1:idx-1),eqn(idx+1:end)});
-  %     eqn = strtrim(splitstr(eqn,'='));
       lhs = eqn{1};
       rhs = eqn{2};
       % determine equation type and process
@@ -156,13 +152,19 @@ end
         else
           icval{end+1} = rhs;
         end
+      elseif ~isempty(regexp(lhs,'\w+\([(\[?[\d\s,]+\]?)|(\[?\d+:[(\d+)|(end)]\]?)]+\)','match'))
+        % case1='\[?[\d\s,]+\]?';          % var(#), var([#]), var([# #]), var([#,#])
+        % case2='\[?\d+:[(\d+)|(end)]\]?'; % var(#:#), var(#:end), var([#:#]), var([#:end])
+        % pat=['\w+\([(' case1 ')|(' case2 ')]+\)'];
+        % pat='\w+\([(\[?[\d\s,]+\]?)|(\[?\d+:[(\d+)|(end)]\]?)]+\)';
+        precalcs{end+1,1} = strtrim(lhs);
+        precalcs{end,2} = strtrim(rhs);        
       elseif ~isempty(regexp(lhs,'\w+\([\w,]+\)','match')) % function: x(v) = ...
         tmp = strtrim(splitstr(lhs,'('));
         funcs{end+1,1} = tmp{1};
         funcs{end,2} = ['@(' tmp{2} ' ' rhs];
         Vin{end+1} = tmp{2}(1:end-1);
         VinFunc{end+1} = tmp{1};
-  %     elseif strmatch('>',rhs) % function substitution
       elseif numel(regexp(expr{s},'=>'))==1 % function substitution
         subst{end+1,1} = lhs;
         tmp = strtrim(splitstr(rhs,'('));
@@ -180,8 +182,6 @@ end
           aux_Vin(end+1:end+length(tmp2)) = tmp2;
         end  
       elseif ~isempty(regexp(lhs,'(\w+)|(\[\w+\])','match')) % expression: x = ...
-      %elseif ~isempty(regexp(lhs,'\w+','match')) % expression: x = ...
-        %if ~isempty(regexp(rhs,'.*[,<>(<=)(>=)]+.*','match')) % rhs contains: []{}(),<>*/|          % function to evaluate & store
         if ~isempty(regexp(rhs,'.*[a-z_A-Z,<>(<=)(>=)]+.*','match')) % rhs contains: []{}(),<>*/|          % function to evaluate & store
         %   store this as an expression to evaluate before anonymous functions
           precalcs{end+1,1} = strtrim(lhs);

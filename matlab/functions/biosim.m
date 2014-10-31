@@ -1,4 +1,9 @@
 function [simdata,spec,parms] = biosim(varargin)
+% Usage:
+% biosim(spec)
+% biosim(spec,'key',value,...)
+% Examples:
+% biosim(spec,'timelimits',[0 100],'dt',.01,'verbose',1);
 
 % ----------------------------------------------------------
 % get specification

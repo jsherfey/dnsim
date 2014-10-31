@@ -281,7 +281,7 @@ function list = parse_spec(type,str,spec)
   %   str{end+1} = '3';
   
   % special cases:
-  if isequal(str,'N'), str = 'multiplicity'; end
+  if isequal(str,'N') || isequal(str,'n') || isequal(str,'Npop') || isequal(str,'Npost'), str = 'multiplicity'; end
   
   list = {};
   pat = {}; lab = {};
