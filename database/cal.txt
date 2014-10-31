@@ -1,0 +1,42 @@
+% cal: L-type calcium channel with high threshold for activation used in somatic and dendritic regions 
+% Requires: calcium concentration "cai" (e.g., exposed by cadyn mechanism)
+% Exposes: calcium current "ica" for other mechanisms (e.g., required by cadyn mechanism)
+% Tags: calcium, current, papoutsi, pfc, layer 5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+ki = 0.025    % (mM)       : middle point of inactivation fct
+gcalbar = .01 % (mho/cm2)  : initialized conductance
+taumin = 180  % (ms)       : minimal value of the time cst
+vhalf = -1    % (mV) 	   : half potential for activation 
+zeta = -4.6
+t0 = 1.5      % (ms)
+b = 0.01      % (mM) 
+ba = 0.01     % (mM)
+bo = 8
+celsius = 34 % (degC)
+eca = 126.1   % (mV)
+IC=0; IC_noise=0
+
+% Functions
+alp(v) = exp(1.e-3*zeta*(v-vhalf)*9.648e4/(8.315*(273.16+celsius)))
+minf(v) = 1./(1+alp(v))
+h2(cai) = ki./(ki+cai)
+alpha2(cai) = (cai/b).^2
+sinf(cai) = alpha2(cai)./(alpha2(cai)+1)
+taum(cai) = taumin+1./(cai+ba)
+po(cai,m) = m.*m.*h2(cai)
+ica(v,cai,m,s) = gcalbar*(po(cai,m)+s.*s.*bo).*(v-eca)
+
+% ODEs
+m' = (minf(IN)-m)/t0
+s' = (sinf(IN)-s)./taum(cai)
+m(0)=IC+IC_noise.*rand(Npop,1)
+s(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ica(IN,cai,m,s)
+ica => ica(IN,cai,m,s)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Reference: Papoutsi 2014. http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\cal.mod
+

@@ -1,0 +1,13 @@
+% Parameters:
+stim = [15]
+onset = [0]
+ 
+% Auxiliary variables:
+offset = inf
+
+% Functions:
+Itonic(t) = stim*(t>onset & t<offset)
+ 
+% Interface:
+current => Itonic(t)
+ 

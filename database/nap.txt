@@ -1,0 +1,42 @@
+% nap: Persistent Na+ channel
+% from Durstewitz & Gabriel (2006), Cerebral Cortex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gnap= 0.0005
+ena=55
+DA_alphamshift=0  % : 2 for 100% DA, 0 otherwise
+DA_betamshift=0   % : 5 for 100% DA,0 otherwise
+DA_alphahfactor=0 % : -.8e-5 for DA, 0 otherwise
+DA_betahfactor=0  % : 0.014286-0.02 for DA, 0 otherwise
+m_IC=0; h_IC=1; IC_noise=0
+
+% Functions
+mao(v) = (abs(v+12+DA_alphamshift)<1e-4).*(1e-4)+(abs(v+12+DA_alphamshift)>=1e-4).*0
+malf(v) = -0.2816*(v+12+DA_alphamshift+mao(v))./(-1+exp(-(v+12+DA_alphamshift+mao(v))/9.3))
+mbo(v) = (abs(v-15+DA_betamshift)<1e-4).*(1e-4)+(abs(v-15+DA_betamshift)>=1e-4).*0
+mbet(v) = 0.2464*(v-15+DA_betamshift+mbo(v))./(-1+exp((v-15+DA_betamshift+mbo(v))/6))
+hao(v) = (abs(v+42.8477)<1e-4).*(1e-4)+(abs(v+42.8477)>=1e-4).*0
+half(v) = (2.8e-5+DA_alphahfactor)*(exp(-(v+42.8477+hao(v))/4.0248))
+hbo(v) = (abs(v+13.1)<1e-4).*(1e-4)+(abs(v+13.1)>=1e-4).*0
+hao(v) = (abs(v+43.1)<1e-4).*(1e-4)+(abs(v+43.1)>=1e-4).*0
+half(v) = 0.098./exp((v+23.1+hao(v))/20)
+hbo(v) = (abs(v+413.9284)<1e-4).*(1e-4)+(abs(v+413.9284)>=1e-4).*0
+hbet(v) = (0.02+DA_betahfactor)/(1+exp(-(v+413.9284+hbo(v))/148.2589))
+
+minf(v) = malf(v)./(malf(v)+mbet(v))
+taum(v) = 1./(malf(v)+mbet(v))
+hinf(v) = half(v)./(half(v)+hbet(v))
+tauh(v) = 1./(half(v)+hbet(v))
+inap(v,m,h) = gnap.*m.*h.*(v-ena)
+
+% ODEs
+m' = (minf(IN)-m)/taum(IN)
+h' = (hinf(IN)-h)/tauh(IN)
+m(0)=m_IC+IC_noise.*rand(Npop,1)
+h(0)=h_IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -inap(IN,m,h)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\nap.mod

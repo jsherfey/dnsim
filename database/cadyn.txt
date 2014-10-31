@@ -1,0 +1,21 @@
+% cadyn: decay of internal calcium concentration (ref: Papoutsi 2014)
+% Requires: calcium current "ica" (e.g., exposed by cal mechanism)
+% Exposes: calcium concentration "cai" for other mechanisms (e.g., required by cal mechanism)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+depth = .1 % (um) : depth of shell
+taur = 200 % (ms) : rate of calcium removal for stress conditions
+cainf = .00005 % (mM)
+FARADAY = 96520 % (Coulomb)
+IC_noise=0
+
+% ODEs
+cai' = max(0,-(10000)*ica/(2*FARADAY*depth))/18+(cainf-cai)/taur*7
+cai(0)=.00005+IC_noise.*rand(Npop,1)
+
+% Interface
+cai => cai
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\cadyn.mod
+

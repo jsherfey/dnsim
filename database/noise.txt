@@ -1,7 +1,4 @@
-# gaussian noise
+scale = [0] 
+noise(t) = scale.*randn(Npop,1).*sqrt(dt) 
+current => noise(t)
 
-# constants
-V_noise = 0;
-
-# interface statement
-current => V_noise.*randn(Npop,1)*sqrt(dt)

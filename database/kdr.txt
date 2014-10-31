@@ -1,0 +1,27 @@
+% kdr: Delayed rectifier K+ channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gkdr= 6
+ek=-80 % [mV], 25*log(ko/ki), ko0=3.82, ki0=140
+IC=0; IC_noise=0
+
+% Functions
+aoff(v)= (abs(v-13)<1e-4).*(1e-4)+(abs(v-13)>=1e-4).*0
+alf(v) = ((-0.018*(v-13+aoff(v)))./(-1+exp(-((v-13+aoff(v))/25))))
+boff(v)= (abs(v-23)<1e-4).*(1e-4)+(abs(v-23)>=1e-4).*0
+bet(v) = ((0.0054*(v-23+boff(v)))./(-1+exp((v-23+boff(v))/12)))
+ninf(v) = alf(v)./(alf(v)+bet(v))
+taun(v) = 1./(alf(v)+bet(v))
+ik(v,n)=gkdr.*n.^4.*(v-ek)
+
+% ODEs
+n'=(ninf(IN)-n)./taun(IN)
+n(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ik(IN,n)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\kdr.mod
+
+

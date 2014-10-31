@@ -1,0 +1,30 @@
+% ican: Slow Ca-dependent nonspecific cation current
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+celsius	= 36   % (degC)
+ecan    = -20  % (mV)            	: reversal potential
+gcan    = .0002    % (mho/cm2)
+beta 	= 0.00015                     	
+cac	= 0.0001			
+taumin  = 0.1  % (ms)            	: minimal value of time constant
+IC=0; IC_noise=0
+
+% Derived parameters
+tadj = 3^((celsius-22.0)/10)
+
+% Functions
+alpha2(cai) = beta*(cai/cac).^2
+minf(cai) = alpha2(cai)./(alpha2(cai)+beta)
+taum(cai) = max(taumin,1./(alpha2(cai)+beta)/tadj)
+ican(v,m) = .7*gcan.*m.^2.*(v-ecan)
+
+% ODEs
+m' = (minf(cai)-m)./taum(cai)
+m(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ican(IN,m)
+ica => ican(IN,m)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\ican.mod

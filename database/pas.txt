@@ -1,0 +1,12 @@
+% pas: passive leak current
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gpas = .3; % mho/cm2
+epas = -65; % mV
+
+% Functions
+leak(IN)=gpas.*(IN-epas)
+
+% Interface
+current => -leak(IN)
+

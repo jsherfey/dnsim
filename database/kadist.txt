@@ -1,0 +1,48 @@
+% kadist: K-A channel from Klee Ficker and Heinemann
+% modified by Brannon and Yiota Poirazi (poirazi@LNC.usc.edu) to account for Hoffman et al 1997 distal region kinetics used only in locations > 100 microns from the soma
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+ek=-80 % [mV], 25*log(ko/ki), ko0=3.82, ki0=140
+gkabar = 0     % (mho/cm2)  :initialized conductance
+vhalfn = -1    % (mV)    :activation half-potential (-1), change for pfc, activation at -40
+vhalfl = -56   % (mV)       :inactivation half-potential
+a0n = 0.1      % (/ms)      :parameters used
+zetan = -1.8   % (1)        :in calculation of
+zetal = 3      % (1) 
+gmn   = 0.39   % (1)        :and time constants	
+gml   = 1      % (1)
+lmin  = 2      % (ms)
+nmin  = 0.1    % (ms)
+pw    = -1     % (1)
+tq    = -40    % (mV)
+qq    = 5      % (mV)
+q10   = 5      %          :temperature sensitivity
+n_IC=0; l_IC=1; IC_noise=0
+celsius = 34 	% (degC)
+
+% Derived parameters
+qt = q10^((celsius-24)/10)  %     : temperature adjustment factor
+
+% Functions
+zeta(v) = zetan+pw/(1+exp((v-tq)/qq))
+alpn(v) = exp(1e-3*zeta(v)*(v-vhalfn)*9.648e4/(8.315*(273.16+celsius))) 
+alpl(v) = exp(1e-3*zetal*(v-vhalfl)*9.648e4/(8.315*(273.16+celsius))) 
+betn(v) = exp(1e-3*zeta(v)*gmn*(v-vhalfn)*9.648e4/(8.315*(273.16+celsius))) 
+betl(v) = exp(1e-3*zetal*gml*(v-vhalfl)*9.648e4/(8.315*(273.16+celsius))) 
+ninf(v) = 1./(1+alpn(v))
+taun(v) = max(nmin,betn(v)./(qt.*a0n.*(1+alpn(v))))
+linf(v) = 1./(1+alpl(v))
+taul(v) = max(lmin,.26*(v+50))
+ik(v,n,l) = gkabar.*n.*l.*(v-ek)
+
+% ODEs
+n' = (ninf(IN)-n)/taun(IN)
+l' = (linf(IN)-l)/taul(IN)
+n(0)=n_IC+IC_noise.*rand(Npop,1)
+l(0)=l_IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ik(IN,n,l)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\kadist.mod

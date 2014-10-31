@@ -1,0 +1,29 @@
+% kca: Slow Ca++ dependent K+ current responsible for slow AHP
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+ek=-80 % [mV], 25*log(ko/ki), ko0=3.82, ki0=140
+gkca    = .2  % (mho/cm2)
+taumin  = 0   % (ms)  
+b 	= 0.008 % (/ms)  : changed oct 17, 2006 for pfc 
+IC=0; IC_noise=0
+
+% Functions
+minf(cai) = (cai/b)./((cai/b)+1)
+taum(cai) = taumin+b./(cai+b)
+ik(v,m) = gkca.*m.^2.*(v-ek)
+% alternative equations
+%minf(cai) = (100*cai.^2)./(100*cai.^2+b)
+%taum(cai) = 1./(100*cai.^2+b)
+
+% ODEs
+m' = (minf(cai)-m)./taum(cai)
+m(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ik(IN,m)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\kca.mod
+
+% Notes:
+% use dt<.001

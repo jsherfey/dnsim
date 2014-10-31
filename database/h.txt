@@ -1,0 +1,23 @@
+% h: H-current
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gbar   = .002 % (mho/cm2)  : initialize conductance to zero
+eh     = -10  % (mV)
+K      = 10.0  % (mV)	
+vhalf  = -90  % (mV)       : half potential
+IC=0; IC_noise=0
+
+% Functions
+ninf(v) = 1-(1/(1+exp((vhalf-v)/K)))
+taun(v) = (v>-10).*(1) + (v<-10).*(2*(1./(exp((v+145)/-17.5)+exp((v+16.8)/16.5))+10))
+ih(v,n) = gbar*n.*(v-eh)
+
+% ODEs
+n' = (ninf(IN)-n)./taun(IN)
+n(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -ih(IN,n)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\h.mod
