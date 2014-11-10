@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision: 1.4.2.7 $  $Date: 2013/10/15 01:03:11 $ -->
+<demos>
+   <name>Database</name>
+   <type>toolbox</type>
+   <icon>$toolbox/matlab/icons/matlabicon.gif</icon>
+   <description isCdata="no">
+
+</description>
+    <demoitem>
+      <label>Using Database Explorer (4 min, 20 sec)</label>
+      <type>video</type>
+      <callback>playbackdemo('Final_for_doc_ex2','toolbox/database/web/demos');</callback>
+    </demoitem>
+</demos>
