@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <settings name="database" visible="false" xmlns="urn:mathworks.matlab.settings" xsi:schemaLocation="urn:mathworks.matlab.settings settings.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <key name="DataReturnFormat" visible="false">
+        <string>
+            <metadata>
+                <choices>cellarray</choices>
+                <choices>numeric</choices>
+                <choices>structure</choices>
+                <choices>dataset</choices>
+                <choices>table</choices>
+            </metadata> 
+            <value>cellarray</value>
+        </string>
+    </key>
+    <key name="DefaultRowPreFetch" visible="false">
+        <string>
+            <value>10000</value>
+        </string>
+    </key>
+    <key name="ErrorHandling" visible="false">
+        <string>
+            <metadata>
+                <choices>store</choices>
+                <choices>report</choices>
+                <choices>empty</choices>
+            </metadata> 
+            <value>store</value>
+        </string>
+    </key>
+    <key name="JDBCDataSourceFile" visible="false">
+        <string>
+            <value></value>
+        </string>
+    </key>
+    <key name="NullNumberRead" visible="false">
+        <string>
+            <value>NaN</value>
+        </string>
+    </key>
+    <key name="NullNumberWrite" visible="false">
+        <string>
+            <value>NaN</value>
+        </string>
+    </key>
+    <key name="NullStringRead" visible="false">
+        <string>
+            <value>null</value>
+        </string>
+    </key>
+    <key name="NullStringWrite" visible="false">
+        <string>
+            <value>null</value>
+        </string>
+    </key>
+    <key name="TempDirForRegistryOutput" visible="false">
+        <string>
+            <value></value>
+        </string>
+    </key>
+    <key name="UseRegistryForSources" visible="false">
+        <string>
+            <metadata>
+                <choices>yes</choices>
+                <choices>no</choices>
+            </metadata> 
+            <value>yes</value>
+        </string>
+    </key>
+	<key name="FetchInBatches" visible="false">
+       <string>
+			<metadata>
+                <choices>yes</choices>
+                <choices>no</choices>
+            </metadata>
+            <value>no</value>
+       </string>
+   </key>
+   <key name="FetchBatchSize" visible="false">
+       <string>
+           <metadata>
+			   <min>1</min>
+               <max>1000000</max>
+           </metadata>
+           <value>1000</value>
+       </string>
+   </key>
+   <settings name="dexplore" visible="false">
+	<key name="NumberRowsPreviewed" visible="false">
+       <int32>
+           <metadata>
+			   <min>1</min>
+               <max>10000</max>
+           </metadata>
+           <value>25</value>
+       </int32>
+   </key>
+   <key name="ImportBatchSize" visible="false">
+       <int32>
+           <metadata>
+			   <min>1</min>
+               <max>1000000</max>
+           </metadata>
+           <value>1000</value>
+       </int32>
+   </key>
+   </settings>
+</settings>
