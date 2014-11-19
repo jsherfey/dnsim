@@ -1,5 +1,6 @@
 function modeler(varargin)
 clear global cfg H CURRSPEC BACKUPFILE
+cfg.mysql_connector = mysqldb('setup'); % call this first b/c javaaddpath clears global variables (see: http://www.mathworks.com/matlabcentral/newsreader/view_thread/163362)
 if ~isdeployed 
   try
     if ~exist('ganymed-ssh2-build250','dir')
@@ -10,6 +11,18 @@ if ~isdeployed
   end
 end
 global cfg H CURRSPEC LASTSPEC BIOSIMROOT BACKUPFILE
+% Path to local models on disk
+if isempty(BIOSIMROOT)
+  [BIOSIMROOT,o]=fileparts(which('startup.m'));
+end
+if ischar(BIOSIMROOT)
+  DBPATH = fullfile(BIOSIMROOT,'database');
+else
+  DBPATH = '';
+end
+if ~exist(DBPATH,'dir')
+  DBPATH = pwd;
+end
 % server info
 cfg.webhost = '104.131.218.171'; % 'infinitebrain.org','104.131.218.171'
 cfg.dbname = 'modulator';
@@ -28,6 +41,12 @@ cfg.email = '';
 cfg.uploadname='';
 cfg.uploadnotes='';
 cfg.uploadtags='';
+cfg.projectname='';
+cfg.citationtitle='';
+cfg.citationstring='';
+cfg.citationurl='';
+cfg.citationabout='';
+
 % local user info
 [o,r]=system('echo $HOME'); % get home directory
 if numel(r)>1
@@ -52,18 +71,6 @@ BACKUPFILE=fullfile(tempdir,['autodsim_' datestr(now,'yyyymmdd-HHMMSS') '.mat'])
 %     varargin{1}=spec;
 %   end
 % end
-% Path to local models on disk
-if isempty(BIOSIMROOT)
-  [BIOSIMROOT,o]=fileparts(which('startup.m'));
-end
-if ischar(BIOSIMROOT)
-  DBPATH = fullfile(BIOSIMROOT,'database');
-else
-  DBPATH = '';
-end
-if ~exist(DBPATH,'dir')
-  DBPATH = pwd;
-end
 
 warning off
 
@@ -274,7 +281,7 @@ fig = findobj('tag','mainfig');
 if any(fig)
   figure(fig);
 else
-  fig = figure('position',sz,'color','w','tag','mainfig','name','','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+  fig = figure('position',sz,'color','w','tag','mainfig','name','Dynamic Neural Simulator','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
 end
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
@@ -301,8 +308,8 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.34 .97 .06 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.34 .97 .06 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
   uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
-  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .08 .03],'string','models','backgroundcolor','c','callback',@BrowseDB,'visible','on');
-  uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .08 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
+  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .08 .03],'string','models','backgroundcolor','c','callback','global cfg; browse_dnsim(cfg.username,cfg.password,''global CURRSPEC H; close(H.fig); modeler(CURRSPEC);'');');%@BrowseDB,'visible','on');
+%   uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .08 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 
 % left panels for cell, network, and mechanism controls
 pbuild=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','on','tag','ptoggle','userdata','pbuild','units','normalized','position',[0 0 .4 .85],'fontweight','normal');
@@ -321,27 +328,20 @@ phistory=uipanel('parent',fig,'backgroundcolor',bgcolor,'title','','visible','of
   pnotes=uipanel('parent',phistory,'backgroundcolor',bgcolor,'title','project notes','units','normalized','position',[.22 .3 .78 .7],'fontweight','bold');%,'backgroundcolor',[.5 .5 .5]);
   pcomparison=uipanel('parent',phistory,'backgroundcolor',bgcolor,'title','model comparison','units','normalized','position',[.22 0 .78 .3],'fontweight','bold');
 
-% make notes scrollable:
-%   pnotes=uipanel('parent',phistory,'title','project notes','units','normalized','position',[0 0 1 1]);%,'backgroundcolor',[.5 .5 .5]);
-%   jEdit = findjobj(pnotes);
-%   j=javax.swing.JScrollPane(jEdit);
-%   [jj hh]=javacomponent(j,[1 1 .4 .85].*[.22 1 .78 .3].*[sz(3) sz(4) sz(3) sz(4)],fig);
-%   set(pnotes,'position',[.22 .3 .78 .7]);
-  
 % left panel: model view
 txt_model = uicontrol('parent',pmodel,'style','edit','units','normalized','tag','modeltext',...
   'position',[0 0 1 1],'string',cfg.modeltext,'ForegroundColor','k','FontName','Monospaced','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
   % enable horizontal scrolling
-  jEdit = findjobj(txt_model);
-  try
-    jEditbox = jEdit.getViewport().getComponent(0);
-    jEditbox.setWrapping(false);                % turn off word-wrapping
-    jEditbox.setEditable(false);                % non-editable
-    set(jEdit,'HorizontalScrollBarPolicy',30);  % HORIZONTAL_SCROLLBAR_AS_NEEDED
-    % maintain horizontal scrollbar policy which reverts back on component resize 
-    hjEdit = handle(jEdit,'CallbackProperties');
-    set(hjEdit, 'ComponentResizedCallback','set(gcbo,''HorizontalScrollBarPolicy'',30)')
-  end
+%   jEdit = findjobj(txt_model);
+%   try
+%     jEditbox = jEdit.getViewport().getComponent(0);
+%     jEditbox.setWrapping(false);                % turn off word-wrapping
+%     jEditbox.setEditable(false);                % non-editable
+%     set(jEdit,'HorizontalScrollBarPolicy',30);  % HORIZONTAL_SCROLLBAR_AS_NEEDED
+%     % maintain horizontal scrollbar policy which reverts back on component resize 
+%     hjEdit = handle(jEdit,'CallbackProperties');
+%     set(hjEdit, 'ComponentResizedCallback','set(gcbo,''HorizontalScrollBarPolicy'',30)')
+%   end
 
 % left panel: network builder %GUI_netpanel;
 p_net_select  = uipanel('parent',pbuild,'BackgroundColor',bgcolor,'Position',[0 .7 1 .29],'BorderWidth',.2,'BorderType','line'); % cell morphology
@@ -440,7 +440,7 @@ file_m = uimenu(fig,'Label','File');
 uimenu(file_m,'Label','Load model(s)','Callback',{@load_models,1,'file'});
 uimenu(file_m,'Label','Append model(s)','Callback',{@load_models,0,'file'});
 uimenu(file_m,'Label','Save model','Callback',@Save_Spec);
-uimenu(file_m,'Label','Upload model','Callback',@GetUploadInfo);%DB_SaveModel);
+uimenu(file_m,'Label','Upload model','Callback','upload_dnsim;');%@GetUploadInfo);%DB_SaveModel);
 uimenu(file_m,'Label','Write Matlab script','Callback','global CURRSPEC; write_dnsim_script(CURRSPEC);');
 % uimenu(file_m,'Label','Write ODEFUN script','Callback',@write_odefun_script);
 
@@ -993,6 +993,7 @@ for a=1:NC
     thismechlabel=sprintf('%s->%s.%s',EL{i},EL{j},c.mechanisms{k});
     mechlistlabels{mechcnt} = thismechlabel;
     thisvars=c.mechs(k).auxvars;
+    if isempty(thisvars), continue; end
     uniqvarlabels=unique(thisvars(:,1),'stable');
     for u=1:numel(uniqvarlabels)
       cnt=cnt+1;
@@ -1214,15 +1215,15 @@ end
 % update edit_auxvar_eqn
 switch type
   case 'rand'
-    eqn = [varlist{varsel} sprintf('=rand(Npre,Npost)<%g;',str2num(get(H.edit_rand_p,'string')))];
+    eqn = [varlist{varsel} sprintf('=rand(Npost,Npre)<%g;',str2num(get(H.edit_rand_p,'string')))];
   case 'all'
-    eqn = [varlist{varsel} '=ones(Npre,Npost);'];
+    eqn = [varlist{varsel} '=ones(Npost,Npre);'];
   case 'one'
-    eqn = [varlist{varsel} '=eye(Npre,Npost);'];
+    eqn = [varlist{varsel} '=eye(Npost,Npre);'];
   case 'gaussian'
     eqn='';
     if ~ismember('Nmax',varlist)
-      eqn='Nmax=max(Npre,Npost);';
+      eqn='Nmax=max(Npost,Npre);';
     end
     if ~ismember('srcpos',varlist)
       eqn=[eqn 'srcpos=linspace(1,Nmax,Npre)''*ones(1,Npost);'];
@@ -1230,7 +1231,7 @@ switch type
     if ~ismember('dstpos',varlist)
       eqn=[eqn 'dstpos=(linspace(1,Nmax,Npost)''*ones(1,Npre))'';'];
     end
-    eqn=[eqn varlist{varsel} sprintf('=exp(-(srcpos-dstpos).^2/(%g*Npost)^2)',str2num(get(H.edit_gaussian_sigma,'string'))/100)];
+    eqn=[eqn varlist{varsel} sprintf('=exp(-(srcpos-dstpos).^2/(%g*Npost)^2)''',str2num(get(H.edit_gaussian_sigma,'string'))/100)];
   case 'loadmat'
     [filename,pathname] = uigetfile({'*.mat'},'Pick a file containing a connectivity matrix.','MultiSelect','off');
     if isequal(filename,0) || isequal(pathname,0), return; end
@@ -2083,7 +2084,7 @@ if ~iscell(mechadded), mechadded={mechadded}; end
 for i=1:length(mechadded)
   newmech = mechadded{i};
   mechind = find(strcmp({allmechs.label},newmech),1,'last');
-  if isempty(mechind) && exist(fullfile(pwd,[newmech '.txt.']),'file')
+  if exist(fullfile(pwd,[newmech '.txt.']),'file') % && isempty(mechind)
     file=fullfile(pwd,[newmech '.txt.']);
     this = parse_mech_spec(file,[]);
     cfg.allmechfiles{end+1}=file;
@@ -2295,13 +2296,13 @@ function disperror(err)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ZoomFunction(src,evnt)
 global H cfg
-if isequal(gco,H.ax_static_plot)
+if isfield(H,'ax_static_plot') && isequal(gco,H.ax_static_plot)
   hplot=H.ax_static_plot;
   prop='ylim';
-elseif isequal(gco,H.img_auxvar)
+elseif isfield(H,'img_auxvar') && isequal(gco,H.img_auxvar)
   hplot=H.ax_conn_img;
   prop='clim';
-elseif ismember(gco,H.img_state) || ismember(gco,H.ax_state_plot) || ismember(gco,H.simdat_alltrace)
+elseif (isfield(H,'img_state') && ismember(gco,H.img_state)) || (isfield(H,'ax_state_plot') && ismember(gco,H.ax_state_plot)) || (isfield(H,'simdat_alltrace') && ismember(gco,H.simdat_alltrace))
   if strcmp(cfg.plottype,'trace')
     if ismember(gco,H.ax_state_plot)
       hplot=H.ax_state_plot(gco==H.ax_state_plot);
@@ -2372,7 +2373,9 @@ else
   axislimits='tight';
 end
 for k=1:size(funcs,1)
-  eval(sprintf('%s=%s;',funcs{k,1},funcs{k,2}));
+  try
+    eval(sprintf('%s=%s;',funcs{k,1},funcs{k,2}));
+  end
 end
 
 % only consider functions of one variable
@@ -2777,7 +2780,7 @@ for i=1:nrepeats
     'timelimits',lims,'dsfact',dsfact,'sim_cluster_flag',clusterflag,'timestamp',timestamp,...
     'savedata_flag',get(H.chk_savedata,'value'),'savepopavg_flag',get(H.chk_savesum,'value'),'savespikes_flag',get(H.chk_savespikes,'value'),'saveplot_flag',get(H.chk_saveplots,'value'),...
     'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'),...
-    'addpath',fullfile(BIOSIMROOT,'matlab'),'overwrite_flag',get(H.chk_overwrite,'value'));
+    'addpath',fullfile(BIOSIMROOT,'matlab'),'overwrite_flag',get(H.chk_overwrite,'value'),'SOLVER',get(H.edit_SOLVER,'string'));
   clear tmpspec
   if isempty(rootoutdir)
     note.batch.rootoutdir = {};
@@ -2817,11 +2820,11 @@ if ~isfield(H,'lst_notes') || ~ishandle(H.lst_notes)
     'style','listbox','value',1:min(3,length(notes)),'string',ids,'Max',100,'Callback',@UpdateHistory,'KeyPressFcn',@NoteKeyPress);
   H.edit_comparison = uicontrol('parent',H.pcomparison,'style','edit','units','normalized','tag','modelcomparison',...
   'position',[0 0 1 .85],'string','','FontName','Courier','FontSize',9,'HorizontalAlignment','Left','Max',100,'BackgroundColor',[.9 .9 .9]);
-  try
-    jEdit = findjobj(H.edit_comparison);
-    jEditbox = jEdit.getViewport().getComponent(0);
-    jEditbox.setEditable(false);                % non-editable  
-  end
+%   try
+%     jEdit = findjobj(H.edit_comparison);
+%     jEditbox = jEdit.getViewport().getComponent(0);
+%     jEditbox.setEditable(false);                % non-editable  
+%   end
   H.btn_compare = uicontrol('parent',H.pcomparison,'units','normalized',...
     'style','pushbutton','fontsize',10,'string','compare','callback',@CompareModels,...
     'position',[.05 .85 .2 .15]);  
@@ -3057,11 +3060,11 @@ delete(tmpfile);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function QuickPlot_inputdlg(src,evnt,rootoutdir,space)
-if any(findobj('tag','QuickPlot_inputdlg'))
-  figure(findobj('tag','QuickPlot_inputdlg'));
-  return;
-end
-global CURRSPEC
+global CURRSPEC H
+% if isfield(H,'QuickPlot_inputdlg') && ishandle(H.QuickPlot_inputdlg) % any(findobj('tag','QuickPlot_inputdlg'))
+%   figure(H.QuickPlot_inputdlg);%findobj('tag','QuickPlot_inputdlg'));
+%   return;
+% end
 if issubfield(CURRSPEC,'variables.labels') && iscell(CURRSPEC.variables.labels)
   defaultvar=CURRSPEC.variables.labels{1};
 else
@@ -3071,17 +3074,17 @@ nelem = arrayfun(@(x)numel(x.values),space);
 index = find(nelem==max(nelem),1,'first');
 variable = space(index).variable;
 values = space(index).values;
-figure('tag','QuickPlot_inputdlg','name','What to plot','NumberTitle','off','MenuBar','none');
+H.QuickPlot_inputdlg = figure('tag','QuickPlot_inputdlg','name','What to plot','NumberTitle','off','MenuBar','none');
 uicontrol('style','text','units','normalized','position',[.1 .8 .8 .04],'string','Variable to plot (required)','fontsize',12);
-uicontrol('style','edit','units','normalized','position',[.1 .7 .8 .1],'string',defaultvar,'tag','quickplot_var','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+H.quickplot_var = uicontrol('style','edit','units','normalized','position',[.1 .7 .8 .1],'string',defaultvar,'tag','quickplot_var','backgroundcolor','w','horizontalalignment','left','fontsize',12);
 uicontrol('style','text','units','normalized','position',[.1 .65 .8 .04],'string','Parameter varied (required)','fontsize',12);
-uicontrol('style','edit','units','normalized','position',[.1 .55 .8 .1],'string',variable,'tag','quickplot_param','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+H.quickplot_param = uicontrol('style','edit','units','normalized','position',[.1 .55 .8 .1],'string',variable,'tag','quickplot_param','backgroundcolor','w','horizontalalignment','left','fontsize',12);
 uicontrol('style','text','units','normalized','position',[.1 .5 .8 .04],'string','Parameter range/values to plot','fontsize',12);
-uicontrol('style','edit','units','normalized','position',[.1 .4 .8 .1],'string',values,'tag','quickplot_values','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+H.quickplot_values = uicontrol('style','edit','units','normalized','position',[.1 .4 .8 .1],'string',values,'tag','quickplot_values','backgroundcolor','w','horizontalalignment','left','fontsize',12);
 uicontrol('style','text','units','normalized','position',[.1 .35 .8 .04],'string','x-axis limits','fontsize',12);
-uicontrol('style','edit','units','normalized','position',[.1 .25 .8 .1],'string','[]','tag','quickplot_xlims','backgroundcolor','w','horizontalalignment','left','fontsize',12);
+H.quickplot_xlims = uicontrol('style','edit','units','normalized','position',[.1 .25 .8 .1],'string','[]','tag','quickplot_xlims','backgroundcolor','w','horizontalalignment','left','fontsize',12);
 uicontrol('style','pushbutton','units','normalized','position',[.45 .1 .2 .1],'string','OK','callback',{@QuickPlot_sim_data,rootoutdir},'fontsize',14);
-uicontrol('style','pushbutton','units','normalized','position',[.7 .1 .2 .1],'string','Cancel','callback','close(findobj(''tag'',''QuickPlot_inputdlg''))','fontsize',14);
+uicontrol('style','pushbutton','units','normalized','position',[.7 .1 .2 .1],'string','Cancel','callback','global H; close(H.QuickPlot_inputdlg);','fontsize',14);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function QuickPlot_sim_data(src,evnt,rootoutdir)
@@ -3090,10 +3093,11 @@ function QuickPlot_sim_data(src,evnt,rootoutdir)
 %   'What to plot',1,...
 %   {defaultvar,space(1).variable,space(1).values,'[]'});
 % drawnow; pause(0.05);  % this innocent line prevents the Matlab hang
-answer{1} = get(findobj('tag','quickplot_var'),'string');
-answer{2} = get(findobj('tag','quickplot_param'),'string');
-answer{3} = get(findobj('tag','quickplot_values'),'string');
-answer{4} = get(findobj('tag','quickplot_xlims'),'string');
+global H
+answer{1} = get(H.quickplot_var,'string');
+answer{2} = get(H.quickplot_param,'string');
+answer{3} = get(H.quickplot_values,'string');
+answer{4} = get(H.quickplot_xlims,'string');
 if isempty(answer), return; end
 if isequal(answer{3},'[]') || isempty(answer{3}) || isequal(answer{3},'-1'), answer{3}=[]; end
 if isequal(answer{4},'[]') || isempty(answer{4}), answer{4}=[]; end
@@ -3102,7 +3106,7 @@ if ischar(answer{3}) && isempty(regexp(answer{3},'[a-zA-Z]'))
 end
 if ischar(answer{4}), answer{4}=str2num(answer{4}); end
 plot_search_space(fullfile(rootoutdir,'data'),answer{1},answer{2},answer{3},'xlims',answer{4});
-close(findobj('tag','QuickPlot_inputdlg'))
+close(H.QuickPlot_inputdlg);% findobj('tag','QuickPlot_inputdlg'))
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function CompareModels(src,evnt)
@@ -3300,13 +3304,17 @@ function BrowseDB(src,evnt)
 global H cfg
 
 % test remote connection
-try
-  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-  mym('close');
-catch
+if strcmp(cfg.mysql_connector,'none')
   msgbox('Database connection cannot be established.');
   return;
 end
+% try
+%   err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+%   mym('close');
+% catch
+%   msgbox('Database connection cannot be established.');
+%   return;
+% end
 
 % set up figure
 fig=findobj('tag','server');
@@ -3373,173 +3381,196 @@ elseif strcmp(level,'network')
   set(H.btn_db_nodes,'backgroundcolor',[1 1 1]);
 end
 % remote connection
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-if err
-  disp('there was an error opening the database.'); 
-  list_of_models='';
-  ids=[];
+if strcmp(cfg.mysql_connector,'none')
+  return;
+end
+if cfg.is_authenticated && isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
+  result = mysqldb(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level),{'id','name','level'});
 else
-  mym(['use ' cfg.dbname]);
-  %level = get(get(H.rad_modellevel,'SelectedObject'),'string');
-  if cfg.is_authenticated && str isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
-    q = mym(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
-  else
-    q = mym(sprintf('select id,name,level from modeldb_model where level=''%s'' and privacy=''public''',level));% and privacy=''public''',level));
-  end
-  list_of_models = q.name;  
-  ids=q.id;
-end; 
-mym('close');
+  result = mysqldb(sprintf('select id,name,level from modeldb_model where level=''%s'' and privacy=''public''',level),{'id','name','level'});
+end
+if isempty(result)
+  list_of_models = '';
+  ids=[];
+else  
+  list_of_models = result.name;  
+  ids=result.id;
+end
+% err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% if err
+%   disp('there was an error opening the database.'); 
+%   list_of_models='';
+%   ids=[];
+% else
+%   mym(['use ' cfg.dbname]);
+%   %level = get(get(H.rad_modellevel,'SelectedObject'),'string');
+%   if cfg.is_authenticated && str isequal(get(H.rad_authorscope,'SelectedObject'),H.rad_authorscope_2)
+%     q = mym(sprintf('select id,name,level from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
+%   else
+%     q = mym(sprintf('select id,name,level from modeldb_model where level=''%s'' and privacy=''public''',level));% and privacy=''public''',level));
+%   end
+%   list_of_models = q.name;  
+%   ids=q.id;
+% end; 
+% mym('close');
 set(findobj('tag','list'),'string',list_of_models);
 set(findobj('tag','list'),'userdata',ids);
 % -------------------------------------------------------------------------
-function GetUploadInfo(src,evnt)
-global cfg
-figure('name','Upload model to infinitebrain.org','NumberTitle','off','MenuBar','none','tag','uploadfig');
-uicontrol('style','text','units','normalized','position',[.1 .9 .8 .05],'string','Model name (required)');
-uicontrol('style','edit','units','normalized','position',[.1 .8 .8 .1],'string',cfg.uploadname,'backgroundcolor','w','horizontalalignment','left','tag','uploadname');
-uicontrol('style','text','units','normalized','position',[.1 .7 .8 .05],'string','Description (optional)');
-uicontrol('style','edit','units','normalized','position',[.1 .5 .8 .2],'string',cfg.uploadnotes,'max',3,'backgroundcolor','w','horizontalalignment','left','tag','uploadnotes');
-uicontrol('style','text','units','normalized','position',[.1 .4 .8 .05],'string','Tags (optional)');
-uicontrol('style','edit','units','normalized','position',[.1 .3 .8 .1],'string',cfg.uploadtags,'backgroundcolor','w','horizontalalignment','left','tag','uploadtags');
-uicontrol('style','text','units','normalized','position',[.1 .2 .3 .05],'string',['Privacy (' cfg.username '):']);
-if strcmp(cfg.username,'anonymous')
-  uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');
-else
-  uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Unlisted','Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');  
-end
-uicontrol('style','pushbutton','units','normalized','position',[.6 .1 .3 .15],'string','Upload','fontsize',14,'callback',@DB_SaveModel,'busyaction','cancel','Interruptible','off');
-% -------------------------------------------------------------------------
-function DB_SaveModel(src,evnt) % (depends on server inbox/addmodel.py)
-global cfg CURRSPEC
-spec = CURRSPEC;
-if isfield(spec,'history'), spec=rmfield(spec,'history'); end
+% function GetUploadInfo(src,evnt)
+% global cfg
+% figure('name','Upload model to infinitebrain.org','NumberTitle','off','MenuBar','none','tag','uploadfig');
+% uicontrol('style','text','units','normalized','position',[.1 .9 .8 .05],'string','Model name (required)');
+% uicontrol('style','edit','units','normalized','position',[.1 .8 .8 .1],'string',cfg.uploadname,'backgroundcolor','w','horizontalalignment','left','tag','uploadname');
+% uicontrol('style','text','units','normalized','position',[.1 .7 .8 .05],'string','Description (optional)');
+% uicontrol('style','edit','units','normalized','position',[.1 .5 .8 .2],'string',cfg.uploadnotes,'max',3,'backgroundcolor','w','horizontalalignment','left','tag','uploadnotes');
+% uicontrol('style','text','units','normalized','position',[.1 .4 .8 .05],'string','Tags (optional)');
+% uicontrol('style','edit','units','normalized','position',[.1 .3 .8 .1],'string',cfg.uploadtags,'backgroundcolor','w','horizontalalignment','left','tag','uploadtags');
+% uicontrol('style','text','units','normalized','position',[.1 .2 .3 .05],'string',['Privacy (' cfg.username '):']);
+% if strcmp(cfg.username,'anonymous')
+%   uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');
+% else
+%   uicontrol('style','popupmenu','units','normalized','position',[.1 .1 .3 .1],'string',{'Unlisted','Public'},'value',1,'backgroundcolor','w','tag','uploadprivacy');  
+% end
+% uicontrol('style','pushbutton','units','normalized','position',[.6 .1 .3 .15],'string','Upload','fontsize',14,'callback',@DB_SaveModel,'busyaction','cancel','Interruptible','off');
+% % -------------------------------------------------------------------------
+% function DB_SaveModel(src,evnt) % (depends on server inbox/addmodel.py)
+% global cfg CURRSPEC
+% spec = CURRSPEC;
+% if isfield(spec,'history'), spec=rmfield(spec,'history'); end
+% 
+% % get model info
+% modelname = get(findobj('tag','uploadname'),'string');
+% tags = get(findobj('tag','uploadtags'),'string');
+% notes = get(findobj('tag','uploadnotes'),'string');
+% str = get(findobj('tag','uploadprivacy'),'string');
+% val = get(findobj('tag','uploadprivacy'),'value');
+% privacy = str{val};
+% if isempty(modelname)
+%   warndlg('Model name required. Nothing was uploaded.');
+%   return; 
+% end
+% cfg.uploadname = modelname;
+% cfg.uploadnotes = notes;
+% cfg.uploadtags = tags;
+% 
+% tempfile=['temp' datestr(now,'YYMMDDhhmmss')];
+% 
+% % save spec MAT file
+% matfile = [tempfile '_spec.mat'];
+% if 1
+%   save(matfile,'spec');
+% end
+% 
+% % add Django model attributes (modelname, username, level, notes, d3file, readmefile)
+% spec.modelname = modelname;
+% spec.username = cfg.username;
+% if any(~cellfun(@isempty,{spec.connections.mechanisms}))
+%   spec.level='network';
+% else
+%   spec.level = 'node';
+% end
+% if ~isfield(spec,'parent_uids')
+%   spec.parent_uids=[];
+% end
+% spec.notes=notes; 
+%   % todo: construct notes from CURRSPEC.history
+% spec.specfile=[tempfile '_spec.json'];
+% spec.d3file=[tempfile '_d3.json'];
+% spec.readmefile=[tempfile '_report.txt'];
+% spec.tags=tags;
+%   % todo: add checkbox-optional auto-list of tags from cell and mech labels
+% spec.privacy=privacy;
+% 
+% % convert model to d3
+% fprintf('preparing model d3 .json...');
+% try
+%   d3json = spec2d3(CURRSPEC,spec.d3file);
+%   fprintf('success!\n');
+% catch
+%   spec.d3file='';
+%   fprintf('failed!\n');
+% end
+% 
+% % convert model to human-readable descriptive report
+% try
+%   txt=cfg.modeltext;
+%   txt=regexp(txt,'.*Specification files:','match');
+%   txt=strrep(txt{1},'Specification files:','');
+%   fid = fopen(spec.readmefile,'w+');
+%   fprintf(fid,'%s\n',txt);
+%   fclose(fid);
+% catch
+%   spec.readmefile='';
+% end
+% 
+% % convert model to json
+% fprintf('converting model into .json format...');
+% [json,jsonspec] = spec2json(spec,spec.specfile); % ss=loadjson(json); isequal(jsonspec,ss)
+% fprintf('success!\n');
+% 
+% % transfer files to server
+% fprintf('transfering .json specification to server...');
+% target='/project/infinitebrain/inbox';
+% f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
+% pasv(f);
+% cd(f,target);
+% % model specification
+% mput(f,spec.specfile); 
+% delete(spec.specfile);
+% % mat-file specification
+% if exist(matfile)
+%   mput(f,matfile);
+%   delete(matfile);
+% end
+% % d3 graphical model schematic
+% if exist(spec.d3file)
+%   mput(f,spec.d3file); 
+%   delete(spec.d3file);
+% end
+% % human-readable model description + equations
+% if exist(spec.readmefile)
+%   mput(f,spec.readmefile); 
+%   delete(spec.readmefile);
+% end
+% close(f);
+% fprintf('success!\n');
+% 
+% if ~isdeployed
+%   % update database
+%   fprintf('updating database...\n');
+%   command = 'bash /project/infinitebrain/inbox/trigger.sh';
+%   channel = sshfrommatlab(cfg.xfruser,cfg.webhost,cfg.xfrpassword);
+%   [channel,result] = sshfrommatlabissue(channel,command);
+%   for l=1:length(result)
+%     fprintf('\t%s\n',result{l});
+%   end
+%   channel = sshfrommatlabclose(channel);
+%   fprintf('success!\n');
+% end
+% fprintf('Model pushed to server successfully.\n\n');
+% close(findobj('tag','uploadfig'));
+% 
+% % goto web page
+% if ~strcmp(cfg.mysql_connector,'none')
+%   %result = mysqldb(sprintf('select id from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level),{'id','name','level'});
+%   result = mysqldb(sprintf('select id from modeldb_model where name=''%s''',modelname),{'id'});
+%   if ~isempty(result)
+%     web(sprintf('http://infinitebrain.org/models/%g/',max(result.id)),'-browser');
+%   end
+% end
 
-% get model info
-modelname = get(findobj('tag','uploadname'),'string');
-tags = get(findobj('tag','uploadtags'),'string');
-notes = get(findobj('tag','uploadnotes'),'string');
-str = get(findobj('tag','uploadprivacy'),'string');
-val = get(findobj('tag','uploadprivacy'),'value');
-privacy = str{val};
-if isempty(modelname)
-  warndlg('Model name required. Nothing was uploaded.');
-  return; 
-end
-cfg.uploadname = modelname;
-cfg.uploadnotes = notes;
-cfg.uploadtags = tags;
-
-tempfile=['temp' datestr(now,'YYMMDDhhmmss')];
-
-% save spec MAT file
-matfile = [tempfile '_spec.mat'];
-if 1
-  save(matfile,'spec');
-end
-
-% add Django model attributes (modelname, username, level, notes, d3file, readmefile)
-spec.modelname = modelname;
-spec.username = cfg.username;
-if any(~cellfun(@isempty,{spec.connections.mechanisms}))
-  spec.level='network';
-else
-  spec.level = 'node';
-end
-if ~isfield(spec,'parent_uids')
-  spec.parent_uids=[];
-end
-spec.notes=notes; 
-  % todo: construct notes from CURRSPEC.history
-spec.specfile=[tempfile '_spec.json'];
-spec.d3file=[tempfile '_d3.json'];
-spec.readmefile=[tempfile '_report.txt'];
-spec.tags=tags;
-  % todo: add checkbox-optional auto-list of tags from cell and mech labels
-spec.privacy=privacy;
-
-% convert model to d3
-fprintf('preparing model d3 .json...');
-try
-  d3json = spec2d3(CURRSPEC,spec.d3file);
-  fprintf('success!\n');
-catch
-  spec.d3file='';
-  fprintf('failed!\n');
-end
-
-% convert model to human-readable descriptive report
-try
-  txt=cfg.modeltext;
-  txt=regexp(txt,'.*Specification files:','match');
-  txt=strrep(txt{1},'Specification files:','');
-  fid = fopen(spec.readmefile,'w+');
-  fprintf(fid,'%s\n',txt);
-  fclose(fid);
-catch
-  spec.readmefile='';
-end
-
-% convert model to json
-fprintf('converting model into .json format...');
-[json,jsonspec] = spec2json(spec,spec.specfile); % ss=loadjson(json); isequal(jsonspec,ss)
-fprintf('success!\n');
-
-% transfer files to server
-fprintf('transfering .json specification to server...');
-target='/project/infinitebrain/inbox';
-f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
-pasv(f);
-cd(f,target);
-% model specification
-mput(f,spec.specfile); 
-delete(spec.specfile);
-% mat-file specification
-if exist(matfile)
-  mput(f,matfile);
-  delete(matfile);
-end
-% d3 graphical model schematic
-if exist(spec.d3file)
-  mput(f,spec.d3file); 
-  delete(spec.d3file);
-end
-% human-readable model description + equations
-if exist(spec.readmefile)
-  mput(f,spec.readmefile); 
-  delete(spec.readmefile);
-end
-close(f);
-fprintf('success!\n');
-
-if ~isdeployed
-  % update database
-  fprintf('updating database...\n');
-  command = 'bash /project/infinitebrain/inbox/trigger.sh';
-  channel = sshfrommatlab(cfg.xfruser,cfg.webhost,cfg.xfrpassword);
-  [channel,result] = sshfrommatlabissue(channel,command);
-  for l=1:length(result)
-    fprintf('\t%s\n',result{l});
-  end
-  channel = sshfrommatlabclose(channel);
-  fprintf('success!\n');
-end
-fprintf('Model pushed to server successfully.\n\n');
-close(findobj('tag','uploadfig'));
-
-% goto web page
-try
-  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-  if err
-    disp('there was an error opening the database to get the new model ID.'); 
-    mym('close');
-    return;
-  end
-  mym(['use ' cfg.dbname]);
-  q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
-  mym('close');
-  web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)),'-browser');
-end
+% % try
+% %   err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% %   if err
+% %     disp('there was an error opening the database to get the new model ID.'); 
+% %     mym('close');
+% %     return;
+% %   end
+% %   mym(['use ' cfg.dbname]);
+% %   q = mym(sprintf('select id from modeldb_model where name=''%s''',modelname));
+% %   mym('close');
+% %   web(sprintf('http://infinitebrain.org/models/%g/',max(q.id)),'-browser');
+% % end
 
 % -------------------------------------------------------------------------
 function DB_SaveMechanism(src,evnt) % (depends on server inbox/addmodel.py)
@@ -3636,93 +3667,125 @@ if ~isdeployed
 end
 fprintf('Model pushed to server successfully.\n\n');
 % -------------------------------------------------------------------------
-function DB_LoadModel(src,evnt)
-global cfg BACKUPFILE H
-
-% what models to load:
-ids = get(findobj('tag','list'),'userdata');
-v = get(findobj('tag','list'),'value');
-ModelID = ids(v);
-
-% get file names of spec files on server
-fprintf('getting file name on server...\n');
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-if err
-  disp('there was an error opening the database.'); 
-  return;
-else
-  mym(['use ' cfg.dbname]);
-  q = mym(['select file from modeldb_modelspec where model_id=' num2str(ModelID)]);
-  jsonfile = q.file{1};
-end
-mym('close');
-
-% retrieve spec file
-fprintf('retrieving full model specification from server...\n');
-% temp dir
-target = fileparts(BACKUPFILE);
-if ~exist(target,'dir'), target=pwd; end
-% remote info
-[usermedia,modelfile] = fileparts(jsonfile);
-usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
-modelfile=[modelfile '.json'];
-% ftp
-f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword); % f=ftp([cfg.webhost ':' num2str(port)],cfg.username,cfg.password);
-pasv(f);
-cd(f,usermedia); % cd(f,'/project/infinitebrain/media/user/dev/models');
-mget(f,modelfile,target); % mget('model4.json')
-close(f);
-
-% % convert to Modulator spec
-fprintf('processing model specification and updating active model...\n');
-tempfile = fullfile(target,modelfile);
-[spec,jsonspec] = json2spec(tempfile);
-delete(tempfile);
-
-figure(H.fig);
-updatemodel(spec);
-refresh;
-fprintf('success.\n');
-% -------------------------------------------------------------------------
-function DB_AppendModel(src,evnt)
+% function DB_LoadModel(src,evnt)
+% global cfg BACKUPFILE H
+% 
+% % what models to load:
+% ids = get(findobj('tag','list'),'userdata');
+% v = get(findobj('tag','list'),'value');
+% ModelID = ids(v);
+% 
+% % get file names of spec files on server
+% fprintf('getting file name on server...\n');
+% if ~strcmp(cfg.mysql_connector,'none')
+%   result = mysqldb(['select file from modeldb_modelspec where model_id=' num2str(ModelID)],{'file'});
+% else
+%   result = [];
+% end
+% if isempty(result)
+%   disp('there was an error opening the database.'); 
+%   return;
+% else
+%   jsonfile = result.file{1};
+% end  
+% % err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% % if err
+% %   disp('there was an error opening the database.'); 
+% %   return;
+% % else
+% %   mym(['use ' cfg.dbname]);
+% %   q = mym(['select file from modeldb_modelspec where model_id=' num2str(ModelID)]);
+% %   jsonfile = q.file{1};
+% % end
+% % mym('close');
+% 
+% % retrieve spec file
+% fprintf('retrieving full model specification from server...\n');
+% % temp dir
+% target = fileparts(BACKUPFILE);
+% if ~exist(target,'dir'), target=pwd; end
+% % remote info
+% [usermedia,modelfile] = fileparts(jsonfile);
+% usermedia=fullfile(cfg.MEDIA_PATH,usermedia);
+% modelfile=[modelfile '.json'];
+% % ftp
+% f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword); % f=ftp([cfg.webhost ':' num2str(port)],cfg.username,cfg.password);
+% pasv(f);
+% cd(f,usermedia); % cd(f,'/project/infinitebrain/media/user/dev/models');
+% mget(f,modelfile,target); % mget('model4.json')
+% close(f);
+% 
+% % % convert to Modulator spec
+% fprintf('processing model specification and updating active model...\n');
+% tempfile = fullfile(target,modelfile);
+% [spec,jsonspec] = json2spec(tempfile);
+% delete(tempfile);
+% 
+% figure(H.fig);
+% updatemodel(spec);
+% refresh;
+% fprintf('success.\n');
+% % -------------------------------------------------------------------------
+% function DB_AppendModel(src,evnt)
 % -------------------------------------------------------------------------
 function DB_Login(src,evnt)
 global cfg H
 u=get(H.editusername,'string');
 p=get(H.editpassword,'string');
 % authentication
-try
-  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-catch
-  err=1;
-end
-if err
+result = mysqldb(sprintf('select id,email from auth_user where username=''%s''',u),{'id','email'});
+if isempty(result)
   disp('authentication failed: there was an error opening the database for user authentication.'); 
   msgbox('LOGIN FAILED. You can upload models as ANONYMOUS user (File -> Upload)');
-  return;
+  return;  
 else
-  mym(['use ' cfg.dbname]);
-  q = mym(sprintf('select id,email from auth_user where username=''%s''',u));
-  mym('close');
-  if ~isempty(q.id)
-    cfg.username=u;
-    cfg.password=p;
-    cfg.user_id = q.id;
-    if iscell(q.email)
-      cfg.email = q.email{1};
-    elseif ischar(q.email)
-      cfg.email = q.email;
-    else
-      cfg.email = '';
-    end
-    cfg.is_authenticated = 1;
-    disp('authentication successful.');
-    fprintf('current user: %s (id=%g)\n',cfg.username,cfg.user_id);
+  cfg.username=u;
+  cfg.password=p;
+  cfg.user_id = result.id;
+  if iscell(result.email)
+    cfg.email = result.email{1};
+  elseif ischar(result.email)
+    cfg.email = result.email;
   else
-    fprintf('user "%s" not found\n',u);
-    return;
+    cfg.email = '';
   end
-end
+  cfg.is_authenticated = 1;
+  disp('authentication successful.');
+  fprintf('current user: %s (id=%g)\n',cfg.username,cfg.user_id);
+end  
+
+% try
+%   err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% catch
+%   err=1;
+% end
+% if err
+%   disp('authentication failed: there was an error opening the database for user authentication.'); 
+%   msgbox('LOGIN FAILED. You can upload models as ANONYMOUS user (File -> Upload)');
+%   return;
+% else
+%   mym(['use ' cfg.dbname]);
+%   q = mym(sprintf('select id,email from auth_user where username=''%s''',u));
+%   mym('close');
+%   if ~isempty(q.id)
+%     cfg.username=u;
+%     cfg.password=p;
+%     cfg.user_id = q.id;
+%     if iscell(q.email)
+%       cfg.email = q.email{1};
+%     elseif ischar(q.email)
+%       cfg.email = q.email;
+%     else
+%       cfg.email = '';
+%     end
+%     cfg.is_authenticated = 1;
+%     disp('authentication successful.');
+%     fprintf('current user: %s (id=%g)\n',cfg.username,cfg.user_id);
+%   else
+%     fprintf('user "%s" not found\n',u);
+%     return;
+%   end
+% end
 set(H.txt_user,'string',['user: ' cfg.username]);
 set(findobj('tag','login'),'visible','off');
 set(findobj('tag','logout'),'visible','on');
@@ -3798,19 +3861,25 @@ function specs = download_get_models(ModelIDs,cfg)
 target = pwd; % local directory for temporary files
 specs={};
 % Open MySQL DB connection
-err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-if err
+result = mysqldb(['select file from modeldb_modelspec where model_id=' num2str(ModelIDs(1))],{'file'});
+if isempty(result)
   disp('there was an error opening the database.'); 
   return;
-else
-  mym(['use ' cfg.dbname]);
 end
+% err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% if err
+%   disp('there was an error opening the database.'); 
+%   return;
+% else
+%   mym(['use ' cfg.dbname]);
+% end
+
 % Open ftp connection
 try
   f=ftp([cfg.webhost ':' num2str(cfg.ftp_port)],cfg.xfruser,cfg.xfrpassword);
   pasv(f);
 catch err
-  mym('close');
+%   mym('close');
   disp('there was an error connecting (ftp) to the server.');
   rethrow(err);
 end
@@ -3819,8 +3888,9 @@ for i = 1:length(ModelIDs)
   ModelID=ModelIDs(i);
   % get file names of spec files on server
   fprintf('Model(uid=%g): getting file name and file from server\n',ModelID);
-  q = mym(['select file from modeldb_modelspec where model_id=' num2str(ModelID)]);
-  jsonfile = q.file{1};
+  result = mysqldb(['select file from modeldb_modelspec where model_id=' num2str(ModelID)],{'file'});
+%   q = mym(['select file from modeldb_modelspec where model_id=' num2str(ModelID)]);
+  jsonfile = result.file{1};
   % retrieve json spec file
   [usermedia,modelfile,ext] = fileparts(jsonfile); % remote server media directory
   if isempty(ext)
@@ -3846,7 +3916,6 @@ for i = 1:length(ModelIDs)
   delete(tempfile);
 end
 close(f);
-mym('close');
 % -------------------------------------------------------------------------
 function load_models(src,evnt,replace_flag,source_type) % Load/Append from disk
 % -- load and apply models
@@ -3987,152 +4056,252 @@ if ~isfield(spec.cells,'parent')
   end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function MechanismBrowser(src,evnt)
-global cfg allmechs
-
-% get list of local mechanisms
-localmechs = {allmechs.label};
-localfiles = {allmechs.file};
-
-% get list of remote mechanisms
-try
-  err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
-  mym(['use ' cfg.dbname]);
-  level = 'mechanism';
-  if cfg.is_authenticated
-    q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
-  else
-    q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
-  end
-  remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
-  remoteids=q.id';
-  remotenotes=q.notes';
-  mym('close');
-catch
-  remotemechs='';
-  remoteids=[];
-  remotenotes='';
-end
-
-% find "files" elements that are actually primary keys of remote mech models prefixed by "#"
-localremote_ind = find(~cellfun(@isempty,regexp(localfiles,'^#\d+'))); 
-% remove remote mechs that are already present in the local allmechs struct
-if any(localremote_ind)
-  redundant_ids = cellfun(@(x)strrep(x,'#',''),localfiles(localremote_ind),'unif',0);
-  redundant_ids = cellfun(@str2num,redundant_ids);
-  rmidx = ismember(remoteids,redundant_ids);
-  remotemechs(rmidx)=[];
-  remoteids(rmidx)=[];
-  remotenotes(rmidx)=[];
-end
-
-% prepare table data
-header = {'name','site','description','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
-format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
-editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
-localnotes=repmat({''},[1 length(localmechs)]);
-localids=zeros(1,length(localmechs));
-if any(localremote_ind)
-  localids(localremote_ind)=redundant_ids;
-end
-ids=[remoteids localids];
-names=cat(2,remotemechs,localmechs);
-local=[zeros(1,length(remoteids)) ones(1,length(localmechs))]==1;
-gosite=repmat({'link'},[1 length(local)]);
-[gosite{ids==0}]=deal(''); % remove links for mechs without key in DB (ie, w/o Django site)
-allnotes=cat(2,remotenotes,localnotes);
-data=cat(2,names',gosite',allnotes',num2cell(local'),num2cell(ids'));%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
-ud.storage=cat(2,num2cell(remoteids),localfiles);
-ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
-
-% draw figure
-pos=get(findobj('tag','mainfig'),'position');
-if iscell(pos), pos=pos{1}; end
-pos(4)=.8*pos(4); % [10 30 800 510]
-h=findobj('tag','mechbrowser');
-if any(h)
-  figure(h(end));
-else
-  h=figure('tag','mechbrowser','position',pos,'color',cfg.bgcolor,'name','Browse Mechanisms','NumberTitle','off','MenuBar','none');
-end
-% draw controls
-% mechanism table
-uitable('parent',h,'units','normalized','position',[0 0 .35 1],'tag','mechtable','userdata',ud,...
-  'ColumnName',header,'ColumnFormat',format,'ColumnEditable',editable,'data',data,'CellSelectionCallback',@BrowserSelection,'CellEditCallback',@BrowserChange);
-% mechanism text box
-uicontrol('parent',h,'style','text','units','normalized','position',[.38 0 .59 .9],'tag','mechtext','BackgroundColor',[.9 .9 .9],'string','','FontName','Monospaced','FontSize',10,'HorizontalAlignment','Left');
-% -------------------------------------------------------------------------
-function BrowserSelection(src,evnt)
-if isempty(evnt.Indices)
-  return;
-end
-global allmechs cfg
-row=evnt.Indices(1);
-col=evnt.Indices(2);
-dat=get(src,'Data'); % {name,site,notes,local,id}
-if col==2 % site
-  if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
-    % goto model detail page
-    web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
-  end
-end
-if isequal(row,get(findobj('tag','mechtext'),'userdata'))
-  return;
-end
-ud=get(src,'userdata'); % storage (sql:id, disk:file), mechindex (index into allmechs struct)
-store=ud.storage{row}; % numeric id or filename
-index=ud.mechindex(row); % index in allmechs or 0
-
-id=dat{row,5};
-name=dat{row,1};
-islocal=(dat{row,4}==true);
-if islocal
-  mech = allmechs(index);
-  if exist(mech.file)
-    fid=fopen(mech.file); % open local mechanism file
-    txt={};
-    while (~feof(fid))
-      this = fgetl(fid);
-      if this == -1, break; end      
-      txt{end+1}=this;
-    end
-    fclose(fid); % close mech file
-    set(findobj('tag','mechtext'),'string',txt,'userdata',row);
-  else
-    set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
-  end
-else
-  % download & convert mech.txt to mech structure; add to allmechs
-  %mech = getmechfromdb(id);
-  mech = download_get_models(id,cfg);
-  if iscell(mech), mech = mech{1}; end
-  mech.label = name;
-  mech.file = sprintf('#%g',id);
-  allmechs(end+1)=mech;
-  set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
-  ud.mechindex(row)=length(allmechs);
-  set(src,'userdata',ud);
-  dat{row,4}=true;
-  set(src,'Data',dat);
-end
-% -------------------------------------------------------------------------
-function BrowserChange(src,evnt)
-global allmechs
-row=evnt.Indices(1);
-col=evnt.Indices(2);
-dat=get(src,'Data'); 
-ud=get(src,'userdata');
-switch col % {name,site,notes,local,id}
-  case 1 % mechanism name column
-    ind=ud.mechindex(row);
-    if ind>0
-      allmechs(ind).label = dat{row,col};
-    end
-  case 2
-    if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
-      % goto model detail page
-      web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
-    end
-end
+% function MechanismBrowser(src,evnt)
+% global cfg allmechs
+% 
+% % get list of local mechanisms
+% localmechs = {allmechs.label};
+% localfiles = {allmechs.file};
+% 
+% % get list of remote mechanisms
+% remotemechs='';
+% remoteids=[];
+% remotenotes='';
+% try
+%   level = 'mechanism';
+%   if cfg.is_authenticated
+%     result = mysqldb(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level),{'id','name','level','notes'});
+%   else
+%     result = mysqldb(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level),{'id','name','level','notes'});
+%   end
+%   if ~isempty(result)
+%     remotemechs = result.name';   % todo: sort so that mechs of an authenticated user are listed first
+%     remoteids=result.id';
+%     remotenotes=result.notes';
+%   end
+% %   err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+% %   mym(['use ' cfg.dbname]);
+% %   level = 'mechanism';
+% %   if cfg.is_authenticated
+% %     q = mym(sprintf('select id,name,level,notes from modeldb_model where user_id=%g and level=''%s''',cfg.user_id,level));
+% %   else
+% %     q = mym(sprintf('select id,name,level,notes from modeldb_model where level=''%s''',level));
+% %   end
+% %   remotemechs = q.name';   % todo: sort so that mechs of an authenticated user are listed first
+% %   remoteids=q.id';
+% %   remotenotes=q.notes';
+% %   mym('close');
+% end
+% 
+% % find "files" elements that are actually primary keys of remote mech models prefixed by "#"
+% localremote_ind = find(~cellfun(@isempty,regexp(localfiles,'^#\d+'))); 
+% % remove remote mechs that are already present in the local allmechs struct
+% if any(localremote_ind)
+%   redundant_ids = cellfun(@(x)strrep(x,'#',''),localfiles(localremote_ind),'unif',0);
+%   redundant_ids = cellfun(@str2num,redundant_ids);
+%   rmidx = ismember(remoteids,redundant_ids);
+%   remotemechs(rmidx)=[];
+%   remoteids(rmidx)=[];
+%   remotenotes(rmidx)=[];
+% end
+% 
+% % prepare table data
+% header = {'name','site','description','local','id'};%{'name','local','site','id','notes'};%{'id','name','local','site'};
+% format= {'char','char','char','logical','numeric'};%{'numeric','char','logical','char'};
+% editable=[1 0 1 0 0]==1;%[0 1 0 0]==1;
+% localnotes=repmat({''},[1 length(localmechs)]);
+% localids=zeros(1,length(localmechs));
+% if any(localremote_ind)
+%   localids(localremote_ind)=redundant_ids;
+% end
+% ids=[remoteids localids];
+% names=cat(2,remotemechs,localmechs);
+% local=[zeros(1,length(remoteids)) ones(1,length(localmechs))]==1;
+% gosite=repmat({'link'},[1 length(local)]);
+% [gosite{ids==0}]=deal(''); % remove links for mechs without key in DB (ie, w/o Django site)
+% allnotes=cat(2,remotenotes,localnotes);
+% data=cat(2,names',gosite',allnotes',num2cell(local'),num2cell(ids'));%data=cat(2,num2cell(ids'),names',num2cell(local'),gosite');
+% ud.storage=cat(2,num2cell(remoteids),localfiles);
+% ud.mechindex=cat(2,zeros(1,length(remoteids)),(1:length(localmechs)));
+% 
+% % draw figure
+% pos=get(findobj('tag','mainfig'),'position');
+% if iscell(pos), pos=pos{1}; end
+% pos(4)=.8*pos(4); % [10 30 800 510]
+% h=findobj('tag','mechbrowser');
+% if any(h)
+%   figure(h(end));
+% else
+%   h=figure('tag','mechbrowser','position',pos,'color',cfg.bgcolor,'name','Browse Mechanisms','NumberTitle','off','MenuBar','none');
+% end
+% % draw controls
+% % mechanism table
+% uitable('parent',h,'units','normalized','position',[0 0 .35 1],'tag','mechtable','userdata',ud,...
+%   'ColumnName',header,'ColumnFormat',format,'ColumnEditable',editable,'data',data,'CellSelectionCallback',@BrowserSelection,'CellEditCallback',@BrowserChange);
+% % mechanism text box
+% uicontrol('parent',h,'style','text','units','normalized','position',[.38 0 .59 .9],'tag','mechtext','BackgroundColor',[.9 .9 .9],'string','','FontName','Monospaced','FontSize',10,'HorizontalAlignment','Left');
+% % -------------------------------------------------------------------------
+% function BrowserSelection(src,evnt)
+% if isempty(evnt.Indices)
+%   return;
+% end
+% global allmechs cfg
+% row=evnt.Indices(1);
+% col=evnt.Indices(2);
+% dat=get(src,'Data'); % {name,site,notes,local,id}
+% if col==2 % site
+%   if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
+%     % goto model detail page
+%     web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
+%   end
+% end
+% if isequal(row,get(findobj('tag','mechtext'),'userdata'))
+%   return;
+% end
+% ud=get(src,'userdata'); % storage (sql:id, disk:file), mechindex (index into allmechs struct)
+% store=ud.storage{row}; % numeric id or filename
+% index=ud.mechindex(row); % index in allmechs or 0
+% 
+% id=dat{row,5};
+% name=dat{row,1};
+% islocal=(dat{row,4}==true);
+% if islocal
+%   mech = allmechs(index);
+%   if exist(mech.file)
+%     fid=fopen(mech.file); % open local mechanism file
+%     txt={};
+%     while (~feof(fid))
+%       this = fgetl(fid);
+%       if this == -1, break; end      
+%       txt{end+1}=this;
+%     end
+%     fclose(fid); % close mech file
+%     set(findobj('tag','mechtext'),'string',txt,'userdata',row);
+%   else
+%     set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+%   end
+% else
+%   % download & convert mech.txt to mech structure; add to allmechs
+%   %mech = getmechfromdb(id);
+%   mech = download_get_models(id,cfg);
+%   if iscell(mech), mech = mech{1}; end
+%   mech.label = name;
+%   mech.file = sprintf('#%g',id);
+%   allmechs(end+1)=mech;
+%   set(findobj('tag','mechtext'),'string',mech_spec2str(mech),'userdata',row);
+%   ud.mechindex(row)=length(allmechs);
+%   set(src,'userdata',ud);
+%   dat{row,4}=true;
+%   set(src,'Data',dat);
+% end
+% % -------------------------------------------------------------------------
+% function BrowserChange(src,evnt)
+% global allmechs
+% row=evnt.Indices(1);
+% col=evnt.Indices(2);
+% dat=get(src,'Data'); 
+% ud=get(src,'userdata');
+% switch col % {name,site,notes,local,id}
+%   case 1 % mechanism name column
+%     ind=ud.mechindex(row);
+%     if ind>0
+%       allmechs(ind).label = dat{row,col};
+%     end
+%   case 2
+%     if dat{row,5}>0 % has a primary key to a DB mech model in InfiniteBrain
+%       % goto model detail page
+%       web(sprintf('http://infinitebrain.org/models/%g/',dat{row,5}),'-browser');
+%     end
+% end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function result=mysqldb(query,fields)
+% global cfg
+% if isempty(cfg)
+%   cfg.webhost = '104.131.218.171'; % 'infinitebrain.org','104.131.218.171'
+%   cfg.dbname = 'modulator';
+%   cfg.dbuser = 'querydb'; % have all users use root to connect to DB and self to transfer files
+%   cfg.dbpassword = 'publicaccess'; % 'publicaccess'
+% end
+% [BIOSIMROOT,o]=fileparts(which('startup.m'));
+% result=[];
+% % check for database connector type and set cfg.mysql_connector
+% if strcmp(query,'test')
+%   % determine connection type
+%   if exist('database.m')==2 % check for database toolbox
+%     % MySQL JAR file
+%     if exist('mysql-connector-java.jar')
+%       jarfile = which('mysql-connector-java.jar');
+%     elseif exist('mysql.jar')
+%       jarfile = which('mysql.jar');
+%     elseif exist('/usr/share/java/mysql-connector-java.jar')
+%       jarfile = '/usr/share/java/mysql-connector-java.jar';
+%     elseif exist(fullfile(BIOSIMROOT,'matlab','dependencies','mysql-connector-java-5.1.28.jar'))
+%       jarfile = fullfile(BIOSIMROOT,'matlab','dependencies','mysql-connector-java-5.1.28.jar');
+%     else
+%       result='none';%cfg.mysql_connector = 'none';
+%       msgbox('Database toolbox failed because of missing mysql-connector-java.jar');
+%       return;        
+%     end
+%     % Set this to the path to your MySQL Connector/J JAR
+%     javaaddpath(jarfile); % WARNING: this might clear global variables
+%     result='database'; %cfg.mysql_connector = 'database';
+%   elseif exist('mym.m')==2  % check for mym
+%     try
+%       err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+%       mym('close');
+%       result='mym';%cfg.mysql_connector = 'mym';
+%     catch
+%       result='none';%cfg.mysql_connector = 'none';
+%     end  
+%   else
+%     result='none';%cfg.mysql_connector = 'none';
+%   end
+%   if strcmp(result,'none')%strcmp(cfg.mysql_connector,'none')
+%     %msgbox('Database connection cannot be established.');
+%   end
+%   return;
+% end
+% % query the DB
+% try
+%   switch cfg.mysql_connector
+%     case 'database'
+%       % JDBC Parameters
+%       jdbcString = sprintf('jdbc:mysql://%s/%s',cfg.webhost,cfg.dbname);
+%       jdbcDriver = 'com.mysql.jdbc.Driver';
+%       % Create the database connection object
+%       dbConn = database(cfg.dbname,cfg.dbuser,cfg.dbpassword,jdbcDriver,jdbcString);
+%       if isconnection(dbConn)
+%         data = get(fetch(exec(dbConn,query)), 'Data');
+%       else
+%         disp(sprintf('Connection failed:&nbsp;%s', dbConn.Message));
+%       end
+%       if isequal(data{1},'No Data')
+%         result = [];
+%       else
+%         % convert result to structure
+%         for i=1:numel(fields)
+%           if isnumeric(data{1,i})
+%             result.(fields{i}) = [data{:,i}]';
+%           elseif ischar(data{1,i})
+%             result.(fields{i}) = {data{:,i}}';
+%           end
+%         end
+%       end
+%       close(dbConn); % Close the connection so we don't run out of MySQL threads
+%     case 'mym'
+%       err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
+%       if err
+%         disp('there was an error opening the database.'); 
+%       else
+%         mym(['use ' cfg.dbname]);
+%         result = mym(query);
+%       end
+%       mym('close');      
+%     case 'mysql'
+%     otherwise
+%   end
+% catch
+%   result = [];
+%   disp('Database query failed.');
+% end
 

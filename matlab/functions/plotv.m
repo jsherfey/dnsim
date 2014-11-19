@@ -79,7 +79,7 @@ if parms.plot_flag
       plot(T,squeeze(data(pop).epochs.data(var,:,show))); hold on
       % overlay LFP
       plot(T,lfp,'k-','linewidth',3);
-      xlabel('time [s]'); ylabel('V');
+      xlabel('time [s]'); ylabel(strrep(lab,'_','\_'));%'V');
       text(min(xlim)+.2*diff(xlim),min(ylim)+.8*diff(ylim),[strrep(lab,'_','\_') ' (' num2str(nshow) '-cell subset)'],'fontsize',14,'fontweight','bold');
       xlim([T(1) T(end)]);
     end

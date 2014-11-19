@@ -1033,7 +1033,7 @@ if parms.verbose
       end
     end
   end
-  fprintf(fileID,'\n\nModel Equations:\n----------------\n');
+  fprintf(fileID,'\n\nModel Equations:\n----------------------------------\n');
   fprintf(fileID,'ODEs:\n');
   for i = 1:nvar
     fprintf(fileID,'\t%-20s = %s\n',[Svars{i,2} ''''],Sodes{i});
@@ -1130,7 +1130,7 @@ if nargout>7
       end
     end
   end
-  txt{end+1}=sprintf('\n\nModel Equations:\n----------------\n');
+  txt{end+1}=sprintf('\n\nModel Equations:\n----------------------------------\n');
   txt{end+1}=sprintf('ODEs:\n');
   for i = 1:nvar
     txt{end+1}=sprintf('\t%-20s = %s\n',[Svars{i,2} ''''],Sodes{i});
