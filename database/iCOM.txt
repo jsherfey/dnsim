@@ -1,0 +1,15 @@
+% iCOM: Simple ohmic intercompartmental current
+% Tags: multicompartment, ohmic, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gcom=.2
+
+% Connection matrix
+compcon = eye(Npre,Npost)
+
+% Functions
+dV(IN,OUT) = ((IN*ones(1,size(IN,1)))'-(OUT*ones(1,size(OUT,1))))
+ICOM(IN,OUT) = gcom.*sum(dV(IN,OUT).*compcon,2)
+
+% Interface
+current => ICOM(IN,OUT)

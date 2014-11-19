@@ -1,0 +1,31 @@
+% iSYN: synaptic current, fast threshold modulation (ref: Kramer/Kopell 2008)
+% Tags: synapse, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gsyn = [0.5]
+Esyn = [0]
+tauD = [1]
+tauR = [0.25]
+width = inf     					% fanout (connection distance)
+IC = [0.1]
+IC_noise = [0]
+ 
+% Connectivity
+Nmax = max(Npre,Npost)
+srcpos = linspace(1,Nmax,Npre)'*ones(1,Npost)		% linear position (sources)
+dstpos = (linspace(1,Nmax,Npost)'*ones(1,Npre))'	% linear position (targets)
+netcon = (abs(srcpos-dstpos)<=width)'			% adjacency matrix (connect elements closer than width)
+
+% Functions
+ISYN(V,s) = (gsyn.*(netcon*s).*(V-Esyn))
+
+% ODEs
+s' = -s./tauD + ((1-s)/tauR).*(1+tanh(IN/10));
+s(0) = IC+IC_noise.*rand(Npre,1)
+ 
+% Interface
+current => -ISYN(OUT,s)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References: 
+% Kramer, M. A., Roopun, A. K., Carracedo, L. M., Traub, R. D., Whittington, M. A., & Kopell, N. J. (2008). Rhythm generation through period concatenation in rat somatosensory cortex. PLoS computational biology, 4(9), e1000169. (http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000169)

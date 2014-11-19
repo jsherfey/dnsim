@@ -1,0 +1,19 @@
+% iGAP: Simple ohmic gap junction current
+% Tags: gap junction, ohmic, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+g_GAP=.2; fanout=.5;
+
+% Connectivity
+UB = max(Npre,Npost)
+Xpre = linspace(1,UB,Npre)'*ones(1,Npost)	% linear positions (sources)
+Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'	% linear positions (targets)
+mask = abs(Xpre-Xpost)<=fanout			% adjacency matrix
+%mask = mask-diag(diag(mask))			% remove connections to self
+
+% Functions
+IGAP(V1,V2) = g_GAP.*sum(((V1*ones(1,size(V1,1)))'-(V2*ones(1,size(V2,1)))).*mask,2)
+
+% Interface
+current => IGAP(IN,OUT)
+

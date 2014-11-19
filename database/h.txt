@@ -8,7 +8,7 @@ vhalf  = -90  % (mV)       : half potential
 IC=0; IC_noise=0
 
 % Functions
-ninf(v) = 1-(1/(1+exp((vhalf-v)/K)))
+ninf(v) = 1-(1./(1+exp((vhalf-v)/K)))
 taun(v) = (v>-10).*(1) + (v<-10).*(2*(1./(exp((v+145)/-17.5)+exp((v+16.8)/16.5))+10))
 ih(v,n) = gbar*n.*(v-eh)
 

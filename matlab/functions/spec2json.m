@@ -34,6 +34,12 @@ if isfield(spec,'privacy'),
 else
   s.privacy = 'public';
 end
+if isfield(spec,'ispublished'), s.ispublished = spec.ispublished; end
+if isfield(spec,'projectname'), s.projectname = spec.projectname; end
+if isfield(spec,'citationtitle'), s.citationtitle = spec.citationtitle; end
+if isfield(spec,'citationstring'), s.citationstring = spec.citationstring; end
+if isfield(spec,'citationurl'), s.citationurl = spec.citationurl; end
+if isfield(spec,'citationabout'), s.citationabout = spec.citationabout; end
 
 % outputs
 if ~isempty(outfile)
