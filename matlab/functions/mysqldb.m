@@ -75,7 +75,7 @@ try
     case 'mym'
       err=mym('open', cfg.webhost,cfg.dbuser,cfg.dbpassword);
       if err
-        disp('there was an error opening the database.'); 
+        %disp('there was an error opening the database.'); 
       else
         mym(['use ' cfg.dbname]);
         result = mym(query);

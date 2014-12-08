@@ -1,7 +1,7 @@
 function varargout=modeler(varargin)
 clear global cfg H CURRSPEC BACKUPFILE
 cfg.mysql_connector = mysqldb('setup'); % call this first b/c javaaddpath clears global variables (see: http://www.mathworks.com/matlabcentral/newsreader/view_thread/163362)
-if ~isdeployed 
+if ~isdeployed && nargout==0
   try
     if ~exist('ganymed-ssh2-build250','dir')
       sshfrommatlabinstall(1); % run at tool launch before setting global vars
@@ -1344,7 +1344,8 @@ var_flag=ones(size(sel));
 tvec=zeros(1,cfg.buffer);
 xticks=get(H.ax_state_plot(end),'xtick');
 tinds=1:cfg.buffer; index=1;
-cfg.record=zeros(length(IC),cfg.buffer);
+%cfg.record=zeros(length(IC),cfg.buffer);
+cfg.record=nan(length(IC),cfg.buffer);
 while cfg.quitflag<0 && (length(IC)==length(CURRSPEC.model.IC))
   if ~isequal(ode,CURRSPEC.model.ode)
     ode=CURRSPEC.model.ode;

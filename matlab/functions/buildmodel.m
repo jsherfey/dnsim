@@ -766,9 +766,11 @@ end
 for t=1:size(Tsubst,1)
   idx = (Stype==0 & Spop==Tpop(t));
   o = Sodes(idx);
-  %old=Tsubst{t,1}; new=['(' Tsubst{t,2} ')+' old];
   old=Tsubst{t,1}; new=['((' Tsubst{t,2} ')+' old ')'];
   Sodes(idx)=substitute(old,new,o);
+  o = Sodes0(idx);
+  old=Tsubst0{t,1}; new=['((' Tsubst0{t,2} ')+' old ')'];
+  Sodes0(idx)=substitute(old,new,o);  
 end
 
 % Insert global entity state vars into other entity dnamics
@@ -856,6 +858,8 @@ SodesVec=substitute(old,new,Sodes);
 old=unique(Tsubst(:,1)); clear new
 [new{1:length(old)}]=deal('0');
 SodesVec=substitute(old,new,SodesVec);%,Sodes
+Sodes=substitute(old,new,Sodes);%,Sodes
+Sodes0=substitute(old,new,Sodes0);%,Sodes
 
 % Prepare model string for evaluation
 model = SodesVec;
@@ -909,6 +913,7 @@ for i=1:N
   sys.entities(i).auxvars = auxvars(Cpop==i,:);
   sys.entities(i).functions = functions(Hpop==i,:);
   sys.entities(i).odes = Sodes(Spop==i);
+  sys.entities(i).odes_str = Sodes0(Spop==i);
   sys.entities(i).ode_labels = Svars(Spop==i,2);
   sys.entities(i).var_index=cat(2,Svars{Spop==i,3});
   nhere=length(sys.entities(i).var_index);
