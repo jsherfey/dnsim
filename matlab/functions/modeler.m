@@ -1,4 +1,4 @@
-function modeler(varargin)
+function varargout=modeler(varargin)
 clear global cfg H CURRSPEC BACKUPFILE
 cfg.mysql_connector = mysqldb('setup'); % call this first b/c javaaddpath clears global variables (see: http://www.mathworks.com/matlabcentral/newsreader/view_thread/163362)
 if ~isdeployed 
@@ -266,6 +266,13 @@ CURRSPEC = net;
 % prepare_spec;
 updatemodel(CURRSPEC);
 CURRSPEC = trimparams(CURRSPEC);
+
+if nargout>0
+  varargout{1}=CURRSPEC;
+  return
+else
+  varargout={};
+end
 
 %% set up GUI
 
@@ -3271,17 +3278,20 @@ for i=1:length(spec.cells)
   end
   parmlist={};
   for j=1:length(spec.cells(i).mechanisms)
+    if ~isfield(spec.cells,'mechs'), break; end
     if isstruct(spec.cells(i).mechs(j).params)
       parmlist=cat(1,parmlist,fieldnames(spec.cells(i).mechs(j).params));
     end
   end
   for k=1:length(spec.cells)
+    if ~isfield(spec.connections,'mechs'), break; end
     for j=1:length(spec.connections(k,i).mechanisms)
       if isstruct(spec.connections(k,i).mechs(j).params)
         parmlist=cat(1,parmlist,fieldnames(spec.connections(k,i).mechs(j).params));
       end
     end
   end
+  if isempty(parmlist), continue; end
   parmlist=unique(parmlist);
   rm=find(ismember(spec.cells(i).parameters(1:2:end),parmlist));
   if ~isempty(rm)

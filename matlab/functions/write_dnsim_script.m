@@ -86,14 +86,20 @@ if isfield(spec,'connections')
   end
 end
 
+% % process specification and simulate model
+% model=dnsim(spec); % dnsim(spec);
+% data = biosim(model,'timelimits',[0 5000],'dt',.01,'dsfact',10);
+% plotv(data,model,'varlabel','V');
+% title(sprintf('stim=%g',stimLTS));
+
 fprintf(fid,'dnsim(spec); %% open model in DNSim GUI\n\n');
 fprintf(fid,'%% Parse and compare DNSim models:\n');
-fprintf(fid,'[ODEFUN,IC,functions,auxvars,FULLSPEC]=buildmodel2(spec,''verbose'',1); %% parse DNSim spec structure (returns ODEFUN handle and initial conditions IC for manual simulation and FULLSPEC for automatic simulation)\n');
+fprintf(fid,'[ODEFUN,IC,functions,auxvars,FULLSPEC]=buildmodel(spec,''verbose'',1); %% parse DNSim spec structure (returns ODEFUN handle and initial conditions IC for manual simulation and FULLSPEC for automatic simulation)\n');
 fprintf(fid,'report=modeldiff(FULLSPEC,FULLSPEC) %% compare two DNSim models\n');
 fprintf(fid,'%% DNSim simulation and plots:\n');
 fprintf(fid,'sim_data = biosim(FULLSPEC,''timelimits'',[0 100],''dt'',.02,''dsfact'',10); %% wrapper to simulate DNSim models\n');
 try  
-  [ODEFUN,IC,functions,auxvars,FULLSPEC,Sodes,Svars,txt]=buildmodel2(spec,'verbose',0);
+  [ODEFUN,IC,functions,auxvars,FULLSPEC,Sodes,Svars,txt]=buildmodel(spec,'verbose',0);
   vars=FULLSPEC.variables.global_oldlabel;
   fprintf(fid,'plotv(sim_data,FULLSPEC,''varlabel'',''%s''); %% quickly plot select variables\n',vars{1});
 catch
