@@ -20,16 +20,16 @@ nummechs = sum(arrayfun(@(x)numel(x.mechanisms),spec.nodes)) + ...
            sum(arrayfun(@(x)numel(x.mechanisms),spec.connections));
 
 % How to preserve parameter/variable scopes / namespaces
-if numnodes>1
-  prefixflag = 2; % add node and mechanism prefixes
-elseif nummechs>1
-  prefixflag = 1; % add mechanism prefixes only
-else
-  prefixflag = 0; % add no prefixes
-end
+% if numnodes>1
+%   prefixflag = 2; % add node and mechanism prefixes
+% elseif nummechs>1
+%   prefixflag = 1; % add mechanism prefixes only
+% else
+%   prefixflag = 0; % add no prefixes
+% end
 
 % Re-organize model data for xpp conversion
-[odes,ics,functions,parameters] = collectdata(spec,prefixflag);
+[odes,ics,functions,parameters] = collectdata(spec);%,prefixflag);
 
 % Convert model to xpp format
 xpp='';
@@ -63,45 +63,71 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SUBFUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [ODEs,ICs,FUNCTIONS,PARAMETERS] = collectdata(spec,prefixflag)
+function [ODEs,ICs,FUNCTIONS,PARAMETERS] = collectdata(spec)
 ODEs={}; ICs={}; FUNCTIONS={}; PARAMETERS={};
+parsedfunctions=spec.model.functions;
 for i=1:numel(spec.nodes)
   % add global node dynamics (ODEs) and parameters
-    % PREREQUISITE TODO: modify buildmodel() to add spec.nodes(#).odes where odes 
-    % contains dynamics with interface function substitutions and no parameter substitutions.
-  % ...
+  for j=1:numel(spec.nodes(i).odes_str)
+    ODEs{end+1}=sprintf('%s''=%s',spec.nodes(i).ode_labels{j},spec.nodes(i).odes_str{j});
+  end
+  % add intrinsic mechanism parameters, functions, and ODEs
   for j=1:numel(spec.nodes(i).mechanisms)
-    % add intrinsic mechanism parameters, functions, and ODEs
-    [odes,ics,functions,parameters] = collectmechdata(spec.nodes(i).mechs(j));
+    prefix=sprintf('%s_%s',spec.nodes(i).label,spec.nodes(i).mechanisms{j});
+    [odes,ics,functions,parameters] = collectmechdata(spec.nodes(i).mechs(j),prefix,parsedfunctions);
     ODEs=cat(2,ODEs,odes); ICs=cat(2,ICs,ics); FUNCTIONS=cat(2,FUNCTIONS,functions); PARAMETERS=cat(2,PARAMETERS,parameters);
   end
+  % add connection mechanism parameters, functions, and ODEs
   for j=1:numel(spec.nodes)
     for k=1:numel(spec.connections(i,j).mechanisms)
-      % add connection mechanism parameters, functions, and ODEs
-      [odes,ics,functions,parameters] = collectmechdata(spec.connections(i,j).mechs(k));  
+      prefix=strrep(sprintf('%s_%s',spec.connections(i,j).label,spec.connections(i,j).mechanisms{k}),'-','_');
+      [odes,ics,functions,parameters] = collectmechdata(spec.connections(i,j).mechs(k),prefix,parsedfunctions);  
       ODEs=cat(2,ODEs,odes); ICs=cat(2,ICs,ics); FUNCTIONS=cat(2,FUNCTIONS,functions); PARAMETERS=cat(2,PARAMETERS,parameters);
     end
   end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [odes,ics,functions,parameters] = collectmechdata(mech)
+function [odes,ics,functions,parameters] = collectmechdata(mech,prefix,parsedfunctions)
 odes={}; ics={}; functions={}; parameters={};
+% Parameters
+keys = fieldnames(mech.params);
+vals = struct2cell(mech.params);
+for i=1:length(keys)
+  if isnumeric(vals{i})
+    val=num2str(vals{i});
+  else
+    val=vals{i};
+  end
+  parameters{end+1} = sprintf('%s_%s = %s',prefix,keys{i},val);
+end
+newkeys = cellfun(@(x)[prefix '_' x],keys,'uni',0);
+% State functions
+keyboard
+for i=1:size(mech.functions,1)
+  % convert [f=@(x)expression] to [f(x)=expression]
+  name = [prefix '_' mech.functions{i,1}];
+  vars1 = parsedfunctions{strcmp(name,parsedfunctions(:,1)),2};
+  vars1 = regexp(vars1,'^@([^\s]+)','match');
+  vars1 = strrep(strrep(vars1{1},'@(',''),')','');
+  vars2 = mech.functions{i,2};
+  vars2 = regexp(vars2,'^@([^\s]+)','match');
+  vars2 = strrep(strrep(vars2{1},'@(',''),')','');
+  expr = strrep(mech.functions{i,2},['@(' vars2 ')'],'');
+  for j=1:length(keys)
+    expr = strrep(expr,keys{j},newkeys{j});
+  end
+  for j=1:size(parsedfunctions,1)
+    expr = strrep(expr,parsedfunctions{j,3},parsedfunctions{j,1});
+  end  
+  expr = sprintf('%s_%s(%s) =%s',prefix,mech.functions{i,1},vars1,expr);
+  functions{end+1}=expr;  
+end
 % ODEs
 for i=1:size(mech.odes,1)
   % ... (odes and ic); 
   %     odes: statevars{j}'=odes{j} 
   %     ics:  statevars{j}(0)=eval(ic{j})
-end
-% State functions
-for i=1:size(mech.functions,1)
-  % ... (convert [f=@(x)expression] to [f(x)=expression])
-end
-% Parameters
-keys = fieldnames(mech.params);
-vals = struct2cell(mech.params);
-for i=1:length(keys)
-  % ... (param keys{i} = vals{i})
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
