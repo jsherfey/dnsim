@@ -77,12 +77,14 @@ for pop=1:npop
   end
   if parms.spectrogram_flag
     try
-      [yo,fo,to] = spectrogram(double(detrend(lfp)),NFFT,Fs,WINDOW,NOVERLAP);
+      %[yo,fo,to] = spectrogram(double(detrend(lfp)),NFFT,Fs,WINDOW,NOVERLAP);
+      [yo,fo,to] = spectrogram(double(detrend(lfp)),WINDOW,NOVERLAP,NFFT,Fs);
       %[yo,fo,to] = specmw(detrend(lfp),NFFT,Fs,WINDOW,NOVERLAP);
       %[yo,fo,to] = mtmspecTA2(detrend(dat),NFFT,Fs,WINDOW,NOVERLAP);
       %[yo,fo,to] = mtmspecTA(detrend(dat),NFFT,Fs,WINDOW,NOVERLAP,2.5);
     catch
-      yo=[];
+      parms.spectrogram_flag = 0;
+      continue;
     end
     if pop==1
       tfpows = zeros(npop,length(to),length(fo));
@@ -130,6 +132,12 @@ if parms.plot_flag
       ylabel('power [normalized]');
       title([strrep(lab,'_','\_') ' power spectrum'],'fontsize',14,'fontweight','bold');    
       xlim(plims);
+      maxf=f(pows(pop,:)==max(pows(pop,:)));
+      if ~isempty(maxf) && isreal(maxf)
+        vline(maxf,'k');
+        hh=text(maxf+.05*range(xlim),min(ylim)+.9*range(ylim),num2str(maxf));
+        set(hh,'fontsize',12);
+      end
       if pop==npop
         xlabel('freq [Hz]'); 
       else
@@ -141,7 +149,8 @@ if parms.plot_flag
      yz = (yy-repmat(mean(yy,1),[size(yy,1) 1]))./(repmat(std(yy,0,1),[size(yy,1) 1]));
      imagesc(to,fo,yz'); axis xy; axis tight;
      caxis(zlims);
-     ylim(plims); xlim([to(1) to(end)]);
+     if plims(1)~=plims(2), ylim(plims); end
+     if to(1)~=to(end), xlim([to(1) to(end)]); end
      colorbar; %colormap(flipud(colormap('hot')));
      ylabel('freq [Hz]')   
      title([strrep(lab,'_','\_') ' spectrogram (power z-score)'],'fontsize',14,'fontweight','bold');    

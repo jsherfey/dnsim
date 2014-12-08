@@ -1,10 +1,15 @@
-function dnsim(varargin)
+function varargout=dnsim(varargin)
 %modeler(varargin);
+varargout={};
 
 if nargin<1
   dnsim_loader;
 else
-  modeler(varargin{:});
+  if nargout>0
+    varargout{1}=modeler(varargin{:});
+  else
+    modeler(varargin{:});
+  end
 end
 
 function dnsim_loader

@@ -1,10 +1,11 @@
-function [allspecs,allspaces,allscopes,allvariables,uniq_allscopes,uniq_allvars, allfiles] = loadbatchmodels(batchdirs)
+function [allspecs,allspaces,allscopes,allvariables,uniq_allscopes,uniq_allvars, allfiles,uniq_allvals] = loadbatchmodels(batchdirs)
 % purpose: load specs and (scope,var,val) across simstudy batches into paramspaces
 % example:
 % batchdirs{1}='/projectnb/crc-nak/sherfey/20140316-193925_CBsynparams/CB-multiplicity__CB-Ed-span-tauDx-gSYN__I-multiplicity__I-E-gSYN';
 % batchdirs{2}='/projectnb/crc-nak/sherfey/20140316-224054_gSYNstoEcell/CB-multiplicity__CB-Ed-gSYN__E+Ed-multiplicity__E-Ed-gSYN__I-E-gSYN';
 % [specs,spaces,scopes,vars,uscope,uvars]=loadbatchmodels(batchdirs);
 if ~iscell(batchdirs), batchdirs={batchdirs}; end
+batchdirs=unique(batchdirs);
 nbatches=length(batchdirs);
 
 % load paramspaces from all simstudy batches

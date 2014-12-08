@@ -27,7 +27,7 @@ VinFunc = {};
 aux_Vin = {};
 
 if isfile
-  fprintf('reading %s\n',fname);
+  %fprintf('reading %s\n',fname);
   fid=fopen(fname,'rt'); % open mech file
   while (~feof(fid))
     % read line & split by semicolon-delimiter
