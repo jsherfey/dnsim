@@ -47,6 +47,16 @@ if isfield(spec,'connections') && any(size(spec.connections)<length(spec.entitie
   spec.connections(n,n).mechanisms=[];
   spec.connections(n,n).parameters=[];
 end
+if ~isfield(spec.entities,'label')
+  for i=1:length(spec.entities)
+    spec.entities(i).label = sprintf('node%g',i);
+  end
+end
+if ~isfield(spec.entities,'multiplicity')
+  for i=1:length(spec.entities)
+    spec.entities(i).multiplicity = 1;
+  end
+end
 parms = mmil_args2parms( varargin, ...
                          {  ...
                             'logfid',1,[],...
@@ -56,6 +66,7 @@ parms = mmil_args2parms( varargin, ...
                             'verbose',1,[],...
                             'timelimits',[],[],...
                             'DBPATH',[],[],...
+                            'couple_flag',0,[],...
                          }, false);
 % note: override = {label,field,value,[arg]; ...}
 fileID = parms.logfid;
@@ -139,6 +150,9 @@ mechtype={}; % 0=connection, 1=intrinsic
 mechsrc=[]; mechdst=[];
 for i=1:N % loop over entities
   clear m1 m2 p1 p2 inp1 inp2
+  if ~isfield(spec.entities,'mechanisms')
+    spec.entities(i).mechanisms = [];
+  end
   m1 = spec.entities(i).mechanisms;
   if length(m1)>0
     [p1{1:length(m1)}]=deal(spec.entities(i).parameters);
@@ -777,43 +791,45 @@ end
 % ADDED: 21-May-2014 (trial code - if broken, check here or where handling for no mechs was added)
 alloldvars=Svars(:,1);
 allnewvars=Svars(:,2);
-% for i=1:nvar % loop over all state vars
-%   if Stype(i)==1 % skip intrinsic variables
-%     continue; 
-%   end
-%   str=Sodes{i};
-%   for j=1:N % loop over all populations
-%     if Spop(i)==j % do not substitute this var's label here
-%       continue; 
-%     end
-%     % get state vars for this population
-%     vars=alloldvars(Spop==j);
-%     newvars=allnewvars(Spop==j);
-%     types=Stype(Spop==j);
-%     if isempty(vars), continue; end
-%     for k=1:length(vars)
-%       if types(k)==1
-%         continue;
-%       end
-%       var=vars{k};
-%       subvar=newvars{k};    
-% %       var='U'; subvar='y_U';
-% %       str='V./ U+E_V';%'E_V+U./';
-%       ops='+-/^\.\s\*';
-%       pat1=['^' var '$'];
-%       pat2=['^' var '[' ops ']'];
-%       pat3=['[' ops '\(]' var '[' ops '\)]'];
-%       pat4=['[' ops ']' var '$'];
-%       pat=sprintf('(%s|%s|%s|%s)',pat1,pat2,pat3,pat4);
-%       matches=regexp(str,pat,'match');
-%       for l=1:length(matches)
-%         newsub=strrep(matches{l},var,subvar);
-%         str=strrep(str,matches{l},newsub);
-%       end
-%     end
-%   end
-%   Sodes{i}=str;
-% end
+if parms.couple_flag==1
+  for i=1:nvar % loop over all state vars
+    if Stype(i)==1 % skip intrinsic variables
+      continue; 
+    end
+    str=Sodes{i};
+    for j=1:N % loop over all populations
+      if Spop(i)==j % do not substitute this var's label here
+        continue; 
+      end
+      % get state vars for this population
+      vars=alloldvars(Spop==j);
+      newvars=allnewvars(Spop==j);
+      types=Stype(Spop==j);
+      if isempty(vars), continue; end
+      for k=1:length(vars)
+        if types(k)==1
+          continue;
+        end
+        var=vars{k};
+        subvar=newvars{k};    
+  %       var='U'; subvar='y_U';
+  %       str='V./ U+E_V';%'E_V+U./';
+        ops='+-/^\.\s\*';
+        pat1=['^' var '$'];
+        pat2=['^' var '[' ops ']'];
+        pat3=['[' ops '\(]' var '[' ops '\)]'];
+        pat4=['[' ops ']' var '$'];
+        pat=sprintf('(%s|%s|%s|%s)',pat1,pat2,pat3,pat4);
+        matches=regexp(str,pat,'match');
+        for l=1:length(matches)
+          newsub=strrep(matches{l},var,subvar);
+          str=strrep(str,matches{l},newsub);
+        end
+      end
+    end
+    Sodes{i}=str;
+  end
+end
 
 % Evaluate ICs and determine state vector indices
 stateindx=0;
@@ -897,19 +913,21 @@ sys.connections.parameters=[];
 sys.connections.mechs=[];
 sys.connections(1:N,1:N)=sys.connections;
 for i=1:N
-  for j=1:length(sys.entities(i).mechs)
-    p=sys.entities(i).parameters{j};
-    if isempty(p), continue; end
-    m=sys.entities(i).mechs(j);
-    if ~isstruct(m.params), continue; end
-    flds=fieldnames(m.params);
-    if isempty(flds), continue; end
-    [s1,s2]=match_str(flds,p(1:2:end));
-    for k=1:length(s1)
-      m.params.(flds{s1(k)}) = p{2*s2(k)};
-    end
-    sys.entities(i).mechs(j) = m;
-  end    
+  if isfield(sys.entities,'mechs')
+    for j=1:length(sys.entities(i).mechs)
+      p=sys.entities(i).parameters{j};
+      if isempty(p), continue; end
+      m=sys.entities(i).mechs(j);
+      if ~isstruct(m.params), continue; end
+      flds=fieldnames(m.params);
+      if isempty(flds), continue; end
+      [s1,s2]=match_str(flds,p(1:2:end));
+      for k=1:length(s1)
+        m.params.(flds{s1(k)}) = p{2*s2(k)};
+      end
+      sys.entities(i).mechs(j) = m;
+    end    
+  end
   sys.entities(i).auxvars = auxvars(Cpop==i,:);
   sys.entities(i).functions = functions(Hpop==i,:);
   sys.entities(i).odes = Sodes(Spop==i);
@@ -988,6 +1006,7 @@ sys.model.functions = functions;
 sys.model.auxvars = auxvars;
 sys.model.ode = model;
 sys.model.IC = IC;
+sys.model.parms = parms;
 
 if parms.verbose
   % Print model info

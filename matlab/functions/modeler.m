@@ -379,7 +379,7 @@ uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
-if ~isempty(CURRSPEC.(cfg.focustype)) && ~isempty(CURRSPEC.(cfg.focustype)(cfg.focus).mechanisms)
+if ~isempty(CURRSPEC.(cfg.focustype)) && isfield(CURRSPEC.(cfg.focustype),'mechanisms') && ~isempty(CURRSPEC.(cfg.focustype)(cfg.focus).mechanisms)
   tmp=CURRSPEC.(cfg.focustype)(cfg.focus);
   str1=tmp.mechanisms;
   str2=mech_spec2str(tmp.mechs(1));
@@ -2202,7 +2202,7 @@ Display_Mech_Info;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function printmodel(src,evnt)
 global CURRSPEC
-buildmodel2(CURRSPEC,'verbose',1,'nofunctions',get(findobj('tag','substfunctions'),'value'));
+buildmodel(CURRSPEC,'verbose',1,'nofunctions',get(findobj('tag','substfunctions'),'value'));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function txt = mech_spec2str(mech)
 % Purpose: prepare text to display mech model parameters and equations
@@ -3248,7 +3248,7 @@ LASTSPEC = CURRSPEC;
 CURRSPEC = newspec;
 if 1
   try
-    [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel2(CURRSPEC,'verbose',0,'nofunctions',get(findobj('tag','substfunctions'),'value'));
+    [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel(CURRSPEC,'verbose',0,'nofunctions',get(findobj('tag','substfunctions'),'value'));
     if isfield(CURRSPEC,'entities') && ~isfield(CURRSPEC,'cells')
       CURRSPEC.cells=CURRSPEC.entities; CURRSPEC=rmfield(CURRSPEC,'entities'); 
     end
@@ -3278,17 +3278,21 @@ for i=1:length(spec.cells)
     continue;
   end
   parmlist={};
-  for j=1:length(spec.cells(i).mechanisms)
-    if ~isfield(spec.cells,'mechs'), break; end
-    if isstruct(spec.cells(i).mechs(j).params)
-      parmlist=cat(1,parmlist,fieldnames(spec.cells(i).mechs(j).params));
+  if isfield(spec.cells,'mechanisms')
+    for j=1:length(spec.cells(i).mechanisms)
+      if ~isfield(spec.cells,'mechs'), break; end
+      if isstruct(spec.cells(i).mechs(j).params)
+        parmlist=cat(1,parmlist,fieldnames(spec.cells(i).mechs(j).params));
+      end
     end
   end
-  for k=1:length(spec.cells)
-    if ~isfield(spec.connections,'mechs'), break; end
-    for j=1:length(spec.connections(k,i).mechanisms)
-      if isstruct(spec.connections(k,i).mechs(j).params)
-        parmlist=cat(1,parmlist,fieldnames(spec.connections(k,i).mechs(j).params));
+  if isfield(spec.connections,'mechanisms')
+    for k=1:length(spec.cells)
+      if ~isfield(spec.connections,'mechs'), break; end
+      for j=1:length(spec.connections(k,i).mechanisms)
+        if isstruct(spec.connections(k,i).mechs(j).params)
+          parmlist=cat(1,parmlist,fieldnames(spec.connections(k,i).mechs(j).params));
+        end
       end
     end
   end

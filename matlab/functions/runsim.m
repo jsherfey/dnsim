@@ -53,20 +53,40 @@ parms = mmil_args2parms( varargin, ...
                               'override',[],[],...
                               'IC',[],[],...
                               'verbose',1,[],...
+                              'couple_flag',0,[],...
+                              'nofunctions',1,[],...
                            }, false);
 
 % ----------------------------------------------------------
 % get model
 %[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override);
-[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel2(spec,'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose);
+if ~isfield(spec,'model') || ~isempty(parms.output_list)
+  [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
+else
+  model=spec.model.ode;
+  ic=spec.model.IC;
+  functions=spec.model.functions;
+  auxvars=spec.model.auxvars;
+end
 if ~isempty(parms.IC) && numel(parms.IC)==numel(ic)
   ic = parms.IC;
+end
+% get nofunctions from spec in case processed spec was provided
+if issubfield(spec,'model.parms')
+  parms.nofunctions = spec.model.parms.nofunctions;
 end
 % ----------------------------------------------------------
 % run simulation
 tstart = tic;
 try args = mmil_parms2args(parms); catch args = {}; end
-[data,t] = biosimulator(model,ic,functions,auxvars,args{:});%'Iext',Iext,'timelimits',tspan);
+switch parms.SOLVER
+  case {'euler','rk2','modifiedeuler'}
+    file = dnsimulator(spec,args{:});
+    [data,t] = feval(file); %eval(sprintf('[data,t]=%s;',file));
+    delete([file '.m']);    
+  otherwise
+    [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
+end
 toc(tstart);
 
 % ----------------------------------------------------------
@@ -316,8 +336,10 @@ end
 clear simdata
 if isfield(spec,'entities')
   simfield='entities';
-else
+elseif isfield(spec,'cells')
   simfield='cells';
+elseif isfield(spec,'nodes')
+  simfield='nodes';
 end
 datafield = 'epochs';% 'studies';
 maxN = max(Esizes);
