@@ -63,7 +63,7 @@ end
 
 % run biosim
 args = mmil_parms2args(spec.simulation);
-[sim_data,spec,parms.biosim] = biosim(spec,args{:},'verbose',parms.verbose);
+[sim_data,spec,parms.biosim] = runsim(spec,args{:},'verbose',parms.verbose);
 
 % save simulated data with prefix
 if parms.savedata_flag

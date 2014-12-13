@@ -46,6 +46,8 @@ switch lower(parms.SOLVER)
     % preallocate and initialize data matrix
     Y = zeros(length(IC),nstep);
     Y(:,1) = IC;
+    enableLog = 1:(nstep-1)/nreports:nstep;
+    enableLog(1) = [];
     for k = 2:nstep
       t=T(k-1);
       switch parms.SOLVER
@@ -60,8 +62,15 @@ switch lower(parms.SOLVER)
          k4 = model(t+dt,Y(:,k-1)+dt*k3);   
          Y(:,k) = Y(:,k-1)+(k1+2*(k2+k3)+k4)*dt/6;
       end        
-      if rem(k,round(nstep/nreports))==0
-        fprintf(fileID,'Processed %g of %g in %g sec)\n',t,T(end),round(toc(tstart)));
+      if any(k == enableLog)
+        elapsedTime = toc(tstart);
+        elapsedTimeMinutes = floor(elapsedTime/60);
+        elapsedTimeSeconds = rem(elapsedTime,60);
+        if elapsedTimeMinutes
+            fprintf(fileID,'Processed %g of %g ms (elapsed time: %g m %.3f s)\n',T(k),T(end),elapsedTimeMinutes,elapsedTimeSeconds);
+        else
+            fprintf(fileID,'Processed %g of %g ms (elapsed time: %.3f s)\n',T(k),T(end),elapsedTimeSeconds);
+        end
       end
     end
     t = T; clear T

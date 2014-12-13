@@ -2,12 +2,14 @@ function odefun = dnsimulator(spec,varargin)
 parms = mmil_args2parms( varargin, ...
                          {...
                             'timelimits',[0 200],[],...
+                            'logfid',1,[],...
                             'dt',.02,[],...
                             'SOLVER','euler',[],...
                          }, false);
 
 tspan = parms.timelimits;
 dt = parms.dt;
+fileID = parms.logfid;
 solver = parms.SOLVER;
 
 if isfield(spec,'cells'), fld='cells';
@@ -28,6 +30,11 @@ fid=fopen([odefun '.m'],'wt');
 fprintf(fid,'function [Y,T] = %s\n',odefun);
 fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
+if ischar(fileID)
+  fprintf(fid,'fileID = %s; nreports = 5; enableLog = 1:(nstep-1)/nreports:nstep;enableLog(1) = [];\n',fileID);
+else
+  fprintf(fid,'fileID = %d; nreports = 5; enableLog = 1:(nstep-1)/nreports:nstep;enableLog(1) = [];\n',fileID);
+end
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan);');
 fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);',solver);
 
@@ -68,16 +75,17 @@ end
 odes = splitstr(model(9:end-2),';');
 
 % Integrate
+fprintf(fid,'tstart = tic;\n');
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
-    fprintf(fid,'\tt=T(k-1);\n');
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
-      fprintf(fid,'\tF=%s;\n',odes{i});
+      fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
-        fprintf(fid,'\t%s(:,k) = %s(:,k-1) + dt*F;\n',ulabels{i},ulabels{i});
+        fprintf(fid,'  %s(:,k) = %s(:,k-1) + dt*F;\n',ulabels{i},ulabels{i});
       else
-        fprintf(fid,'\t%s(k) = %s(k-1) + dt*F;\n',ulabels{i},ulabels{i});
+        fprintf(fid,'  %s(k) = %s(k-1) + dt*F;\n',ulabels{i},ulabels{i});
       end
     end
     fprintf(fid,'end\n');    
@@ -85,8 +93,8 @@ switch solver
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
     for i=1:length(odes)
-      fprintf(fid,'\tt=T(k-1);\n');
-      fprintf(fid,'\t%s1=%s;\n',ulabels{i},odes{i});
+      fprintf(fid,'  t=T(k-1);\n');
+      fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
         if ns(j)>1
           tmpodes{i}=strrep(tmpodes{i},[ulabels{j} '(:,k-1)'],sprintf('(%s(:,k-1)+.5*dt*%s1)',ulabels{j},ulabels{j}));
@@ -96,16 +104,28 @@ switch solver
       end
     end
     for i=1:length(odes)
-      fprintf(fid,'\tt=T(k-1)+.5*dt;\n');
-      fprintf(fid,'\t%s2=%s;\n',ulabels{i},tmpodes{i});
+      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
+      fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
     for i=1:length(odes)
       if ns(i)>1
-        fprintf(fid,'\t%s(:,k) = %s(:,k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
+        fprintf(fid,'  %s(:,k) = %s(:,k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
       else
-        fprintf(fid,'\t%s(k) = %s(k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
+        fprintf(fid,'  %s(k) = %s(k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
       end
     end
+    fprintf(fid,'  if any(k == enableLog)\n');
+    fprintf(fid,'    elapsedTime = toc(tstart);\n');
+    fprintf(fid,'    elapsedTimeMinutes = floor(elapsedTime/60);\n');
+    fprintf(fid,'    elapsedTimeSeconds = rem(elapsedTime,60);\n');
+    fprintf(fid,'    if elapsedTimeMinutes\n');
+    logMS = 'Processed %g of %g ms (elapsed time: %g m %.3f s)\n';
+    logS = 'Processed %g of %g ms (elapsed time: %.3f s)\n';
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeMinutes,elapsedTimeSeconds);\n',logMS);
+    fprintf(fid,'    else\n');
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeSeconds);\n',logS);
+    fprintf(fid,'    end\n');
+    fprintf(fid,'  end\n');    
     fprintf(fid,'end\n');    
   case 'rk4'
     % ...
@@ -127,5 +147,4 @@ end
 %{
 fprintf('running simulation...\n');
 eval(sprintf('[data,t]=%s;',odefun));
-delete([odefun '.m']);
 %}

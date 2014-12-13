@@ -61,7 +61,8 @@ parms = mmil_args2parms( varargin, ...
 % get model
 %[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override);
 if ~isfield(spec,'model') || ~isempty(parms.output_list)
-  [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
+  args = mmil_parms2args(parms);
+  [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,args{:});%'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
 else
   model=spec.model.ode;
   ic=spec.model.IC;
@@ -77,17 +78,15 @@ if issubfield(spec,'model.parms')
 end
 % ----------------------------------------------------------
 % run simulation
-tstart = tic;
 try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler'}
     file = dnsimulator(spec,args{:});
-    [data,t] = feval(file); %eval(sprintf('[data,t]=%s;',file));
+    [data,t] = feval(file);
     delete([file '.m']);    
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
 end
-toc(tstart);
 
 % ----------------------------------------------------------
 % prepare results (downsample/postprocess data, organize data structure):
