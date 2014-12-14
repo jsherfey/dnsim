@@ -80,7 +80,7 @@ end
 % run simulation
 try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
-  case {'euler','rk2','modifiedeuler'}
+  case {'euler','rk2','modifiedeuler','rk4','rungekutta','rk'}
     file = dnsimulator(spec,args{:});
     [data,t] = feval(file);
     delete([file '.m']);    

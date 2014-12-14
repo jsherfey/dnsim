@@ -88,6 +88,18 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + dt*F;\n',ulabels{i},ulabels{i});
       end
     end
+    fprintf(fid,'  if any(k == enableLog)\n');
+    fprintf(fid,'    elapsedTime = toc(tstart);\n');
+    fprintf(fid,'    elapsedTimeMinutes = floor(elapsedTime/60);\n');
+    fprintf(fid,'    elapsedTimeSeconds = rem(elapsedTime,60);\n');
+    fprintf(fid,'    if elapsedTimeMinutes\n');
+    logMS = 'Processed %g of %g ms (elapsed time: %g m %.3f s)\n';
+    logS = 'Processed %g of %g ms (elapsed time: %.3f s)\n';
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeMinutes,elapsedTimeSeconds);\n',logMS);
+    fprintf(fid,'    else\n');
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeSeconds);\n',logS);
+    fprintf(fid,'    end\n');
+    fprintf(fid,'  end\n');    
     fprintf(fid,'end\n');    
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
@@ -127,8 +139,81 @@ switch solver
     fprintf(fid,'    end\n');
     fprintf(fid,'  end\n');    
     fprintf(fid,'end\n');    
-  case 'rk4'
-    % ...
+%           k1 = model(t,Y(:,k-1));
+%           k2 = model(t+.5*dt,Y(:,k-1)+0.5*dt*k1)
+%           Y(:,k) = Y(:,k-1) + dt*k2;
+  case {'rk4','rungekutta','rk'}
+    fprintf(fid,'for k=2:nstep\n');
+    tmpodes1=odes;
+    tmpodes2=odes;
+    tmpodes3=odes;
+    for i=1:length(odes)
+      fprintf(fid,'  t=T(k-1);\n');
+      % set k1
+      fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
+      % set k2
+      for j=1:length(ulabels)
+        if ns(j)>1
+          tmpodes1{i}=strrep(tmpodes1{i},[ulabels{j} '(:,k-1)'],sprintf('(%s(:,k-1)+.5*dt*%s1)',ulabels{j},ulabels{j}));
+        else
+          tmpodes1{i}=strrep(tmpodes1{i},[ulabels{j} '(k-1)'],sprintf('(%s(k-1)+.5*dt*%s1)',ulabels{j},ulabels{j}));
+        end
+      end
+    end
+    for i=1:length(odes)
+      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
+      fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
+      % set k3
+      for j=1:length(ulabels)
+        if ns(j)>1
+          tmpodes2{i}=strrep(tmpodes2{i},[ulabels{j} '(:,k-1)'],sprintf('(%s(:,k-1)+.5*dt*%s2)',ulabels{j},ulabels{j}));
+        else
+          tmpodes2{i}=strrep(tmpodes2{i},[ulabels{j} '(k-1)'],sprintf('(%s(k-1)+.5*dt*%s2)',ulabels{j},ulabels{j}));
+        end
+      end
+    end
+    for i=1:length(odes)
+      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
+      fprintf(fid,'  %s3=%s;\n',ulabels{i},tmpodes2{i});
+      % set k4
+      for j=1:length(ulabels)
+        if ns(j)>1
+          tmpodes3{i}=strrep(tmpodes3{i},[ulabels{j} '(:,k-1)'],sprintf('(%s(:,k-1)+dt*%s3)',ulabels{j},ulabels{j}));
+        else
+          tmpodes3{i}=strrep(tmpodes3{i},[ulabels{j} '(k-1)'],sprintf('(%s(k-1)+dt*%s3)',ulabels{j},ulabels{j}));
+        end
+      end
+      
+    end
+    for i=1:length(odes)
+      fprintf(fid,'  t=T(k-1)+dt;\n');
+      fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
+    end
+    for i=1:length(odes)
+      if ns(i)>1
+        fprintf(fid,'  %s(:,k) = %s(:,k-1) + (dt/6)*(%s1+2*(%s2+%s3)+%s4);\n',ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i});
+      else
+        fprintf(fid,'  %s(k) = %s(k-1) + (dt/6)*(%s1+2*(%s2+%s3)+%s4);\n',ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i});
+      end
+    end    
+    fprintf(fid,'  if any(k == enableLog)\n');
+    fprintf(fid,'    elapsedTime = toc(tstart);\n');
+    fprintf(fid,'    elapsedTimeMinutes = floor(elapsedTime/60);\n');
+    fprintf(fid,'    elapsedTimeSeconds = rem(elapsedTime,60);\n');
+    fprintf(fid,'    if elapsedTimeMinutes\n');
+    logMS = 'Processed %g of %g ms (elapsed time: %g m %.3f s)\n';
+    logS = 'Processed %g of %g ms (elapsed time: %.3f s)\n';
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeMinutes,elapsedTimeSeconds);\n',logMS);
+    fprintf(fid,'    else\n');
+    fprintf(fid,'        fprintf(fileID,''%s'',T(k),T(end),elapsedTimeSeconds);\n',logS);
+    fprintf(fid,'    end\n');
+    fprintf(fid,'  end\n');    
+    fprintf(fid,'end\n');        
+%          k1 = model(t,Y(:,k-1)); 
+%          k2 = model(t+0.5*dt,Y(:,k-1)+0.5*dt*k1);
+%          k3 = model(t+0.5*dt,Y(:,k-1)+0.5*dt*k2);
+%          k4 = model(t+dt,Y(:,k-1)+dt*k3);   
+%          Y(:,k) = Y(:,k-1)+(k1+2*(k2+k3)+k4)*dt/6;
 end
 
 % COMBINE UNIQUE VARIABLE NAMES INTO ONE DATA MATRIX
