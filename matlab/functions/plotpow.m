@@ -36,6 +36,8 @@ end
 
 if ~isfield(spec,'entities') && isfield(spec,'cells')
   spec.entities=spec.cells;
+elseif ~isfield(spec,'entities') && isfield(spec,'nodes')
+  spec.entities=spec.nodes;
 end
 npop = length(spec.entities);
 Fs = fix(data(1).sfreq);
@@ -54,7 +56,11 @@ for pop=1:npop
   end  
   t = data(pop).epochs.time;
   dat = double(squeeze(data(pop).epochs.data(var,:,1:n))');
-  lfp = mean(dat,1)';
+  if size(dat,2)>1
+    lfp = mean(dat,1)';
+  else
+    lfp = dat;
+  end
   try
     res = PowerSpecTA(t,lfp,parms.FreqRange,WINDOW,parms.NormAbs,parms.Notch);
       % res.AreaPower (in FreqRange)
@@ -132,7 +138,7 @@ if parms.plot_flag
       ylabel('power [normalized]');
       title([strrep(lab,'_','\_') ' power spectrum'],'fontsize',14,'fontweight','bold');    
       xlim(plims);
-      maxf=f(pows(pop,:)==max(pows(pop,:)));
+      maxf=f(pows(pop,3:end)==max(pows(pop,3:end)));
       if ~isempty(maxf) && isreal(maxf)
         vline(maxf,'k');
         hh=text(maxf+.05*range(xlim),min(ylim)+.9*range(ylim),num2str(maxf));

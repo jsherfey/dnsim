@@ -1096,7 +1096,8 @@ if parms.verbose
     fprintf(fileID,'\t%-20s = %-40s\n',Hfunc{i,2},[Hfunc{i,3} ';']);
   end
   fprintf(fileID,'\n%% ODE Handle, ICs, integration, and plotting:\nODEFUN = %s\n',model);
-  fprintf(fileID,'IC = [%s];\n',num2str(IC'));
+  fprintf(fileID,'IC = [%s];\n',num2str(mean(IC)'));
+  %fprintf(fileID,'IC = [%s];\n',num2str(IC'));
   fprintf(fileID,'\n[t,y]=ode23(ODEFUN,[0 100],IC);   %% numerical integration\nfigure; plot(t,y);           %% plot all variables/functions\n');
   if nvar>=1,fprintf(fileID,'try legend(''%s''',strrep(Svars{1,2},'_','\_')); end
   if nvar>=2,for k=2:nvar,fprintf(fileID,',''%s''',strrep(Svars{k,2},'_','\_')); end; end
