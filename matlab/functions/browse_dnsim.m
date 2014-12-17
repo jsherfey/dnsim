@@ -18,7 +18,7 @@ end
 pos=[300 25 1400 975];
 pos = .95*get(0,'ScreenSize'); pos(1)=pos(1)+50; pos(2)=pos(2)+50;
 fig=findobj('tag','modelbrowser');
-if any(fig)
+if ~any(strfind(version,'R2014b')) && any(fig)
   figure(fig);
 else
   userdata.level='node';

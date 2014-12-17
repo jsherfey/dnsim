@@ -138,9 +138,13 @@ for i=1:nrows
       vars={data.sensor_info.label};
       varind=find(~cellfun(@isempty,regexp(vars,sprintf('(_%s)|(%s)',plotvar,plotvar))),1,'first');
       t=data.epochs.time;
-      sel=t>=cfg.xlims(1)&t<=cfg.xlims(2);
+      if ~isempty(cfg.xlims), 
+        sel=t>=cfg.xlims(1)&t<=cfg.xlims(2);
+      else
+        sel=ones(size(t))==1;
+      end
       dat=squeeze(data.epochs.data(varind,sel,:));
-      subplot(nrows,ncols,cnt); plot(t,dat); axis tight
+      subplot(nrows,ncols,cnt); plot(t,dat(sel)); axis tight
       if ~isempty(cfg.xlims), xlim(cfg.xlims); end
       xlabel('time'); ylabel(strrep(data.sensor_info(varind).label,'_','\_')); 
       if isnumeric(uniqparms1(i))
@@ -149,7 +153,7 @@ for i=1:nrows
         title(strrep(sprintf('%s: %s',paramvaried,uniqparms1{i}),'_','\_'));
       end
     end
-    fprintf('row %g, col %g: %s\n',i,j,file);
+    %fprintf('row %g, col %g: %s\n',i,j,file);
   end
 end
 
