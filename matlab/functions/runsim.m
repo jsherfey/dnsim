@@ -79,15 +79,20 @@ end
 % ----------------------------------------------------------
 % run simulation
 try args = mmil_parms2args(parms); catch args = {}; end
-switch parms.SOLVER
-  case {'euler','rk2','modifiedeuler','rk4'}
-    file = dnsimulator(spec,args{:});
-    [data,t] = feval(file);
-    delete([file '.m']);    
-  otherwise
-    [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
+try
+  switch parms.SOLVER
+    case {'euler','rk2','modifiedeuler','rk4'}
+      file = dnsimulator(spec,args{:});
+      [data,t] = feval(file);    
+    otherwise
+      [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
+  end
+catch  
+  [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
 end
-
+if exist('file','var')
+  delete([file '.m']);
+end
 % ----------------------------------------------------------
 % prepare results (downsample/postprocess data, organize data structure):
 if parms.dsfact > 1
