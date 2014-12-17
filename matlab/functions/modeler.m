@@ -285,10 +285,14 @@ bgcolor = cfg.bgcolor;
 sz = get(0,'ScreenSize'); sz0=sz;
 sz = [.005*sz(3) .005*sz(4) .97*sz(3) .85*sz(4)];
 fig = findobj('tag','mainfig');
-if any(fig)
-  figure(fig);
-else
-  fig = figure('position',sz,'color','w','tag','mainfig','name','Dynamic Neural Simulator','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+try
+  if ~any(strfind(version,'R2014b')) && any(fig)
+    figure(fig);
+  else
+    fig = figure('position',sz,'color','w','tag','mainfig','name','Dynamic Neural Simulator','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]
+  end
+catch
+  fig = figure('position',sz,'color','w','tag','mainfig','name','Dynamic Neural Simulator','NumberTitle','off','WindowScrollWheelFcn',@ZoomFunction,'CloseRequestFcn','delete(gcf); clear global H'); % [320 240 920 560]  
 end
 % global controls (i.e., always present in main figure in all views)
 titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim

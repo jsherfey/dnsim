@@ -43,9 +43,9 @@ for k = 1:size(auxvars,1)
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
 % evaluate anonymous functions
-% for k = 1:size(functions,1)
-%   fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
-% end
+for k = 1:size(functions,1)
+  fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
+end
 
 % REPLACE X(#:#) with unique variable names X# and initialize
 Npops = [spec.(fld).multiplicity];
