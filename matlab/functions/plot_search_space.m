@@ -137,8 +137,9 @@ for i=1:nrows
       data=sim_data(plotpops(k));
       vars={data.sensor_info.label};
       varind=find(~cellfun(@isempty,regexp(vars,sprintf('(_%s)|(%s)',plotvar,plotvar))),1,'first');
-      dat=squeeze(data.epochs.data(varind,:,:));
       t=data.epochs.time;
+      sel=t>=cfg.xlims(1)&t<=cfg.xlims(2);
+      dat=squeeze(data.epochs.data(varind,sel,:));
       subplot(nrows,ncols,cnt); plot(t,dat); axis tight
       if ~isempty(cfg.xlims), xlim(cfg.xlims); end
       xlabel('time'); ylabel(strrep(data.sensor_info(varind).label,'_','\_')); 
