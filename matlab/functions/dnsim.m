@@ -77,7 +77,7 @@ catch
   err=1;
 end
 if err
-  disp('there was an error opening the database.'); 
+  %disp('there was an error opening the database.'); 
   remote_list_of_models='';
   remote_ids=[];
 else
