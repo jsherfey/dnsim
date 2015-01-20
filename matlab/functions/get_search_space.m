@@ -27,6 +27,10 @@ if ~isfield(spec,'entities') && isfield(spec,'cells')
   entityfield='cells';
   spec.entities = spec.cells;
   spec = rmfield(spec,'cells');
+elseif ~isfield(spec,'entities') && isfield(spec,'nodes')
+  entityfield='nodes';
+  spec.entities = spec.nodes;
+  spec = rmfield(spec,'nodes');
 else
   entityfield='entities';
 end
