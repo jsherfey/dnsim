@@ -3255,6 +3255,8 @@ if 1
     [model,IC,functions,auxvars,CURRSPEC,sodes,svars,txt] = buildmodel(CURRSPEC,'verbose',0,'nofunctions',get(findobj('tag','substfunctions'),'value'));
     if isfield(CURRSPEC,'entities') && ~isfield(CURRSPEC,'cells')
       CURRSPEC.cells=CURRSPEC.entities; CURRSPEC=rmfield(CURRSPEC,'entities'); 
+    elseif isfield(CURRSPEC,'nodes') && ~isfield(CURRSPEC,'cells')
+      CURRSPEC.cells=CURRSPEC.nodes; CURRSPEC=rmfield(CURRSPEC,'nodes'); 
     end
     cfg.modeltext = txt;
     h=findobj('tag','modeltext');

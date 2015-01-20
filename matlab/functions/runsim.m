@@ -1,4 +1,4 @@
-function [simdata,spec,parms] = biosim(varargin)
+function [simdata,spec,parms] = runsim(varargin)
 % Usage:
 % biosim(spec)
 % biosim(spec,'key',value,...)
@@ -28,9 +28,15 @@ elseif nargin>0
 else
   error('You must supply at least one input.');
 end
+nodefield='entities';
 if isfield(spec,'cells') && ~isfield(spec,'entities')
   spec.entities = spec.cells;
   spec = rmfield(spec,'cells');
+  nodefield='cells';
+elseif isfield(spec,'nodes') && ~isfield(spec,'entities')
+  spec.entities = spec.nodes;
+  spec = rmfield(spec,'nodes');  
+  nodefield='nodes';
 end
 if ~isfield(spec,'files') || isempty(spec.files)
   DBPATH = '/space/mdeh3/9/halgdev/projects/jsherfey/code/modeler/database';
@@ -60,7 +66,7 @@ parms = mmil_args2parms( varargin, ...
 % ----------------------------------------------------------
 % get model
 %[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override);
-if ~isfield(spec,'model') || ~isempty(parms.output_list)
+if ~isfield(spec,'model') || ~isempty(parms.output_list) || isfield(spec,'simulation')
   args = mmil_parms2args(parms);
   [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,args{:});%'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
 else

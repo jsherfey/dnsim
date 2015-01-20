@@ -1,4 +1,5 @@
-function [model,IC,functions,auxvars,sys,Sodes,Svars,txt] = buildmodel2(spec,varargin)
+%function [model,IC,functions,auxvars,sys,Sodes,Svars,txt] = buildmodel(spec,varargin)
+function varargout = buildmodel(spec,varargin)
 % get input structure into the right form
 if isempty(spec)
   model=[]; IC=[]; functions=[]; auxvars=[]; sys=[]; Sodes=[]; Svars=[]; txt=[];
@@ -22,10 +23,13 @@ if ~isfield(spec,'connections')
   spec.connections.mechanisms={};
   spec.connections.parameters={};
 end
+nodefield='entities';
 if isfield(spec,'cells') && ~isfield(spec,'entities')
+  nodefield='cells';
   spec.entities = spec.cells;
   spec = rmfield(spec,'cells');
 elseif isfield(spec,'nodes') && ~isfield(spec,'entities')
+  nodefield='nodes';
   spec.entities = spec.nodes;
   spec = rmfield(spec,'nodes');  
 end
@@ -104,6 +108,7 @@ if ~isempty(parms.override)
     else continue; 
     end
     n = strmatch(l,{spec.(type).label},'exact');
+    if isequal(f,'N'), f='multiplicity'; end
     if isequal(f,'parameters')
       if isempty(spec.(type)(n).(f)), continue; end
       matched = find(cellfun(@(x)isequal(v,x),spec.(type)(n).(f)));
@@ -220,7 +225,9 @@ for i=1:N % loop over entities
     % check for existing intrinsic mechanism
     if issubfield(sys.entities(i),'mechs.label')
       if ismember(ML,{sys.entities(i).mechs.label}) && length(sys.entities(i).mechs)>=j
-        continue; % mechanism model already provided by user
+        if isempty(parms.override)
+          continue; % mechanism model already provided by user
+        end
       end
     end
     % check for existing connection mechanism
@@ -233,7 +240,9 @@ for i=1:N % loop over entities
         else
           sys.entities(i).mechs(j) = tmpc.mechs(idx(1));
         end
-        continue;
+        if isempty(parms.override)
+          continue;
+        end
       end
     end
     % load mechanism from file
@@ -1206,6 +1215,23 @@ if nargout>7
   end  
   txt=[txt{:}];
 end  
+
+if ~strcmp(nodefield,'entities')
+  sys.(nodefield) = sys.entities;
+  sys = rmfield(sys,'entities');
+end
+if nargout==1
+  varargout{1}=sys;
+elseif nargout>0
+  varargout{1}=model;
+  if nargout>1, varargout{2}=IC; end
+  if nargout>2, varargout{3}=functions; end
+  if nargout>3, varargout{4}=auxvars; end
+  if nargout>4, varargout{5}=sys; end
+  if nargout>5, varargout{6}=Sodes; end
+  if nargout>6, varargout{7}=Svars; end
+  if nargout>7, varargout{8}=txt; end
+end
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PARAMETERS

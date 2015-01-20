@@ -8,6 +8,7 @@ function dnsim2xpp_noparms(spec,outfile,tspan,dt)
 % Example usage: 
 % load('Morris-Lecar-Neuron.mat','spec');  % Load DNSim model specification
 % dnsim2xpp_noparms(spec,'Morris-Lecar-Neuron.ode',[0 1000],.05);
+% Then to run the resulting XPP model: xppaut Morris-Lecar-Neuron.ode
 
 % Info needed from the DNSim specification:
 model=spec.model.ode;            % function handle string containing full ODE system
