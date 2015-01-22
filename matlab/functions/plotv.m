@@ -1,5 +1,6 @@
 function [fig,lfps,T]=plotv(data,spec,varargin)
 % Purpose: plot V (per population): image and (traces + mean(V))
+lfps=[]; T=[];
 
 parms = mmil_args2parms( varargin, ...
                    {  'plot_flag',1,[],...
