@@ -1,15 +1,15 @@
 function varargout=modeler(varargin)
 clear global cfg H CURRSPEC BACKUPFILE
 cfg.mysql_connector = mysqldb('setup'); % call this first b/c javaaddpath clears global variables (see: http://www.mathworks.com/matlabcentral/newsreader/view_thread/163362)
-if ~isdeployed && nargout==0
-  try
-    if ~exist('ganymed-ssh2-build250','dir')
-      sshfrommatlabinstall(1); % run at tool launch before setting global vars
-    else
-      sshfrommatlabinstall;
-    end
-  end
-end
+% if ~isdeployed && nargout==0
+%   try
+%     if ~exist('ganymed-ssh2-build250','dir')
+%       sshfrommatlabinstall(1); % run at tool launch before setting global vars
+%     else
+%       sshfrommatlabinstall;
+%     end
+%   end
+% end
 global cfg H CURRSPEC LASTSPEC BIOSIMROOT BACKUPFILE
 % Path to local models on disk
 if isempty(BIOSIMROOT)
