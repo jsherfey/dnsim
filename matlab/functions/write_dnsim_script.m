@@ -92,21 +92,23 @@ end
 % plotv(data,model,'varlabel','V');
 % title(sprintf('stim=%g',stimLTS));
 
-fprintf(fid,'dnsim(spec); %% open model in DNSim GUI\n\n');
-fprintf(fid,'%% Parse and compare DNSim models:\n');
-fprintf(fid,'[ODEFUN,IC,functions,auxvars,FULLSPEC]=buildmodel(spec,''verbose'',1); %% parse DNSim spec structure (returns ODEFUN handle and initial conditions IC for manual simulation and FULLSPEC for automatic simulation)\n');
-fprintf(fid,'report=modeldiff(FULLSPEC,FULLSPEC) %% compare two DNSim models\n');
-fprintf(fid,'%% DNSim simulation and plots:\n');
-fprintf(fid,'sim_data = biosim(FULLSPEC,''timelimits'',[0 100],''dt'',.02,''dsfact'',10); %% wrapper to simulate DNSim models\n');
+fprintf(fid,'%%dnsim(spec); %% open model in DNSim GUI\n\n');
 try  
   [ODEFUN,IC,functions,auxvars,FULLSPEC,Sodes,Svars,txt]=buildmodel(spec,'verbose',0);
   vars=FULLSPEC.variables.global_oldlabel;
-  fprintf(fid,'plotv(sim_data,FULLSPEC,''varlabel'',''%s''); %% quickly plot select variables\n',vars{1});
 catch
   txt='';
 end
-fprintf(fid,'visualizer(sim_data); %% ugly interactive tool hijacked to visualize sim_data\n');
-if ~isempty(txt)   
+fprintf(fid,'%% DNSim simulation and plots:\n');
+fprintf(fid,'data = runsim(spec,''timelimits'',[0 100],''dt'',.02,''SOLVER'',''euler''); %% simulate DNSim models\n');
+if ~isempty(txt) % got vars from buildmodel
+  fprintf(fid,'plotv(data,spec,''varlabel'',''%s''); %% quickly plot select variables\n',vars{1});
+end
+fprintf(fid,'%%visualizer(data); %% ugly interactive tool hijacked to visualize sim_data\n');
+if ~isempty(txt) % got vars from buildmodel
+  fprintf(fid,'\n%% Sweep over parameter values:\n');
+  fprintf(fid,'model=buildmodel(spec); %% parse DNSim spec structure\n');
+  fprintf(fid,'simstudy(model,{''%s''},{''N''},{''[1 2]''}); %% N = # of cells\n\n',spec.nodes(1).label);
   fprintf(fid,'\n%% Manual simulation and plots:\n');
   %fprintf(fid,'[t,y]=ode23(ODEFUN,[0 100],IC); %% numerical integration\n');
   %fprintf(fid,'figure; plot(t,y); %% plot all variables/functions\n');
