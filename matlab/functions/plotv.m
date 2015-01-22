@@ -54,6 +54,7 @@ if parms.plot_flag
     yi = floor((i-1)./ncols)+1;
     subplot('Position',[xpos(xi) ypos(yi) .9/ncols .9/nrows]); set(gca,'units','normalized');
     pop = ceil(i/ncols); % index to this population
+    if pop>length(data), continue; end
     labels = {data(pop).sensor_info.label};
     if isempty(parms.var)
       var = find(strcmp(labels,parms.varlabel));
