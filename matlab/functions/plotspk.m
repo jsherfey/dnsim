@@ -15,6 +15,8 @@ parms = mmil_args2parms( varargin, ...
                  
 if ~isfield(spec,'entities') && isfield(spec,'cells')
   spec.entities=spec.cells;
+elseif ~isfield(spec,'entities') && isfield(spec,'nodes')
+  spec.entities=spec.nodes;
 end
 threshold = parms.spikethreshold; % used to create point process {dn}
 npop = length(spec.entities);

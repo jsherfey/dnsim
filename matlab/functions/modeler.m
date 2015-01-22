@@ -318,8 +318,8 @@ titlestring = 'DNSim';%'Dynamic Neural Simulator'; % DNSim
   editpassword=uicontrol('parent',fig,'style','edit','tag','login','units','normalized','position',[.34 .91 .06 .03],'string','password','backgroundcolor','w','callback',[],'visible','on','KeyPressFcn',@EnterPassword,'UserData','password');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','login','units','normalized','position',[.34 .97 .06 .025],'string','login','backgroundcolor',[.9 .9 .9],'callback',@DB_Login,'visible','on');
   blogin=uicontrol('parent',fig,'style','pushbutton','tag','logout','units','normalized','position',[.34 .97 .06 .025],'string','logout','backgroundcolor',[.9 .9 .9],'callback',@DB_Logout,'visible','off');
-  uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
-  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .94 .08 .03],'string','models','backgroundcolor','c','callback','global cfg; browse_dnsim(cfg.username,cfg.password,''global CURRSPEC H; close(H.fig); modeler(CURRSPEC);'');');%@BrowseDB,'visible','on');
+  %uicontrol('parent',fig,'style','text','units','normalized','position',[0 .97 .06 .025],'string','browse:','backgroundcolor','w');
+  bDB=uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .97 .08 .03],'string','browse','backgroundcolor','c','callback','global cfg; browse_dnsim(cfg.username,cfg.password,''global CURRSPEC H; close(H.fig); modeler(CURRSPEC);'');');%@BrowseDB,'visible','on');
 %   uicontrol('parent',fig,'style','pushbutton','units','normalized','position',[0 .91 .08 .03],'string','mechanisms','backgroundcolor','c','callback',@MechanismBrowser);%,'global allmechs; msgbox({allmechs.label},''available'');');%msgbox(get_mechlist,''available'')');%'get_mechlist');
 
 % left panels for cell, network, and mechanism controls
