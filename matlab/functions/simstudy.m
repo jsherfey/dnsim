@@ -156,6 +156,7 @@ if spec.simulation.sim_cluster_flag % run on cluster
   if ischar(p.addpath)
     auxcmd=sprintf('addpath(genpath(''%s'')); ',p.addpath);
   end
+  auxcmd = [auxcmd 'try rng(''shuffle''); end; '];
   for k=1:length(allspecs)
     modelspec=allspecs{k};
     specfile = sprintf('spec%g.mat',k);
