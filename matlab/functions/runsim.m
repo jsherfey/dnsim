@@ -66,7 +66,9 @@ parms = mmil_args2parms( varargin, ...
 % ----------------------------------------------------------
 % get model
 %[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override);
-if ~isfield(spec,'model') || ~isempty(parms.output_list) || isfield(spec,'simulation')
+if ~isfield(spec,'model') || ~isempty(parms.output_list) || isfield(spec,'simulation') || ...
+    (isfield(spec,'connections') && any( ~cellfun(@isempty,{spec.connections.label}) & (cellfun(@(x)isfield(x,'mechs'),{spec.connections}) & cellfun(@isempty,{spec.connections.mechs})) )) || ... % connection with undefined mechs
+    any( ~cellfun(@isempty,{spec.(nodefield).label}) & (cellfun(@(x)isfield(x,'mechs'),{spec.(nodefield)}) & cellfun(@isempty,{spec.(nodefield).mechs})) ) % node with undefined mechs
   args = mmil_parms2args(parms);
   [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,args{:});%'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
 else

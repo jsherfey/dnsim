@@ -182,7 +182,8 @@ end
           aux_Vin(end+1:end+length(tmp2)) = tmp2;
         end  
       elseif ~isempty(regexp(lhs,'(\w+)|(\[\w+\])','match')) % expression: x = ...
-        if ~isempty(regexp(rhs,'.*[a-z_A-Z,<>(<=)(>=)]+.*','match')) % rhs contains: []{}(),<>*/|          % function to evaluate & store
+        if ~isempty(regexp(rhs,'.*[a-z_A-Z,<>(<=)(>=)]+.*','match')) && ... % rhs contains: []{}(),<>*/|          % function to evaluate & store
+            isempty(regexp(rhs,'^\d+e[\-\+]?\d+$')) % check not scientific notation
         %   store this as an expression to evaluate before anonymous functions
           precalcs{end+1,1} = strtrim(lhs);
           precalcs{end,2} = strtrim(rhs);
