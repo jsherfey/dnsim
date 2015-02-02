@@ -840,6 +840,11 @@ if parms.couple_flag==1
   end
 end
 
+% -------------------------------------------------------
+% TODO: Substitute other expressions into IC expressions
+% ...
+% -------------------------------------------------------
+
 % Evaluate ICs and determine state vector indices
 stateindx=0;
 for i=1:nvar
