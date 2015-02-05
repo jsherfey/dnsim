@@ -1,4 +1,4 @@
-function varargout = parse_mech_txt(fname,key,val)
+function varargout = parse_mech_spec(fname,key,val)
 if nargin < 1
   error('Must specify a mech name');
 end
@@ -79,7 +79,7 @@ for k = 1:length(ickey)
   end
 end
 if nargin>1 && ~isempty(cfg)
-  [params,IC] = update(params,IC,vars,cfg); 
+  [params,IC] = update(params,IC,vars,cfg);
 end
 for k=1:length(IC)
   if isempty(IC{k})
@@ -158,7 +158,7 @@ end
         % pat=['\w+\([(' case1 ')|(' case2 ')]+\)'];
         % pat='\w+\([(\[?[\d\s,]+\]?)|(\[?\d+:[(\d+)|(end)]\]?)]+\)';
         precalcs{end+1,1} = strtrim(lhs);
-        precalcs{end,2} = strtrim(rhs);        
+        precalcs{end,2} = strtrim(rhs);
       elseif ~isempty(regexp(lhs,'\w+\([\w,]+\)','match')) % function: x(v) = ...
         tmp = strtrim(splitstr(lhs,'('));
         funcs{end+1,1} = tmp{1};
@@ -172,7 +172,7 @@ end
         try tmp = ['(' tmp{2}]; catch tmp = '()'; end
         tmp1 = regexp(tmp,'\([\[\]\S\s]+\)','match');%regexp(tmp,'\(\S+\)\[\]','match');
         if ~isempty(tmp1)
-          subst{end,3} = tmp1{1}; 
+          subst{end,3} = tmp1{1};
         else
           subst{end,3} = '';
         end
@@ -180,7 +180,7 @@ end
         if ~isempty(tmp2)
           tmp2 = regexp(tmp2{1},'[^\[\],]+','match');
           aux_Vin(end+1:end+length(tmp2)) = tmp2;
-        end  
+        end
       elseif ~isempty(regexp(lhs,'(\w+)|(\[\w+\])','match')) % expression: x = ...
         if ~isempty(regexp(rhs,'.*[a-z_A-Z,<>(<=)(>=)]+.*','match')) && ... % rhs contains: []{}(),<>*/|          % function to evaluate & store
             isempty(regexp(rhs,'^\d+e[\-\+]?\d+$')) % check not scientific notation
@@ -198,7 +198,7 @@ end
           error('Invalid mechanism specification: %s\n',fname);
         end
       end
-    end  
+    end
   end
 
 end
@@ -219,7 +219,7 @@ end
       error('the number of keys must equal the number of vals.');
     else
       if isnumeric(val)
-        val = num2cell(val); 
+        val = num2cell(val);
       elseif ischar(val)
         val = {val};
       end
@@ -236,7 +236,7 @@ end
     fld    = fieldnames(P);
     cfgfld = fieldnames(cfg);
     % update constant parameters
-    ind    = find(ismember(cfgfld,fld));    
+    ind    = find(ismember(cfgfld,fld));
     for k  = 1:length(ind)
       this = cfgfld{ind(k)};
       P.(this) = cfg.(this);
@@ -245,10 +245,10 @@ end
     for j = 1:length(IC)
       if ~ischar(IC{j}), continue; end
       if ~isempty(regexp(IC{j},'[^\W-_]*IC[\s\+-/*]'))
-        icflag=1; 
+        icflag=1;
         icind = regexp(IC{j},'[^\W-_]*IC[\s\+-/*]');
       else
-        icflag=0; 
+        icflag=0;
       end
       for k  = 1:length(cfgfld)
         IC{j} = strrep(IC{j},cfgfld{k},num2str(cfg.(cfgfld{k})));
@@ -267,11 +267,11 @@ end
           IC{j} = [IC{j}(1:icind(k)-1) num2str(cfg.(cfgfld{strcmp(Veq{j},cfgfld)})) IC{j}(icind(k)+2:end)];
 %           IC{j} = strrep(IC{j},'IC',num2str(cfg.(cfgfld{strcmp(Veq{j},cfgfld)})));
         end
-      end      
+      end
       try IC{j} = eval(IC{j}); end
     end
     % update initial conditions
-    ind     = find(ismember(cfgfld,Veq));    
+    ind     = find(ismember(cfgfld,Veq));
     for k   = 1:length(ind)
       this  = cfgfld{ind(k)};
       j     = strmatch(this,Veq,'exact');
