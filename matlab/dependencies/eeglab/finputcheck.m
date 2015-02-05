@@ -184,7 +184,7 @@ function [g, varargnew] = finputcheck( vararg, fieldlist, callfunc, mode )
         if ~iscell( fieldlist{index, TYPE} )
             res = fieldtest( fieldlist{index, NAME},  fieldlist{index, TYPE}, ...
                            fieldlist{index, VALS}, tmpval, callfunc );
-            if isstr(res), g = res; return; end;
+            if ischar(res), g = res; return; end;
         else 
             testres = 0;
             tmplist = fieldlist;
@@ -195,7 +195,7 @@ function [g, varargnew] = finputcheck( vararg, fieldlist, callfunc, mode )
                 else res{it} = fieldtest(  fieldlist{index, NAME},  fieldlist{index, TYPE}{it}, ...
                                            fieldlist{index, VALS}{it}, tmpval, callfunc );
                 end;
-                if ~isstr(res{it}), testres = 1; end;
+                if ~ischar(res{it}), testres = 1; end;
             end;
             if testres == 0,
                 g = res{1};
@@ -257,7 +257,7 @@ function g = fieldtest( fieldname, fieldtype, fieldval, tmpval, callfunc );
       
       
      case 'string'
-      if ~isstr(tmpval)
+      if ~ischar(tmpval)
           g = [ callfunc 'error: argument ''' fieldname ''' must be a string' ]; return;
       end;
       if ~isempty(fieldval)

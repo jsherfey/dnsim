@@ -238,7 +238,7 @@ end;
 
 % decoding input and backward compatibility
 % -----------------------------------------
-if isstr(varargin{1})
+if ischar(varargin{1})
     options = varargin;
 else
     options = { 'fig'      varargin{1} 'geomhoriz' varargin{2} ...
@@ -252,7 +252,7 @@ g = finputcheck(options, { 'geomhoriz' 'cell'   []      [];
                            'geomvert'  'real'   []      [];
                            'inseth'    'real'   []      0.02; % x border absolute (5% of width)
                            'insetv'    'real'   []      0.02 }, 'supergui');
-if isstr(g), error(g); end;
+if ischar(g), error(g); end;
 g.insetv = g.insetv/length(g.geomhoriz);
 
 % create new figure

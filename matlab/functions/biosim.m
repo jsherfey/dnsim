@@ -11,11 +11,11 @@ if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
   if nargin>1, varargin = varargin(2:end); end
 elseif nargin>0
-  if isstr(varargin{1}) && exist(varargin{1},'file')
+  if ischar(varargin{1}) && exist(varargin{1},'file')
     spec = loadspec(varargin{1});
     if nargin>1, varargin = varargin(2:end); end
-  elseif isstr(varargin{1}) && exist(varargin{1},'dir')
-    if nargin>1 && isstr(varargin{2}) % biosim(fpath,prefix,...)
+  elseif ischar(varargin{1}) && exist(varargin{1},'dir')
+    if nargin>1 && ischar(varargin{2}) % biosim(fpath,prefix,...)
       spec = loadspec(varargin{1},varargin{2});
       if nargin>2, varargin = varargin(3:end); end
     else
