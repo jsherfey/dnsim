@@ -147,12 +147,12 @@ end
       elseif ~isempty(regexp(lhs,'\w+\(0\)','match')) % IC: x(0) = ...
         tmp = strtrim(splitstr(lhs,'('));
         ickey{end+1} = tmp{1};
-        if isempty(regexp(rhs,'[^\d\.-+\\]+','match'))
+        if isempty(regexp(rhs,'[^\d\.\-+\\]+','match'))
           icval{end+1} = str2num(rhs);
         else
           icval{end+1} = rhs;
         end
-      elseif ~isempty(regexp(lhs,'\w+\([(\[?[\d\s,]+\]?)|(\[?\d+:[(\d+)|(end)]\]?)]+\)','match'))
+      elseif ~isempty(regexp(lhs,'\w+\([\(\[?[\d\s,]+\]?\) | \(\[?\d+:[\(\d+\)|\(end\)]\]?\)]+\)','match'))
         % case1='\[?[\d\s,]+\]?';          % var(#), var([#]), var([# #]), var([#,#])
         % case2='\[?\d+:[(\d+)|(end)]\]?'; % var(#:#), var(#:end), var([#:#]), var([#:end])
         % pat=['\w+\([(' case1 ')|(' case2 ')]+\)'];
