@@ -19,7 +19,7 @@ function [s] = rmsubfield(s, f, v);
 % new implementation
 %
 
-if ~isstr(f)
+if ~ischar(f)
   error('incorrect input argument for fieldname');
 end
 

@@ -18,7 +18,7 @@ function [s] = getsubfield(s, f);
 % new implementations to make it easier to work with nested structures
 %
 
-if ~isstr(f)
+if ~ischar(f)
   error('incorrect input argument for fieldname');
 end
 

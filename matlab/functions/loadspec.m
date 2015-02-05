@@ -40,7 +40,7 @@ elseif nargin==0                      % loadspec => load example spec
   return;
 elseif exist(inspec,'dir')          
   cwd = pwd; cd(inspec);
-  if nargin>1 && isstr(varargin{1})   % loadspec(fpath,prefix) 
+  if nargin>1 && ischar(varargin{1})   % loadspec(fpath,prefix) 
     prefix = varargin{1};
   else                                % loadspec(fpath) 
     if exist(fullfile(inspec,'cellspecs.csv'),'file')
