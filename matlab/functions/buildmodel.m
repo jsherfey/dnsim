@@ -1,3 +1,5 @@
+% this comment is for a toy pull requiest
+
 %function [model,IC,functions,auxvars,sys,Sodes,Svars,txt] = buildmodel(spec,varargin)
 function varargout = buildmodel(spec,varargin)
 % get input structure into the right form
