@@ -8,7 +8,7 @@ function [simdata,spec,parms] = runsim(varargin)
 % ----------------------------------------------------------
 % get specification
 
-coder = 1;
+coder = 1; % 0; % 1; whether or not matlab code generator is enabled
 
 if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
@@ -103,24 +103,41 @@ try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
     file = dnsimulator(spec,coder,args{:});
+    tmp_str = strsplit(file,'/');
+    odefun_dir = tmp_str{1};
+    file = tmp_str{2};
+    cd(odefun_dir);
     if  ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       [data,t] = feval(file);
       delete([file,'.m']);
     else
-      filecomp = 'odefun';
-      [~,res] = system(['diff ',file,'.m ',filecomp,'.m'])
-      if isempty(res)
-        file = filecomp;
-      else
+      odefun_mfiles = {};
+      dirinfo = dir('.');
+      res_diff = 'not empty';
+      j = 1;
+      while ~isempty(res_diff) && j <= length(dirinfo)
+        if ~dirinfo(j).isdir && ~strcmp(dirinfo(j).name(1:end-2),file) && strncmp(dirinfo(j).name,file,6) &&  strncmp(dirinfo(j).name(end-1:end),'.m',2)
+          [~,res_diff] = system(['diff ',file,'.m ',dirinfo(j).name]);
+          if isempty(res_diff)
+            delete([file,'.m']);
+            file = dirinfo(j).name(1:end-2);
+            display('Using previous mex file');
+            filemex = [file,'_mex']
+          end
+        end
+        j = j+1;
+      end
+      if ~exist('filemex')
         tic
         codegen_odefun(file);
         toc
+        filemex = [file,'_mex'];
       end
       tic
-      filemex = [file,'_mex'];
       [data,t] = feval(filemex);
       toc
     end
+    cd ..
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
 end

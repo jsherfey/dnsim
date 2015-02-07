@@ -25,11 +25,16 @@ auxvars=spec.model.auxvars;
 T = tspan(1):dt:tspan(2);
 nstep = length(T);
 
-odefun = ['odefun_' datestr(now,'yyyymmdd_HHMMSS')];
+subdir = 'odefun';
+if ~exist(subdir,'dir')
+  mkdir(subdir);
+end
+odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS')];
+odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
 if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
-  fprintf(fid,'function [Y,T] = %s\n',odefun);
+  fprintf(fid,'function [Y,T] = %s\n',odefun_file);
 else
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
 end
