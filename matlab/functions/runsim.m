@@ -7,6 +7,9 @@ function [simdata,spec,parms] = runsim(varargin)
 
 % ----------------------------------------------------------
 % get specification
+
+coder = 1;
+
 if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
   if nargin>1, varargin = varargin(2:end); end
@@ -21,7 +24,7 @@ elseif nargin>0
     else
       spec = loadspec(varargin{1});
       if nargin>1, varargin = varargin(2:end); end
-    end    
+    end
   else
     spec = loadspec(varargin{:});
   end
@@ -35,7 +38,7 @@ if isfield(spec,'cells') && ~isfield(spec,'entities')
   nodefield='cells';
 elseif isfield(spec,'nodes') && ~isfield(spec,'entities')
   spec.entities = spec.nodes;
-  spec = rmfield(spec,'nodes');  
+  spec = rmfield(spec,'nodes');
   nodefield='nodes';
 end
 if ~isfield(spec,'files') || isempty(spec.files)
@@ -78,7 +81,7 @@ parms = mmil_args2parms( varargin, ...
 %        ) % node with undefined mechs
 if ~isfield(spec,'model') || ~isempty(parms.output_list) || isfield(spec,'simulation') || ...
     (isfield(spec,'connections') && any( ~cellfun(@isempty,{spec.connections.label}) & (cellfun(@(x)isfield(x,'mechs'),{spec.connections}) & cellfun(@isempty,{spec.connections.mechs})) )) || ... % connection with undefined mechs
-    any( ~cellfun(@isempty,{spec.(nodefield).label}) & (cellfun(@(x)isfield(x,'mechs'),{spec.(nodefield)}) & cellfun(@isempty,{spec.(nodefield).mechs})) ) % node with undefined mechs  
+    any( ~cellfun(@isempty,{spec.(nodefield).label}) & (cellfun(@(x)isfield(x,'mechs'),{spec.(nodefield)}) & cellfun(@isempty,{spec.(nodefield).mechs})) ) % node with undefined mechs
   args = mmil_parms2args(parms);
   [model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,args{:});%'logfid',parms.logfid,'override',parms.override,'dt',parms.dt,'verbose',parms.verbose,'couple_flag',parms.couple_flag,'nofunctions',parms.nofunctions);
 else
@@ -97,19 +100,29 @@ end
 % ----------------------------------------------------------
 % run simulation
 try args = mmil_parms2args(parms); catch args = {}; end
-try
-  switch parms.SOLVER
-    case {'euler','rk2','modifiedeuler','rk4'}
-      file = dnsimulator(spec,args{:});
-      [data,t] = feval(file);    
-    otherwise
-      [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
-  end
-catch  
-  [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
-end
-if exist('file','var')
-  delete([file '.m']);
+switch parms.SOLVER
+  case {'euler','rk2','modifiedeuler','rk4'}
+    file = dnsimulator(spec,coder,args{:});
+    if  ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+      [data,t] = feval(file);
+      delete([file,'.m']);
+    else
+      filecomp = 'odefun';
+      [~,res] = system(['diff ',file,'.m ',filecomp,'.m'])
+      if isempty(res)
+        file = filecomp;
+      else
+        tic
+        codegen_odefun(file);
+        toc
+      end
+      tic
+      filemex = [file,'_mex'];
+      [data,t] = feval(filemex);
+      toc
+    end
+  otherwise
+    [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
 end
 % ----------------------------------------------------------
 % prepare results (downsample/postprocess data, organize data structure):
@@ -149,7 +162,7 @@ if ~isempty(parms.output_list)
     eval(sprintf('%s = parms.%s;',flds{f},flds{f}));
   end
   fprintf(parms.logfid,'Calculating additional function values from simulation results.\n');
-  if ischar(parms.output_list), parms.output_list = {parms.output_list}; end  
+  if ischar(parms.output_list), parms.output_list = {parms.output_list}; end
   % construct list of functions to evaluate
   list = {};
   for i = 1:length(parms.output_list)
@@ -169,7 +182,7 @@ if ~isempty(parms.output_list)
     end
   end
     % TODO: add case for using regexp to match entity or mech label (much
-    % like how they can be specified for plotting in biosim_plots.m)  
+    % like how they can be specified for plotting in biosim_plots.m)
   for k = 1:size(auxvars,1)
     eval( sprintf('%s = %s;',auxvars{k,1},auxvars{k,2}) );
   end
@@ -209,13 +222,13 @@ if ~isempty(parms.output_list)
     end
   end
   list = list(~ismember(list,failed));
-  
+
   % preallocate matrix for calculation
-  outdata = nan(ntime,sum(NV));        
+  outdata = nan(ntime,sum(NV));
   % ------------------
   % IMPORTANT!! (again) this only works for 'output' at this time
   % evaluate auxiliary vars & functions to get calculate output functions for storage
-  % ------------------  
+  % ------------------
   % calculate time courses for desired functions
   last = 0; newvar = []; MAXITER=1e3;
   for k = 1:length(list)
@@ -224,7 +237,7 @@ if ~isempty(parms.output_list)
     ind = last + (1:NV(k));
     src = spec.(srctype{k})(srcidx(k));
     src_orig = src;
-    mechlist = src.mechanisms; 
+    mechlist = src.mechanisms;
     srclabel = strrep(src.label,'-','_');
     if ischar(mechlist),mechlist={mechlist};end
     if k==28
@@ -240,11 +253,11 @@ if ~isempty(parms.output_list)
         tmp = splitstr(spec.(srctype{k})(srcidx(k)).label,'-');
         tmpsrc=tmp{1}; tmpdst=tmp{2};
         % switch src and dst b/c of structure vs algorithm organization
-          srcidx(k) = find(strcmp(tmpsrc,{spec.entities.label})); 
+          srcidx(k) = find(strcmp(tmpsrc,{spec.entities.label}));
           % srcidx => dst/post
           dstidx = find(strcmp(tmpdst,{spec.entities.label}));
           % dstidx => src/pre
-        srctype{k} = 'entities';        
+        srctype{k} = 'entities';
         src = spec.(srctype{k})(srcidx(k));
           % src = dst/post structure
         dst = spec.(srctype{k})(dstidx);
@@ -252,7 +265,7 @@ if ~isempty(parms.output_list)
       else
         dst = src;
         origvars = unique(src.orig_var_list);
-      end    
+      end
       for v = 1:length(origvars)
         old = origvars{v}; cntwhile = 0; skipflag=0;
         while any(regexp(arg_str,['[^a-zA-Z]' old '([^a-zA-Z]|post|pre)']))
@@ -275,8 +288,8 @@ if ~isempty(parms.output_list)
                 else
                   arg_str = strrep(arg_str,old,sprintf('data(TIMESTEP,%g:%g)''',datvarind(1),datvarind(end)));
                 end
-              end 
-            else 
+              end
+            else
               src=dst;
               sel = find(strcmp(old,src.orig_var_list));
                 % recall: src here actually refers to the destination
@@ -315,8 +328,8 @@ if ~isempty(parms.output_list)
         if ~isempty(tmpstr1)
           tmpstr1 = tmpstr1{1};
           tmpstr2 = strrep(tmpstr1,'t','t(TIMESTEP)');
-          arg_str = strrep(arg_str,tmpstr1,tmpstr2);      
-        end        
+          arg_str = strrep(arg_str,tmpstr1,tmpstr2);
+        end
         tmp_arg_str = arg_str;
         tmp_arg_str = strrep(tmp_arg_str,'post','');
         tmp_arg_str = strrep(tmp_arg_str,'pre','');
@@ -329,7 +342,7 @@ if ~isempty(parms.output_list)
       clear old sel src
       break;
     end
-    last = last + NV(k); 
+    last = last + NV(k);
     dstidx = find(strcmp(dst.label,{spec.entities.label}));
     if isfield(newvar,srctype{k}) && length(newvar.(srctype{k}))>=dstidx%srcidx(k)
       newvar.(srctype{k})(dstidx).var_list = cat(2,newvar.(srctype{k})(dstidx).var_list,repmat(list(k),[1 NV(k)]));
@@ -338,7 +351,7 @@ if ~isempty(parms.output_list)
       newvar.(srctype{k})(dstidx).var_list = repmat(list(k),[1 NV(k)]);
       newvar.(srctype{k})(dstidx).var_index = size(data,2) + ind;
     end
-  end   
+  end
   % add calculated results to data
   data = cat(2,data,outdata);
   clear outdata
@@ -350,7 +363,7 @@ if ~isempty(parms.output_list)
     for k=1:length(spec.connections(:))
         spec.connections(k).var_list = cat(2,spec.connections(k).var_list,newvar.connections(k).var_list);
         spec.connections(k).var_index = cat(2,spec.connections(k).var_index,newvar.connections(k).var_index);
-    end    
+    end
   end
 end
 
@@ -413,4 +426,3 @@ parms.IC = ic;
   %   => compare population averages b/w study simulations
   % ts_ezplot(data(1),'chanlabels',varlist,'trials_flag',1)
   %   => overlay waveforms from all cells of an entity for a given var
-  
