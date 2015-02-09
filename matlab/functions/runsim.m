@@ -8,7 +8,7 @@ function [simdata,spec,parms] = runsim(varargin)
 % ----------------------------------------------------------
 % get specification
 
-coder = 0; % 0; % 1; whether or not matlab code generator is enabled
+coder = 1; % 0; % 1; whether or not matlab code generator is enabled
 
 if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
