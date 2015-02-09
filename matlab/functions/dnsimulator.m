@@ -41,25 +41,27 @@ end
 
 fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
-if ischar(fileID)
+
+if ischar(fileID) && (~exist('codegen') || coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'fileID = %s; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
 else
-  fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
+    fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
 end
-fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));');
-fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);',solver);
+
+fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
+fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
 % evaluate auxiliary variables (ie., adjacency matrices)
 for k = 1:size(auxvars,1)
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
 
-% evaluate anonymous functions
-if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
-  for k = 1:size(functions,1)
-    fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
-  end
-end
+%  % evaluate anonymous functions
+%  if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+%    for k = 1:size(functions,1)
+%      fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
+%    end
+%  end
 
 % REPLACE X(#:#) with unique variable names X# and initialize
 Npops = [spec.(fld).multiplicity];
@@ -111,8 +113,8 @@ switch solver
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1);\n');
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
         if ns(j)>1
@@ -122,8 +124,8 @@ switch solver
         end
       end
     end
+    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
     for i=1:length(odes)
@@ -142,8 +144,8 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1);\n');
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       % set k2
@@ -155,8 +157,8 @@ switch solver
         end
       end
     end
+    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
       for j=1:length(ulabels)
@@ -168,7 +170,6 @@ switch solver
       end
     end
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1)+.5*dt;\n');
       fprintf(fid,'  %s3=%s;\n',ulabels{i},tmpodes2{i});
       % set k4
       for j=1:length(ulabels)
@@ -179,8 +180,8 @@ switch solver
         end
       end
     end
+    fprintf(fid,'  t=T(k-1)+dt;\n');
     for i=1:length(odes)
-      fprintf(fid,'  t=T(k-1)+dt;\n');
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end
     for i=1:length(odes)
