@@ -1,10 +1,11 @@
-function odefun = dnsimulator(spec,coder,varargin)
+function odefun = dnsimulator(spec,varargin)
 parms = mmil_args2parms( varargin, ...
                          {...
                             'timelimits',[0 200],[],...
                             'logfid',1,[],...
                             'dt',.02,[],...
                             'SOLVER','euler',[],...
+                            'coder',0,[],...
                          }, false);
 
 tspan = parms.timelimits;
@@ -33,7 +34,7 @@ odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS')];
 odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
-if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'function [Y,T] = %s\n',odefun_file);
 else
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
@@ -42,7 +43,7 @@ end
 fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 
-if ischar(fileID) && (~exist('codegen') || coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
+if ischar(fileID) && (~exist('codegen') || parms.coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'fileID = %s; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
 else
     fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
@@ -57,7 +58,7 @@ for k = 1:size(auxvars,1)
 end
 
 %  % evaluate anonymous functions
-%  if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+%  if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
 %    for k = 1:size(functions,1)
 %      fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
 %    end
@@ -91,7 +92,7 @@ end
 odes = splitstr(model(9:end-2),';');
 
 % Integrate
-if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'tstart = tic;\n');
 end
 switch solver
@@ -106,7 +107,7 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + dt*F;\n',ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');
@@ -135,7 +136,7 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');
@@ -191,7 +192,7 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + (dt/6)*(%s1+2*(%s2+%s3)+%s4);\n',ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');

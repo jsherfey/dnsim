@@ -8,8 +8,6 @@ function [simdata,spec,parms] = runsim(varargin)
 % ----------------------------------------------------------
 % get specification
 
-coder = 1; % 0; % 1; whether or not matlab code generator is enabled
-
 if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
   if nargin>1, varargin = varargin(2:end); end
@@ -63,6 +61,7 @@ parms = mmil_args2parms( varargin, ...
                               'verbose',1,[],...
                               'couple_flag',0,[],...
                               'nofunctions',1,[],...
+                              'coder',0,[],...
                            }, false);
 
 % ----------------------------------------------------------
@@ -102,12 +101,12 @@ end
 try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
-    file = dnsimulator(spec,coder,args{:});
+    file = dnsimulator(spec,args{:});
     tmp_str = strsplit(file,'/');
     odefun_dir = tmp_str{1};
     file = tmp_str{2};
     cd(odefun_dir);
-    if  ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if  ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       [data,t] = feval(file);
       delete([file,'.m']);
     else
