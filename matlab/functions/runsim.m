@@ -7,9 +7,6 @@ function [simdata,spec,parms] = runsim(varargin)
 
 % ----------------------------------------------------------
 % get specification
-
-coder = 1; % 0; % 1; whether or not matlab code generator is enabled
-
 if nargin>0 && isstruct(varargin{1}) % biosim(spec,...)
   spec = varargin{1};
   if nargin>1, varargin = varargin(2:end); end
@@ -63,8 +60,9 @@ parms = mmil_args2parms( varargin, ...
                               'verbose',1,[],...
                               'couple_flag',0,[],...
                               'nofunctions',1,[],...
+                              'coder',0,[],...
                            }, false);
-
+coder = parms.coder;
 % ----------------------------------------------------------
 % get model
 %[model,ic,functions,auxvars,spec,readable,StateIndex] = buildmodel(spec,'logfid',parms.logfid,'override',parms.override);
@@ -138,6 +136,9 @@ switch parms.SOLVER
       toc
     end
     cd ..
+    if exist('odefun','dir') && length(dir('odefun'))==2 % empty directory
+      rmdir('odefun'); 
+    end    
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
 end
