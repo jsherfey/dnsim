@@ -41,11 +41,11 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'overwrite_flag',0,[],...
                       'addpath',[],[],...
                       'coder',0,[],...
-                      'group_num_sims',1,[],...
+                      'sims_per_job',1,[],...
                    }, false);
                  
 % coder (0 or 1): whether to compile sim and run mex
-% group_num_sims (integer): # sims per job
+% sims_per_job (integer): # sims per job
 
 if ~isempty(spec.simulation.sim_cluster_flag) % for backwards-compatibility
   spec.simulation.cluster_flag=pec.simulation.sim_cluster_flag;
@@ -186,15 +186,15 @@ if spec.simulation.cluster_flag % run on cluster
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
     fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd2,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
-    if spec.simulation.group_num_sims==1
+    if spec.simulation.sims_per_job==1
       fprintf(fileID,'exit\n');
     end
     fclose(fileID);
   end
-  if spec.simulation.group_num_sims>1
+  if spec.simulation.sims_per_job>1
     % create jobs grouping several simulation scripts
     jobs={};
-    nperjob=spec.simulation.group_num_sims;
+    nperjob=spec.simulation.sims_per_job;
     nsims=length(allspecs);
     njobs=ceil(nsims/nperjob);
     cnt=0;
@@ -233,7 +233,7 @@ if spec.simulation.cluster_flag % run on cluster
   end
   % log errors
   if s, fprintf(logfid,'%s',m); end
-  if spec.simulation.group_num_sims==1
+  if spec.simulation.sims_per_job==1
     fprintf(logfid,'%g jobs submitted.\n',length(jobs));
   else
     fprintf(logfid,'%g jobs submitted (%g simulations).\n',length(jobs),length(allspecs));
