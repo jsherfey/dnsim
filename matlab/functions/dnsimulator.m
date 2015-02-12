@@ -8,7 +8,6 @@ parms = mmil_args2parms( varargin, ...
                             'cluster_flag',0,[],...
                             'coder',0,[],...
                          }, false);
-coder = parms.coder;
 coderprefix = 'pset.p';
 % (param struct in odefun).(param var below).(param name in buildmodel)
 % ex) pset = param struct in odefun), p = (param var below)
@@ -38,7 +37,7 @@ if ~exist(subdir,'dir')
 end
 
 % write params.mat if using coder
-if exist('codegen') && coder~=0
+if exist('codegen') && parms.coder~=0
   p=spec.model.parameters; % variable name 'p' must match coderprefix
   if parms.cluster_flag % write params to job-specific subdir
     stck=dbstack;
@@ -125,7 +124,6 @@ end
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
@@ -141,7 +139,6 @@ switch solver
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
@@ -152,7 +149,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
@@ -172,7 +168,6 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
@@ -185,7 +180,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
@@ -208,7 +202,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end
