@@ -1,11 +1,17 @@
-function odefun = dnsimulator(spec,coder,varargin)
+function odefun = dnsimulator(spec,varargin)
 parms = mmil_args2parms( varargin, ...
                          {...
                             'timelimits',[0 200],[],...
                             'logfid',1,[],...
                             'dt',.02,[],...
                             'SOLVER','euler',[],...
+                            'cluster_flag',0,[],...
+                            'coder',0,[],...
                          }, false);
+coder = parms.coder;
+coderprefix = 'pset.p'; 
+% (param struct in odefun).(param var below).(param name in buildmodel)
+% ex) pset = param struct in odefun), p = (param var below)
 
 tspan = parms.timelimits;
 dt = parms.dt;
@@ -25,21 +31,42 @@ auxvars=spec.model.auxvars;
 T = tspan(1):dt:tspan(2);
 nstep = length(T);
 
+% create subdirectory for temporary integrator scripts
 subdir = 'odefun';
 if ~exist(subdir,'dir')
   mkdir(subdir);
 end
+
+% write params.mat if using coder
+if exist('codegen') && coder~=0
+  p=spec.model.parameters; % variable name 'p' must match coderprefix
+  if parms.cluster_flag % write params to job-specific subdir
+    stck=dbstack;
+    subdir2=fullfile(subdir,stck(end).name); % create subdir for this job
+    if ~exist(subdir2,'dir')
+      mkdir(subdir2);
+    end
+    save(fullfile(subdir2,'params.mat'),'p');
+  else
+    save(fullfile(subdir,'params.mat'),'p');
+  end
+  %save([subdir '/params.mat'],'p');
+end
+
+% create odefun file that integrates the ODE system
 odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS')];
 odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
 if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'function [Y,T] = %s\n',odefun_file);
-else
+  fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
+else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
+  % load params.mat at start of odefun file
+  fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
+  fprintf(fid,'tspan=%s.timelimits; dt=%s.dt;\n',coderprefix,coderprefix);  
 end
-
-fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 
 if ischar(fileID) && (~exist('codegen') || coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
