@@ -105,7 +105,7 @@ end
 try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
-    file = dnsimulator(spec,coder,args{:});
+    file = dnsimulator(spec,args{:});
     tmp_str = strsplit(file,'/');
     odefun_dir = tmp_str{1};
     file = tmp_str{2};
