@@ -51,9 +51,16 @@ if ~isempty(spec.simulation.sim_cluster_flag) % for backwards-compatibility
   spec.simulation.cluster_flag=pec.simulation.sim_cluster_flag;
 end
 
-if spec.simulation.coder==1 && ~exist('codegen')
-  fprintf('codegen not found.\n');
-  spec.simulation.coder=0;
+if spec.simulation.coder==1 
+  if ~exist('codegen')
+    fprintf('codegen not found.\n');
+    spec.simulation.coder=0;
+  else
+    % create MEX file 
+    % (below: copy mex and odefun.m to [batchdir]/odefun)
+    % ...
+    % if MEX generation fails: set spec.simulation.coder=0
+  end
 end
 
 if ischar(scope), scope={scope}; end
