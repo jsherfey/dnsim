@@ -92,6 +92,7 @@ end
 
 % REPLACE X(#:#) with unique variable names X# and initialize
 Npops = [spec.(fld).multiplicity];
+EL = {spec.(fld).label};
 PopID = 1:length(Npops);
 labels = spec.variables.labels;
 ulabels = unique(labels,'stable');
@@ -101,7 +102,7 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); %Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
+  fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});

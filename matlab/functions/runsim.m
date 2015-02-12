@@ -147,8 +147,11 @@ switch parms.SOLVER
       for i=1:length(err.stack)
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
       end
-      cd(cwd);
       simdata=[];
+      if exist([file,'.m'],'file')
+         delete([file,'.m']);
+      end
+      cd(cwd);
       return
     end
     if exist('odefun','dir') && length(dir('odefun'))==2 % empty directory
