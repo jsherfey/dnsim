@@ -16,7 +16,8 @@ end
 spec.simulation = mmil_args2parms( varargin, ...
                    {  'logfid',1,[],...
                       'logfile',[],[],...
-                      'sim_cluster_flag',0,[],...
+                      'sim_cluster_flag',[],[],...
+                      'cluster_flag',0,[],...
                       'sim_cluster','scc2.bu.edu',[],...
                       'sim_qsubscript','qmatjobs_memlimit',[],...
                       'sim_driver','biosimdriver.m',[],...
@@ -39,7 +40,11 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'plotpower_flag',0,[],...
                       'overwrite_flag',0,[],...
                       'addpath',[],[],...
+                      'coder',0,[],...
                    }, false);
+if ~isempty(spec.simulation.sim_cluster_flag) % for backwards-compatibility
+  spec.simulation.cluster_flag=pec.simulation.sim_cluster_flag;
+end
 
 if ischar(scope), scope={scope}; end
 if ischar(variable), scope={variable}; end
@@ -132,7 +137,7 @@ end
 home=home(1:end-1); % remove new line character
 cwd = pwd;
 
-if spec.simulation.sim_cluster_flag % run on cluster
+if spec.simulation.cluster_flag % run on cluster
   % create batchdir
   if isempty(spec.simulation.batchdir)
     batchname = ['B' timestamp];
@@ -158,12 +163,19 @@ if spec.simulation.sim_cluster_flag % run on cluster
   end
   auxcmd = [auxcmd 'try rng(''shuffle''); end; '];
   for k=1:length(allspecs)
+    if spec.simulation.coder==1
+      subdir = fullfile(batchdir,'odefun',['job' num2str(k)]);
+      auxcmd2 = [auxcmd sprintf('addpath(''%s''); ',subdir)];
+      mkdir(subdir);
+    else
+      auxcmd2 = auxcmd;
+    end
     modelspec=allspecs{k};
     specfile = sprintf('spec%g.mat',k);
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd2,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
     fprintf(fileID,'exit\n');
     fclose(fileID);
   end
