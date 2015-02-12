@@ -102,7 +102,11 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); %Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
+  if coder==1
+    fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
+  else
+    fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},Npops(ids(k)));
+  end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
