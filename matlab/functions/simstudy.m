@@ -222,9 +222,9 @@ if spec.simulation.cluster_flag % run on cluster
   end
   if spec.simulation.coder==1
     % copy mex and m files to batchdir/odefun_subdir
-    [status,result]=system(sprintf('cp %s %s',filemex,fullfile(batchdir,filemex)));
+    [status,result]=system(sprintf('cp %s %s',fullfile(cwd,filemex),fullfile(batchdir,filemex)));
     if status, disp(result); return; end % if error occurred
-    [status,result]=system(sprintf('cp %s %s',mfile,fullfile(batchdir,mfile)));
+    [status,result]=system(sprintf('cp %s %s',fullfile(cwd,mfile),fullfile(batchdir,mfile)));
     if status, disp(result); return; end % if error occurred
   end
   if spec.simulation.sims_per_job>1
@@ -237,6 +237,11 @@ if spec.simulation.cluster_flag % run on cluster
     for k=1:njobs
       jobs{end+1}=sprintf('jobs%g.m',k);
       fileID=fopen(jobs{end},'wt');
+      if spec.simulation.coder==1
+        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);      
+        fprintf(fileID,'addpath %s\n',subdir);
+        mkdir(subdir);
+      end
       for i=1:nperjob
         if (cnt+i)>nsims
           break;
