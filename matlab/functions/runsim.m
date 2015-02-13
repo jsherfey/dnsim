@@ -140,7 +140,7 @@ switch parms.SOLVER
         end
         tic
         [data,t] = feval(filemex);
-        delete('params.mat','file');
+        delete('params.mat');
         toc
       end
       cd(cwd);
@@ -152,6 +152,7 @@ switch parms.SOLVER
       simdata=[];
       if exist([file,'.m'],'file') && parms.debug==0
          delete([file,'.m']);
+         delete('params.mat');
       end
       cd(cwd);
       return
