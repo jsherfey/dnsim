@@ -964,6 +964,11 @@ for i=1:nvar
   Svars{i,4}=ic;
   Svars{i,3}=stateindx+(1:length(ic));
   stateindx=stateindx+length(ic);
+  if parms.coder==1
+    % store ICs for setting in odefun file using params.mat
+    fld=sprintf('IC_%s',Svars{i,2});
+    modelparams.(fld) = ic;
+  end
 end
 IC=cat(1,Svars{:,4});
 
