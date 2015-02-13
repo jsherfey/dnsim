@@ -8,8 +8,7 @@ parms = mmil_args2parms( varargin, ...
                             'cluster_flag',0,[],...
                             'coder',0,[],...
                          }, false);
-coder = parms.coder;
-coderprefix = 'pset.p'; 
+coderprefix = 'pset.p';
 % (param struct in odefun).(param var below).(param name in buildmodel)
 % ex) pset = param struct in odefun), p = (param var below)
 
@@ -38,7 +37,7 @@ if ~exist(subdir,'dir')
 end
 
 % write params.mat if using coder
-if exist('codegen') && coder~=0
+if exist('codegen') && parms.coder~=0
   p=spec.model.parameters; % variable name 'p' must match coderprefix
   if parms.cluster_flag % write params to job-specific subdir
     stck=dbstack;
@@ -58,21 +57,19 @@ odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS')];
 odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
-if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'function [Y,T] = %s\n',odefun_file);
   fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
   % load params.mat at start of odefun file
   fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
-  fprintf(fid,'tspan=%s.timelimits; dt=%s.dt;\n',coderprefix,coderprefix);  
+  fprintf(fid,'tspan=%s.timelimits; dt=%s.dt;\n',coderprefix,coderprefix);
 end
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 
-if ischar(fileID) && (~exist('codegen') || coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
-  fprintf(fid,'fileID = %s; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
-else
-    fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+  fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
 
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
@@ -84,7 +81,7 @@ for k = 1:size(auxvars,1)
 end
 
 %  % evaluate anonymous functions
-%  if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+%  if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
 %    for k = 1:size(functions,1)
 %      fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
 %    end
@@ -92,6 +89,7 @@ end
 
 % REPLACE X(#:#) with unique variable names X# and initialize
 Npops = [spec.(fld).multiplicity];
+EL = {spec.(fld).label};
 PopID = 1:length(Npops);
 labels = spec.variables.labels;
 ulabels = unique(labels,'stable');
@@ -101,7 +99,11 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); %Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
+  if ~exist('codegen') || parms.coder == 0
+    fprintf(fid,'%s = zeros(%s,nstep);\n',ulabels{k},num2str(n));
+  else
+    fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
+  end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
@@ -118,13 +120,12 @@ end
 odes = splitstr(model(9:end-2),';');
 
 % Integrate
-if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'tstart = tic;\n');
 end
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
@@ -133,14 +134,13 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + dt*F;\n',ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
@@ -151,7 +151,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
@@ -162,7 +161,7 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + dt*%s2;\n',ulabels{i},ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');
@@ -171,7 +170,6 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
@@ -184,7 +182,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
@@ -207,7 +204,6 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end
@@ -218,7 +214,7 @@ switch solver
         fprintf(fid,'  %s(k) = %s(k-1) + (dt/6)*(%s1+2*(%s2+%s3)+%s4);\n',ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i},ulabels{i});
       end
     end
-    if ~exist('codegen') || coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+    if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
       enableLog(fid);
     end
     fprintf(fid,'end\n');
