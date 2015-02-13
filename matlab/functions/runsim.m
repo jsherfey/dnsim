@@ -154,6 +154,7 @@ switch parms.SOLVER
          delete([file,'.m']);
          delete('params.mat');
       end
+      rmdir('codemex','s');
       cd(cwd);
       return
     end
