@@ -38,7 +38,7 @@ if ~exist(subdir,'dir')
 end
 
 % write params.mat if using coder
-if exist('codegen') && coder~=0
+if exist('codegen') && coder==1
   p=spec.model.parameters; % variable name 'p' must match coderprefix
   if parms.cluster_flag % write params to job-specific subdir
     stck=dbstack;
@@ -50,7 +50,6 @@ if exist('codegen') && coder~=0
   else
     save(fullfile(subdir,'params.mat'),'p');
   end
-  %save([subdir '/params.mat'],'p');
 end
 
 % create odefun file that integrates the ODE system
@@ -90,30 +89,40 @@ end
 %    end
 %  end
 
-% REPLACE X(#:#) with unique variable names X# and initialize
+% REPLACE X(#:#) with unique variable names X#
+% Set Initial conditions
 Npops = [spec.(fld).multiplicity];
 EL = {spec.(fld).label};
 PopID = 1:length(Npops);
 labels = spec.variables.labels;
-ulabels = unique(labels,'stable');
+[ulabels,I] = unique(labels,'stable');
 ids = spec.variables.entity;
+uids = ids(I);
 cnt = 1; ns=zeros(1,length(ulabels));
 for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
-  n = length(varinds); %Npops(ids(varinds(1))==PopID);
+  n = length(varinds); % # cells in the pop with this var   % Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  if coder==1
-    fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
-  else
-    fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},Npops(ids(k)));
-  end
+%   if coder==0
+    fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
+%   else
+%     fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
+%   end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
-    fprintf(fid,'%s(:,1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
+    if coder==0
+      fprintf(fid,'%s(:,1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
+    else
+      fprintf(fid,'%s(:,1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
+    end
   else
     new = sprintf('%s(k-1)',ulabels{k});
-    fprintf(fid,'%s(1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
+    if coder==0
+      fprintf(fid,'%s(1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
+    else
+      fprintf(fid,'%s(1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
+    end
   end
   model = strrep(model,old,new);
   cnt = cnt + n;

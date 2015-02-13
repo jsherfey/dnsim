@@ -48,18 +48,40 @@ spec.simulation = mmil_args2parms( varargin, ...
 % sims_per_job (integer): # sims per job
 
 if ~isempty(spec.simulation.sim_cluster_flag) % for backwards-compatibility
-  spec.simulation.cluster_flag=pec.simulation.sim_cluster_flag;
+  spec.simulation.cluster_flag=spec.simulation.sim_cluster_flag;
 end
 
-if spec.simulation.coder==1 
+if spec.simulation.coder==1
   if ~exist('codegen')
-    fprintf('codegen not found.\n');
+    fprintf('codegen not found. will run m-file simulation.\n');
     spec.simulation.coder=0;
   else
-    % create MEX file 
+    cwd=pwd;
+    try
+      % create MEX file 
+      tmpparms=spec.simulation;
+      tmpparms.cluster_flag=0; % set to 0 b/c job-specific params.mat should be created from the compute node
+      args = mmil_parms2args(tmpparms);
+      spec = buildmodel(spec,args{:});
+      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m   
+      [odefun_subdir,file]=fileparts(file);
+      cd(odefun_subdir);
+      tic
+      codegen_odefun(file);
+      toc
+      filemex = fullfile(odefun_subdir,[file,'_mex.mexa64']);
+      mfile = fullfile(odefun_subdir,[file '.m']);
+      cd(cwd);
+    catch err
+      fprintf('Error: %s\n',err.message);
+      for i=1:length(err.stack)
+        fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
+      end     
+      fprintf('Re-run simstudy() with "coder" set to 0\n');
+      cd(cwd);
+      return
+    end    
     % (below: copy mex and odefun.m to [batchdir]/odefun)
-    % ...
-    % if MEX generation fails: set spec.simulation.coder=0
   end
 end
 
@@ -181,7 +203,7 @@ if spec.simulation.cluster_flag % run on cluster
   auxcmd = [auxcmd 'try rng(''shuffle''); end; '];
   for k=1:length(allspecs)
     if spec.simulation.coder==1
-      subdir = fullfile(batchdir,'odefun',['job' num2str(k)]);
+      subdir = fullfile(batchdir,odefun_subdir,['job' num2str(k)]);
       auxcmd2 = [auxcmd sprintf('addpath(''%s''); ',subdir)];
       mkdir(subdir);
     else
@@ -197,6 +219,13 @@ if spec.simulation.cluster_flag % run on cluster
       fprintf(fileID,'exit\n');
     end
     fclose(fileID);
+  end
+  if spec.simulation.coder==1
+    % copy mex and m files to batchdir/odefun_subdir
+    [status,result]=system(sprintf('cp %s %s',filemex,fullfile(batchdir,filemex)));
+    if status, disp(result); return; end % if error occurred
+    [status,result]=system(sprintf('cp %s %s',mfile,fullfile(batchdir,mfile)));
+    if status, disp(result); return; end % if error occurred
   end
   if spec.simulation.sims_per_job>1
     % create jobs grouping several simulation scripts
