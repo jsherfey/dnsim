@@ -33,7 +33,7 @@ nstep = length(T);
 
 % create subdirectory for temporary integrator scripts
 subdir = 'odefun';
-if ~exist(subdir,'dir')
+if ~exist(fullfile(pwd,subdir),'dir')
   mkdir(subdir);
 end
 
@@ -165,7 +165,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
+    fprintf(fid,'  t=t+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
@@ -198,7 +198,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+.5*dt;\n');
+    fprintf(fid,'  t=t+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
@@ -221,7 +221,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=T(k-1)+dt;\n');
+    fprintf(fid,'  t=t+.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end
