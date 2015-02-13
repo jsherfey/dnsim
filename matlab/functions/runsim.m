@@ -136,9 +136,11 @@ switch parms.SOLVER
           codegen_odefun(file);
           toc
           filemex = [file,'_mex'];
+          rmdir('codemex','s');
         end
         tic
         [data,t] = feval(filemex);
+        delete('params.mat','file');
         toc
       end
       cd(cwd);
