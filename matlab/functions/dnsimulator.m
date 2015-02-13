@@ -8,7 +8,6 @@ parms = mmil_args2parms( varargin, ...
                             'cluster_flag',0,[],...
                             'coder',0,[],...
                          }, false);
-coder = parms.coder;
 coderprefix = 'pset.p';
 % (param struct in odefun).(param var below).(param name in buildmodel)
 % ex) pset = param struct in odefun), p = (param var below)
@@ -38,7 +37,7 @@ if ~exist(fullfile(pwd,subdir),'dir')
 end
 
 % write params.mat if using coder
-if exist('codegen') && coder==1
+if exist('codegen') && parms.coder==1
   p=spec.model.parameters; % variable name 'p' must match coderprefix
   if parms.cluster_flag % write params to job-specific subdir
     stck=dbstack;
@@ -68,10 +67,8 @@ else % use codegen
 end
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 
-if ischar(fileID) && (~exist('codegen') || parms.coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
-  fprintf(fid,'fileID = %s; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
-else
-    fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+  fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
 
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
@@ -103,22 +100,23 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); % # cells in the pop with this var   % Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-%   if coder==0
+%   if ~exist('codegen') || parms.coder==0
     fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
 %   else
+%     fprintf(fid,'coder.varsize(''%s'');\n',ulabels{k});
 %     fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
 %   end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
-    if coder==0
+    if ~exist('codegen') || parms.coder==0
       fprintf(fid,'%s(:,1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
     else
       fprintf(fid,'%s(:,1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
     end
   else
     new = sprintf('%s(k-1)',ulabels{k});
-    if coder==0
+    if ~exist('codegen') || parms.coder==0
       fprintf(fid,'%s(1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
     else
       fprintf(fid,'%s(1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
@@ -138,7 +136,6 @@ end
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
@@ -154,7 +151,6 @@ switch solver
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
@@ -185,7 +181,6 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
-    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
