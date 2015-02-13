@@ -82,7 +82,7 @@ parms = mmil_args2parms( varargin, ...
 fileID = parms.logfid;
 
 if parms.coder==1
-  coderprefix = 'pset.p.'; 
+  coderprefix = 'pset.p.';
   % (param struct in odefun).(param var below).(param name in buildmodel)
 else
   coderprefix = '';
@@ -427,7 +427,7 @@ for i=1:N
     if ~isempty(E.parameters) && ~iscell(E.parameters{1})  % USER PARAMETERS
       n=length(E.parameters)/2; I=pcnt+(1:n);
       keys=E.parameters(1:2:end);
-      vals=E.parameters(2:2:end);      
+      vals=E.parameters(2:2:end);
       if parms.coder==0
         [Pdata{I,1}]=deal(keys{:});
         [Pdata{I,2}]=deal(vals{:});
@@ -508,7 +508,7 @@ for i=1:N
     end
     % mechanism-level parameters
     if ~isempty(M.params)         % DEFAULT MECH PARAMETERS
-      keys=fieldnames(M.params); 
+      keys=fieldnames(M.params);
       vals=struct2cell(M.params);
       n=length(keys); I=pcnt+(1:n);
       if parms.coder==0
@@ -601,7 +601,7 @@ for m=1:nmech
   old=Pdata(Pmech==m & Ptype==0,1); new=Pdata(Pmech==m & Ptype==0,2);
   if parms.coder==1
     for k=1:length(new)
-      if ischar(new{k}), new{k}=[coderprefix new{k}]; end; 
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
     end
   end
   [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
@@ -609,7 +609,7 @@ for m=1:nmech
   old=Pdata(Pmech==m & Ptype==1,1); new=Pdata(Pmech==m & Ptype==1,2);
   if parms.coder==1
     for k=1:length(new)
-      if ischar(new{k}), new{k}=[coderprefix new{k}]; end; 
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
     end
   end
   [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
@@ -617,7 +617,7 @@ for m=1:nmech
   k0=unique(Tpop(Tmech==m));
   n0=NE(k0); % target pop size (postsynaptic)
   if m>0, k1=Minputs{m}(1); else k1=k0; end
-  n1=NE(k1); % source pop size (presynaptic)  
+  n1=NE(k1); % source pop size (presynaptic)
   if parms.coder==0
     old={'Npre','N[1]','Npost','N[0]','Npop','dt'};
     new={n1,n1,n0,n0,n0,dt};
@@ -633,7 +633,7 @@ for m=1:nmech
     if ~isfield(modelparams,src), modelparams.(src)=n1; end
     if ~isfield(modelparams,dst), modelparams.(dst)=n0; end
     for k=1:length(new)
-      if ischar(new{k}), new{k}=[coderprefix new{k}]; end; 
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
     end
   end
   [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
@@ -712,7 +712,7 @@ for m=1:nmech
   Tsubst(Tmech==m,2)=t;
   Svars(Smech==m,4)=ic;
 end
-% substitutions into entity-level dynamics 
+% substitutions into entity-level dynamics
 E=unique(Spop(Stype==0));
 for e=1:length(E)
   idx=(Stype==0 & Spop==E(e));
@@ -724,7 +724,7 @@ for e=1:length(E)
   old=Pdata(Ptype==0,1); new=Pdata(Ptype==0,2);
   if parms.coder==1
     for k=1:length(new)
-      if ischar(new{k}), new{k}=[coderprefix new{k}]; end; 
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
     end
   end
   o=substitute(old,new,o);
@@ -738,7 +738,7 @@ for e=1:length(E)
     old={'Npost','N[0]','Npop'};
     new={dst,dst,dst};
     for k=1:length(new)
-      if ischar(new{k}), new{k}=[coderprefix new{k}]; end; 
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
     end
     if ~isfield(modelparams,dst), modelparams.(dst)=n0; end
   end

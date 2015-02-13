@@ -152,9 +152,13 @@ switch parms.SOLVER
       simdata=[];
       if exist([file,'.m'],'file') && parms.debug==0
          delete([file,'.m']);
-         delete('params.mat');
       end
-      rmdir('codemex','s');
+      if exist('params.mat','file')
+        delete('params.mat');
+      end
+      if exist('codemex','dir')
+        rmdir('codemex','s');
+      end
       cd(cwd);
       return
     end

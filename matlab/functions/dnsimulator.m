@@ -68,10 +68,8 @@ else % use codegen
 end
 fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 
-if ischar(fileID) && (~exist('codegen') || parms.coder == 0) % if matlab coder is not available or you don't want to use it because it does not support your code
-  fprintf(fid,'fileID = %s; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
-else
-    fprintf(fid,'fileID = %d; nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n',fileID);
+if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
+  fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
 
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
@@ -101,7 +99,11 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); %Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
+  if ~exist('codegen') || parms.coder == 0
+    fprintf(fid,'%s = zeros(%s,nstep);\n',ulabels{k},num2str(n));
+  else
+    fprintf(fid,'%s = zeros(%s.%s,nstep);\n',ulabels{k},coderprefix,[EL{ids(k)} '_Npop']);
+  end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
