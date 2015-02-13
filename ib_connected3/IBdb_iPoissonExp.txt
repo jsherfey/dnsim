@@ -1,0 +1,16 @@
+lambda = [100]
+T = [2000]
+tauD = [10]
+Pmax = [1]
+gsyn = [125]
+Esyn = [-80]
+poiss_id = [2]
+overwrite_flag = [0]
+ 
+G = getPoissonExp(lambda,tauD,Pmax,Npop,T,dt,overwrite_flag,poiss_id)
+
+Gt(t) = gsyn.*G(:,max(1,round(t/dt)))
+Itrain(t,V) = Gt(t).*(V-Esyn)
+ 
+current => -Itrain(t,V)
+ 

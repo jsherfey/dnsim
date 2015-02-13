@@ -1,0 +1,19 @@
+g_SYN = [0.04]
+E_SYN = [-80]
+tauDx = [100]
+tauRx = [0.5]
+convval = [20]
+IC = [0.1]
+IC_noise = [0]
+Xpost = []
+ 
+Xpre = sorti(randn(Npre,Npost),1)
+mask = Xpre <= convval
+
+ISYNconv(V,s) = (g_SYN.*(s'*mask)'.*(V-E_SYN))
+ 
+sSYNpre' = -sSYNpre./tauDx + ((1-sSYNpre)/tauRx).*(1+tanh(Vpre/10));
+sSYNpre(0) = IC+IC_noise.*rand(Npre,1)
+ 
+current => -ISYNconv(Vpost,sSYNpre)
+ 
