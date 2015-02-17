@@ -196,7 +196,7 @@ if spec.simulation.cluster_flag % run on cluster
   %end
   % create jobs
   jobs={};
-  auxcmd = '';
+  auxcmd = 'clear all; ';
   if ischar(p.addpath)
     auxcmd=sprintf('addpath(genpath(''%s'')); ',p.addpath);
   end
