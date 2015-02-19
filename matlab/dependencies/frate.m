@@ -90,9 +90,12 @@ t_axis = tmin+dt:dt:tmax;
 T = length(t_axis);
 bin_size=dt*1e3;
 tmins = tmin:dW:tmax-window_size;
-tmaxs = tmins+window_size;
 window_bins = ceil(window_size/dt);
 t_ind=round(1:dW/dt:T-window_bins+1);
+% if length(t_ind)<length(tmins) % added 19-Feb-2015 by JSS
+%   tmins=tmins(1:length(t_ind));
+% end
+tmaxs = tmins+window_size;
 N_windows = length(tmins);
 t_axis0=sort([tmins, tmaxs]);
 if ~isequal(plotType,'isi')
