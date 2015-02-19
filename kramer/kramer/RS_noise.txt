@@ -1,0 +1,4 @@
+V_noise = [.8]
+ 
+current => V_noise.*randn(Npop,1).*sqrt(dt)/dt
+ 
