@@ -1,0 +1,16 @@
+gM = [1.5]
+E_M = [-95]
+c_MaM = [1.5]
+c_MbM = [0.75]
+IC = [0]
+IC_noise = [0.01]
+ 
+aM(V) = c_MaM.*(.02./(1+exp((-20-V)/5)))
+bM(V) = c_MbM.*(.01*exp((-43-V)/18))
+IM(V,m) = gM.*m.*(V-E_M)
+ 
+mM' = (aM(V).*(1-mM)-bM(V).*mM);
+mM(0) = IC+IC_noise.*rand(Npop,1)
+ 
+current => -IM(V,mM)
+ 
