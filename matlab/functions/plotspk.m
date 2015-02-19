@@ -61,7 +61,7 @@ for pop=1:npop
     spikeinds{pop}{cell}=ind;
   end
   % calc firing rate from point process
-  [frates, jnk, ordered_elec] = frate(dn, parms);
+  [frates, tmins, ordered_elec] = frate(dn, parms);
   rates{pop} = frates;
   alldn{pop} = dn;
   spikes{pop} = sum(dn,1);
