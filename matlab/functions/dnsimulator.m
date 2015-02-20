@@ -136,6 +136,7 @@ end
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
@@ -151,6 +152,7 @@ switch solver
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
@@ -161,7 +163,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
@@ -181,6 +183,7 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
@@ -193,7 +196,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
@@ -216,7 +219,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end
