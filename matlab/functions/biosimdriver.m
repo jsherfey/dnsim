@@ -64,6 +64,10 @@ end
 % run biosim
 args = mmil_parms2args(spec.simulation);
 [sim_data,spec,parms.biosim] = runsim(spec,args{:},'verbose',parms.verbose);
+if isempty(sim_data)
+  fprintf(logfid,'Simulation failed. No data to save.\n');
+  return;
+end
 
 % save simulated data with prefix
 if parms.savedata_flag
