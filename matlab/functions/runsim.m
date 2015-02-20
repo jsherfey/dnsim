@@ -266,6 +266,7 @@ else
   end
   simdata.labels=allvarlist;
   simdata.params=parms;
+  simdata.time=t;
 end
 clear data
 
