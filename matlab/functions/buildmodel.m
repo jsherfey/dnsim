@@ -1,7 +1,7 @@
 function varargout = buildmodel(spec,varargin)
 % 20150210 - modified: added option (coder) to construct ODEs containing parameter names and construct a parameter structure for all parameters (scope_mech*_param). add param struct to spec.
 
-% NEED TO: assess whether the conditional at line ~517 is necessary to
+% NEED TO: assess whether the conditional at line ~519 is necessary to
 % prevent mechanism parameters from overriding global entity parameters.
 % i.e., check which value is used given conflict b/w entity and mech parms
 
@@ -457,7 +457,7 @@ for i=1:N
 %     % ------
     Minputs{mcnt}=E.inputs{m};
     Mlabels{mcnt}=E.mechanisms{m};
-    if Minputs{mcnt}~=i || mechtype{i}(m)==0
+    if Minputs{mcnt}~=i || mechtype{i}(m)==0 % connection or input from another population
       prefix = [EL{Minputs{mcnt}} '_' EL{i} '_' Mlabels{mcnt}];
     else
       prefix = [EL{i} '_' Mlabels{mcnt}];
@@ -478,7 +478,8 @@ for i=1:N
         [Pdata{I,2}]=deal(vals{:});
       else
         for j=1:length(I)
-          newlabel=[EL{i} '_' keys{j}]; %newlabel=[prefix '_' keys{j}];
+          %newlabel=[EL{i} '_' keys{j}]; 
+          newlabel=[prefix '_' keys{j}];
           Pdata{I(j),1} = keys{j};
           Pdata{I(j),2} = newlabel;
           modelparams.(newlabel) = vals{j};
@@ -517,11 +518,12 @@ for i=1:N
       else
         for j=1:length(I)
           %if ~isfield(modelparams,[EL{i} '_' keys{j}]) % use only if not specified at entity level
+          if ~isfield(modelparams,[prefix '_' keys{j}]) % use only if not specified at entity level
             newlabel=[prefix '_' keys{j}];
             Pdata{I(j),1} = keys{j};
             Pdata{I(j),2} = newlabel;
             modelparams.(newlabel) = vals{j};
-          %end
+          end
         end
       end
       Ppop(I)=i;
