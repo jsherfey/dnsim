@@ -746,7 +746,7 @@ for e=1:length(E)
   end
   o=substitute(old,new,o);
   % ----------------------------------
-  % interface statements into odes
+  % interface statements (functions only) into odes
   tmp=ismember(Tsubst(:,1),Hfunc(:,1))&(Tpop==E(e)); % limit to within-entity substitutions
   old=Tsubst(tmp,1); new=Tsubst(tmp,2);
   % ---
@@ -754,7 +754,11 @@ for e=1:length(E)
   for k=1:numel(new)
       new{k}=['((' new{k} ')+' old{k} ')'];
   end
-  % ---
+  o=substitute(old,new,o);
+  % remove function substitution placeholders (added 21-Feb-2015 to prevent another downstream substitution
+  for k=1:numel(new)
+      new{k}='0';
+  end
   o=substitute(old,new,o);
   % ----------------------------------
   Sodes(idx)=o;
