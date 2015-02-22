@@ -778,13 +778,14 @@ if parms.nofunctions
       pat = @(s)sprintf('(\\W+%s)|(^%s)\\(',s,s); % function label pattern
       funcinds=find(~cellfun(@isempty,cellfun(@(s)regexp(target,pat(s)),Hfunc(:,2),'unif',0)));
       for f=1:length(funcinds)
-        keep_going=1;
+        %keep_going=1;
         ind = funcinds(f);
         submatch = regexp(target,[Hfunc{ind,2} '\([\w\s,]*\)'],'match');
         %submatch = regexp(target,[Hfunc{ind,2} '[\w\s,]*'],'match');
         %submatch = regexp(target,[Hfunc{ind,2} '\(.*\)'],'match');
         %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\([a-zA-Z]\w*\)','match');
         if ~isempty(submatch)
+            keep_going=1;
             subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
             subvars = unique([subvars{:}]);
             subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
