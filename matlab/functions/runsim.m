@@ -137,14 +137,14 @@ switch parms.SOLVER
           codegen_odefun(file);
           toc
           filemex = [file,'_mex'];
-          if parms.debug==0
-            rmdir('codemex','s');
-          end
         end
         tic
         [data,t] = feval(filemex);
         if parms.debug==0
           delete('params.mat');
+        end
+        if exist('codemex','dir')
+          rmdir('codemex','s');
         end
         toc
       end
@@ -158,7 +158,7 @@ switch parms.SOLVER
       if exist([file,'.m'],'file') && parms.debug==0
          delete([file,'.m']);
       end
-      if exist('params.mat','file')
+      if exist('params.mat','file') && parms.debug==0
         delete('params.mat');
       end
       if exist('codemex','dir')
@@ -253,7 +253,7 @@ else
   sim_data.params (dt, tstart, tstop, solver)
   sim_data.git_hash
   %}
-  allvarlist={};  
+  allvarlist={};
   for i = 1:length(spec.(simfield))
     EN = Esizes(i);
     varlist = unique(spec.(simfield)(i).var_list,'stable');
