@@ -155,7 +155,7 @@ switch parms.SOLVER
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
       end
       simdata=[];
-      if exist([file,'.m'],'file') && parms.debug==0
+      if exist([file,'.m'],'file') && if ~exist([file,'.mex'],'file') && parms.debug==0
          delete([file,'.m']);
       end
       if exist('params.mat','file') && parms.debug==0
