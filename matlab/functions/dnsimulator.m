@@ -76,6 +76,18 @@ fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
 % evaluate auxiliary variables (ie., adjacency matrices)
 for k = 1:size(auxvars,1)
+  if strncmp(solver,'rk',2)
+    dt_scaling_factor = '0.5';
+    strParts = strsplit(auxvars{k,2},{'pset.p.'});
+    for l = 2:length(strParts)
+      strParts{l} = ['pset.p.',strParts{l}];
+      if regexp(strParts{l}, '^.+_dt[,)]$')
+        prevStr = strParts{l}(1:end-1);
+        newStr = regexprep(strParts{l}(1:end-1), '^.+_dt$', [dt_scaling_factor,'*',strParts{l}(1:end-1)]);
+        fprintf(fid,'%s = %s; \n',prevStr,newStr);
+      end
+    end
+  end
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
 
