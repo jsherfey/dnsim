@@ -83,7 +83,7 @@ for k = 1:size(auxvars,1)
       strParts{l} = ['pset.p.',strParts{l}];
       if regexp(strParts{l}, '^.+_dt[,)]$')
         prevStr = strParts{l}(1:end-1);
-        newStr = regexprep(strParts{l}(1:end-1), '^.+_dt$', [dt_scaling_factor,'\*',strParts{l}(1:end-1)]);
+        newStr = regexprep(strParts{l}(1:end-1), '^.+_dt$', [dt_scaling_factor,'*',strParts{l}(1:end-1)]);
         fprintf(fid,'%s = %s; \n',prevStr,newStr);
       end
     end
