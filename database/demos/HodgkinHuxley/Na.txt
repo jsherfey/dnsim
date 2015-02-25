@@ -1,0 +1,16 @@
+vna = [50]
+gna = [120]
+ 
+am(v) = .1*(v+40)./(1-exp(-(v+40)/10))
+bm(v) = 4*exp(-(v+65)/18)
+ah(v) = .07*exp(-(v+65)/20)
+bh(v) = 1./(1+exp(-(v+35)/10))
+ina(v,m,h) = gna*h.*(m.^3).*(v-vna)
+ 
+m' = am(v).*(1-m)-bm(v).*m;
+m(0) = [0.052]*ones(Npop,1)
+h' = ah(v).*(1-h)-bh(v).*h;
+h(0) = [0.596]*ones(Npop,1)
+ 
+current => -ina(v,m,h)
+ 
