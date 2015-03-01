@@ -380,6 +380,7 @@ uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+uicontrol('parent',p_net_select,'tag','nodecontrols','units','normalized','position',[.8 .92 .1 .1],'style','pushbutton','string','quicksim','callback',@RunSimStudy);
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
@@ -398,6 +399,7 @@ else
   u=[];
 end
 txt_comp = uicontrol('style','text','string',cl,'units','normalized','position',[.05 .95 .1 .05],'parent',pmech,'FontWeight','bold','visible','off');
+
 % button to expand/collapse mechanism editor
 H.btn_resizemech=uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.4 .97 .2 .04],'string','expand','callback',@ResizeMechEditor,'visible','on');
 % button to upload a new mechanisms
