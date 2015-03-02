@@ -55,7 +55,7 @@ if spec.simulation.coder==1
   if ~exist('codegen')
     fprintf('codegen not found. will run m-file simulation.\n');
     spec.simulation.coder=0;
-  else
+  elseif spec.simulation.cluster_flag==1
     cwd=pwd;
     try
       % create MEX file 
