@@ -3,6 +3,7 @@ function varargout = biosimdriver(spec,varargin)
 parms = mmil_args2parms( varargin, ...
                          {  'logfid',1,[],...
                             'savedata_flag',1,[],...
+                            'jsondata_flag',0,[],...
                             'savepopavg_flag',1,[],...
                             'savespikes_flag',1,[],...
                             'saveplot_flag',1,[],...
@@ -72,8 +73,13 @@ end
 % save simulated data with prefix
 if parms.savedata_flag
   if ~exist(fullfile(rootoutdir,'data'),'dir'), mkdir(fullfile(rootoutdir,'data')); end
-  save(datafile,'sim_data','spec','parms');%,'-v7.3');
-  fprintf(logfid,'Simulated data saved to: %s\n',datafile);
+    if parms.jsondata_flag
+      savejson('', {sim_data,spec,parms}, fullfile(rootoutdir,'data',[prefix '_sim_data.json']));
+      fprintf(logfid,'Simulated data saved to: %s\n',fullfile(rootoutdir,'data',[prefix '_sim_data.json']));
+    else
+      save(datafile,'sim_data','spec','parms');%,'-v7.3');
+      fprintf(logfid,'Simulated data saved to: %s\n',datafile);
+    end
 end
 
 %% analyze and plot simulated data
