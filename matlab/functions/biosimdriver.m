@@ -9,6 +9,7 @@ parms = mmil_args2parms( varargin, ...
                             'plotvars_flag',1,[],...
                             'plotrates_flag',1,[],...
                             'plotpower_flag',1,[],...
+                            'plotpacoupling_flag',0,[],...
                             'reply_address','sherfey@bu.edu',[],...
                             'rootoutdir',[],[],...
                             'prefix','sim',[],... 
@@ -20,9 +21,9 @@ parms = mmil_args2parms( varargin, ...
                             'overwrite_flag',0,[],...
                          }, false);
 
-plot_flag = parms.plotvars_flag || parms.plotrates_flag || parms.plotpower_flag; % whether to plot anything at all
+plot_flag = parms.plotvars_flag || parms.plotrates_flag || parms.plotpower_flag || parms.plotpacoupling_flag; % whether to plot anything at all
 save_flag = parms.savedata_flag || parms.savepopavg_flag || parms.savespikes_flag || (parms.saveplot_flag && plot_flag); % whether to save anything at all
-analysis_flag = parms.plotrates_flag || parms.plotpower_flag || parms.savepopavg_flag || parms.savespikes_flag; % whether to create an analysis directory
+analysis_flag = parms.plotrates_flag || parms.plotpower_flag || parms.plotpacoupling_flag || parms.savepopavg_flag || parms.savespikes_flag; % whether to create an analysis directory
 overwrite_flag = parms.overwrite_flag;
 
 logfid = parms.logfid;
@@ -89,7 +90,7 @@ SimMech='iStepProtocol';
 
 % Data and LFP
 % get and plot results
-h1=[]; h2=[]; h3=[];
+h1=[]; h2=[]; h3=[]; h4=[];
 if issubfield(spec,'variables.global_oldlabel')
   varlabels=unique(spec.variables.global_oldlabel);
 else
@@ -152,7 +153,38 @@ if parms.plotrates_flag || parms.savespikes_flag
     disperror(err);
   end
 end
-figs = [h1 h2 h3];
+
+% -----------------------------------------------------
+% Phase amplitude coupling (PAC) analysis
+
+% PAC parameters
+slow_freq_range = [0, 1.5];  % In Hertz.
+% - No, really! These are converted using Nyquist for you. Everyone else seems to
+%     lie about taking their args in Hz, especially MATLAB.
+fast_freq_range = [8, 13];    % In Hertz.
+window_length = 2.0;          % In seconds.
+% - Make sure that this is longer than the cycle time of whatever the slower,
+%     'modulating' frequency band is.
+window_overlap = 1.0;         % In seconds.
+number_bins = 18;
+% - From Tort's code: We are breaking 0-360 degrees in 18 bins, ie,
+%     each bin has 20
+
+if parms.plotpacoupling_flag
+  try
+    [h4]=plotpacoupling(sim_data,spec,'plot_flag',parms.plotpacoupling_flag,...
+                          'slow_freq_range',slow_freq_range,'fast_freq_range',fast_freq_range,...
+                          'window_length',window_length,'window_overlap',window_overlap,...
+                          'number_bins',number_bins);
+  catch err
+    h4=[];
+    disperror(err);
+  end
+end
+
+figs = [h1 h2 h3 h4];
+% figs = [h1 h2 h3];
+
 
 % -----------------------------------------------------
 % save figures
@@ -198,6 +230,20 @@ if plot_flag && parms.saveplot_flag
       end; 
     end
   end
+  if ~isempty(h4)
+    % Hopefully there isn't any other place that is responsible for creating the data directories
+    if ~exist(fullfile(rootoutdir,'images','coupling'),'dir'), mkdir(fullfile(rootoutdir,'images','coupling')); end
+    filenames{end+1} = fullfile(rootoutdir,'images','coupling',[prefix '_coupling']);
+    fprintf('saving plots - phase amplitude coupling: %s\n',filenames{end});
+    for i=1:length(exts)
+      try
+        print(h4,formats{i},[filenames{end} exts{i}]);
+      catch err
+        disperror(err);
+      end;
+    end
+  end
+
 end
 
 % -----------------------------------------------------

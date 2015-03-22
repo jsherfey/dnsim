@@ -37,6 +37,7 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'plotvars_flag',1,[],...
                       'plotrates_flag',0,[],...
                       'plotpower_flag',0,[],...
+                      'plotpacoupling_flag',0,[],...
                       'overwrite_flag',0,[],...
                       'addpath',[],[],...
                    }, false);
@@ -62,7 +63,7 @@ end
 
 timestamp = spec.simulation.timestamp;
 p=spec.simulation;
-plot_flag = p.plotvars_flag || p.plotrates_flag || p.plotpower_flag; % whether to plot anything at all
+plot_flag = p.plotvars_flag || p.plotrates_flag || p.plotpower_flag || p.plotpacoupling_flag; % whether to plot anything at all
 save_flag = p.savedata_flag || p.savepopavg_flag || p.savespikes_flag || (p.saveplot_flag && plot_flag); % whether to save anything at all
 
 % log file
@@ -163,7 +164,7 @@ if spec.simulation.sim_cluster_flag % run on cluster
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''plotpacoupling_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.plotpacoupling_flag,p.overwrite_flag);
     fprintf(fileID,'exit\n');
     fclose(fileID);
   end
@@ -197,7 +198,7 @@ else
     try
       biosimdriver(modelspec,'rootoutdir',rootoutdir{specnum},'prefix',prefix{specnum},'verbose',1,...
        'savedata_flag',p.savedata_flag,'savepopavg_flag',p.savepopavg_flag,'savespikes_flag',p.savespikes_flag,...
-       'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag,'overwrite_flag',p.overwrite_flag);
+       'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag,'plotpacoupling_flag',p.plotpacoupling_flag,'overwrite_flag',p.overwrite_flag);
         %'savefig_flag',0,'savedata_flag',0);
     catch err
       fprintf('Error: %s\n',err.message);
