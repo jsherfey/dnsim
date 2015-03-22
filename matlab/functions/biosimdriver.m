@@ -157,25 +157,9 @@ end
 % -----------------------------------------------------
 % Phase amplitude coupling (PAC) analysis
 
-% PAC parameters
-slow_freq_range = [0, 1.5];  % In Hertz.
-% - No, really! These are converted using Nyquist for you. Everyone else seems to
-%     lie about taking their args in Hz, especially MATLAB.
-fast_freq_range = [8, 13];    % In Hertz.
-window_length = 2.0;          % In seconds.
-% - Make sure that this is longer than the cycle time of whatever the slower,
-%     'modulating' frequency band is.
-window_overlap = 1.0;         % In seconds.
-number_bins = 18;
-% - From Tort's code: We are breaking 0-360 degrees in 18 bins, ie,
-%     each bin has 20
-
 if parms.plotpacoupling_flag
   try
-    [h4]=plotpacoupling(sim_data,spec,'plot_flag',parms.plotpacoupling_flag,...
-                          'slow_freq_range',slow_freq_range,'fast_freq_range',fast_freq_range,...
-                          'window_length',window_length,'window_overlap',window_overlap,...
-                          'number_bins',number_bins);
+    [h4]=plotpacoupling(sim_data,spec,'plot_flag',parms.plotpacoupling_flag);
   catch err
     h4=[];
     disperror(err);
