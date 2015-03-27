@@ -76,6 +76,18 @@ fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
 % evaluate auxiliary variables (ie., adjacency matrices)
 for k = 1:size(auxvars,1)
+  if strncmp(solver,'rk',2)
+    dt_scaling_factor = '0.5';
+    strParts = strsplit(auxvars{k,2},{'pset.p.'});
+    for l = 2:length(strParts)
+      strParts{l} = ['pset.p.',strParts{l}];
+      if regexp(strParts{l}, '^.+_dt[,)]$')
+        prevStr = strParts{l}(1:end-1);
+        newStr = regexprep(strParts{l}(1:end-1), '^.+_dt$', [dt_scaling_factor,'*',strParts{l}(1:end-1)]);
+        fprintf(fid,'%s = %s; \n',prevStr,newStr);
+      end
+    end
+  end
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
 
@@ -136,6 +148,7 @@ end
 switch solver
   case 'euler'
     fprintf(fid,'for k=2:nstep\n');
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  F=%s;\n',odes{i});
       if ns(i)>1
@@ -151,6 +164,7 @@ switch solver
   case {'rk2','modifiedeuler'}
     fprintf(fid,'for k=2:nstep\n');
     tmpodes=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
       for j=1:length(ulabels)
@@ -161,7 +175,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes{i});
     end
@@ -181,6 +195,7 @@ switch solver
     tmpodes1=odes;
     tmpodes2=odes;
     tmpodes3=odes;
+    fprintf(fid,'  t=T(k-1);\n');
     for i=1:length(odes)
       % set k1
       fprintf(fid,'  %s1=%s;\n',ulabels{i},odes{i});
@@ -193,7 +208,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s2=%s;\n',ulabels{i},tmpodes1{i});
       % set k3
@@ -216,7 +231,7 @@ switch solver
         end
       end
     end
-    fprintf(fid,'  t=t+.5*dt;\n');
+    fprintf(fid,'  t=t+0.5*dt;\n');
     for i=1:length(odes)
       fprintf(fid,'  %s4=%s;\n',ulabels{i},tmpodes3{i});
     end

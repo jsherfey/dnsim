@@ -63,6 +63,7 @@ parms = mmil_args2parms( varargin, ...
                               'cluster_flag',0,[],...
                               'coder',0,[],...
                               'debug',0,[],...
+                              'timesurfer_flag',1,[],...
                            }, false);
 % ----------------------------------------------------------
 % get model
@@ -136,11 +137,15 @@ switch parms.SOLVER
           codegen_odefun(file);
           toc
           filemex = [file,'_mex'];
-          rmdir('codemex','s');
         end
         tic
         [data,t] = feval(filemex);
-        delete('params.mat');
+        if parms.debug==0
+          delete('params.mat');
+        end
+        if exist('codemex','dir')
+          rmdir('codemex','s');
+        end
         toc
       end
       cd(cwd);
@@ -150,10 +155,10 @@ switch parms.SOLVER
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
       end
       simdata=[];
-      if exist([file,'.m'],'file') && parms.debug==0
+      if exist([file,'.m'],'file') && ~exist([file,'.mex'],'file') && parms.debug==0
          delete([file,'.m']);
       end
-      if exist('params.mat','file')
+      if exist('params.mat','file') && parms.debug==0
         delete('params.mat');
       end
       if exist('codemex','dir')
@@ -199,6 +204,75 @@ if issubfield(spec,'connections.auxvars')
     end
   end
 end
+
+% store result in timesurfer format
+clear simdata
+if isfield(spec,'entities')
+  simfield='entities';
+elseif isfield(spec,'cells')
+  simfield='cells';
+elseif isfield(spec,'nodes')
+  simfield='nodes';
+end
+
+if parms.timesurfer_flag
+  datafield = 'epochs';% 'studies';
+  maxN = max(Esizes);
+  try
+    for i = 1:length(spec.(simfield))
+      EN = Esizes(i);
+      varlist = unique(spec.(simfield)(i).var_list);
+      VN = length(varlist);
+      dat = zeros(VN,ntime,maxN);%EN); % vars x time x cells
+      for v = 1:length(varlist)
+        index = spec.(simfield)(i).var_index(strmatch(varlist{v},spec.(simfield)(i).var_list,'exact'));
+        dat(v,:,1:length(index)) = data(:,index);
+      end
+      if ndims(dat)==2
+        tmpdata = ts_matrix2data(single(dat),'time',t/1000,'datafield',datafield,'continuous',1);
+      elseif ndims(dat)==3
+        tmpdata = ts_matrix2data(single(dat),'time',t/1000,'datafield',datafield);
+      end
+      [tmpdata.sensor_info.label] = deal(varlist{:});
+      [tmpdata.sensor_info.kind] = deal(i);
+      if issubfield(spec,'simulation.scope');
+        tmpdata.(datafield).cond_label = sprintf('%s.%s=%s',spec.simulation.scope,spec.simulation.variable,spec.simulation.values);
+      else
+        tmpdata.(datafield).cond_label = 'simulation';
+      end
+      simdata(i) = tmpdata;
+      clear tmpdata dat
+    end
+  catch
+    simdata = single(data);
+  end
+else
+  %{
+  sim_data.labels = {'TC_iNa_m', ...}
+  sim_data.TC_iNa_m.raw [time x cells]
+  sim_data.params (dt, tstart, tstop, solver)
+  sim_data.git_hash
+  %}
+  allvarlist={};
+  for i = 1:length(spec.(simfield))
+    EN = Esizes(i);
+    varlist = unique(spec.(simfield)(i).var_list,'stable');
+    VN = length(varlist);
+    for v = 1:length(varlist)
+      index = spec.(simfield)(i).var_index(strmatch(varlist{v},spec.(simfield)(i).var_list,'exact'));
+      simdata.(varlist{v}) = data(:,index);
+    end
+    allvarlist=cat(2,allvarlist,varlist);
+  end
+  simdata.labels=allvarlist;
+  simdata.params=parms;
+  simdata.time=t;
+end
+clear data
+
+parms.IC = ic;
+
+%{
 % precompute mechanism interface functions (ie, output functions):
 if ~isempty(parms.output_list)
   flds = fieldnames(parms);
@@ -411,48 +485,7 @@ if ~isempty(parms.output_list)
   end
 end
 
-% store result in timesurfer format
-clear simdata
-if isfield(spec,'entities')
-  simfield='entities';
-elseif isfield(spec,'cells')
-  simfield='cells';
-elseif isfield(spec,'nodes')
-  simfield='nodes';
-end
-datafield = 'epochs';% 'studies';
-maxN = max(Esizes);
-try
-  for i = 1:length(spec.(simfield))
-    EN = Esizes(i);
-    varlist = unique(spec.(simfield)(i).var_list);
-    VN = length(varlist);
-    dat = zeros(VN,ntime,maxN);%EN); % vars x time x cells
-    for v = 1:length(varlist)
-      index = spec.(simfield)(i).var_index(strmatch(varlist{v},spec.(simfield)(i).var_list,'exact'));
-      dat(v,:,1:length(index)) = data(:,index);
-    end
-    if ndims(dat)==2
-      tmpdata = ts_matrix2data(single(dat),'time',t/1000,'datafield',datafield,'continuous',1);
-    elseif ndims(dat)==3
-      tmpdata = ts_matrix2data(single(dat),'time',t/1000,'datafield',datafield);
-    end
-    [tmpdata.sensor_info.label] = deal(varlist{:});
-    [tmpdata.sensor_info.kind] = deal(i);
-    if issubfield(spec,'simulation.scope');
-      tmpdata.(datafield).cond_label = sprintf('%s.%s=%s',spec.simulation.scope,spec.simulation.variable,spec.simulation.values);
-    else
-      tmpdata.(datafield).cond_label = 'simulation';
-    end
-    simdata(i) = tmpdata;
-    clear tmpdata dat
-  end
-catch
-  simdata = single(data);
-end
-clear data
-
-parms.IC = ic;
+%}
 
 %% NOTES:
 % entities => separate structures w/ sensor_info.kind = entity ID
