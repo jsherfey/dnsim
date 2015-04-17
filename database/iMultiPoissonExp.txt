@@ -1,23 +1,29 @@
-% iPoissonExp.txt (connection mechanism: spikes from precomputed and saved spike train)
+% iMultiPoissonExp.txt (connection mechanism: spikes from precomputed and saved spike train)
 % Poisson exponential synapse (one-to-one connectivity)
 
-lambda=100; 	% Hz, Poisson spike rate
+rate=2; 	% Hz, Poisson spike rate
 T=2000; 	% ms, duration
-tauD=10; 	% ms, exponential decay time constant
-Pmax=1; 	% conductance step on spike
-gsyn=1;		% input strength
-Esyn=0;
-poiss_id=1;
-overwrite_flag=0;
+g_esyn=1;		% input strength
+g_isyn=1;
+E_esyn=0;
+E_isyn=-85;
+tau_i = 10;
+tau_1 = 1;
+N_einputs = 127;
+N_iinputs = 73;
 
-G = e_i_Poisson(lambda,tauD,Pmax,Npop,T,dt,overwrite_flag,poiss_id);
+Ge = multi_Poisson(Npop, N_einputs, rate, tau_i, tau_1, 2, .5, T, dt);
 
-%Itrain(t,V) = gsyn.*G(:,max(1,round(t/dt))).*(V-Esyn);
-Gt(t) = gsyn.*G(:,max(1,round(t/dt)));
-Itrain(t,V) = Gt(t).*(V-Esyn);
-current => -Itrain(t,V)
+Gte(t) = g_esyn.*Ge(:, max(1,round(t/dt)));
+Itrain_e(t, v) = Gte(t).*(v - E_esyn);
 
-%Itrain(t) = gsyn.*G(:,max(1,round(t/dt)));
-%current => -Itrain(t)
+Gi = multi_Poisson(Npop, N_iinputs, rate, tau_i, tau_1, 5, .5, T, dt);
+
+Gti(t) = g_isyn.*G(:, max(1,round(t/dt)));
+Itrain_i(t, v) = Gti(t).*(v - E_isyn);
+
+Itrain(t, v) = Itrain_e(t, v) + Itrain_i(t,v);
+
+current => -Itrain(t, IN)
 
 

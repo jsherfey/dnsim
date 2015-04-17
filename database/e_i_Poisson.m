@@ -1,4 +1,4 @@
-function current = e_i_Poisson(no_cells, e_inputs_per_cell, i_inputs_per_cell, e_rate, i_rate)
+function current = e_i_Poisson(no_cells, e_inputs_per_cell, i_inputs_per_cell, e_rate, i_rate, T, dt)
 
 % EPSP for spikes at time t = 0.
 epsp = tau_i*(exp(-max(t - tau_e1,0)/tau_ed) - exp(-max(t - tau_e1,0)/tau_er))/(tau_ed - tau_er);
@@ -22,7 +22,7 @@ i_size = 0.0053;
 CE_e = repmat(eye(no_cells), 1, no_e_inputs/no_cells);
 CE_i = repmat(eye(no_cells), 1, no_i_inputs/no_cells);
 
-e_spikes = rand(no_e_inputs, length(t));
+e_spikes = rand(no_e_inputs, ceil(T/dt));
 e_spikes = e_spikes < e_rate*dt/1000;
 
 e_spike_arrivals = CE_e*e_spikes; % Calculating presynaptic spikes for each cell.
