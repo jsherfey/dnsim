@@ -1,0 +1,7 @@
+g_l = [1]
+E_l = [-65]
+ 
+Ileak(IN) = g_l.*(IN-E_l)
+ 
+current => -Ileak(IN)
+ 
