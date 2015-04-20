@@ -12,18 +12,18 @@ tau_1 = 1;
 N_einputs = 127;
 N_iinputs = 73;
 
-Ge = multi_Poisson(Npop, N_einputs, rate, tau_i, tau_1, 2, .5, T, dt);
+Ge = multi_Poisson(Npop, N_einputs, rate, 'individual', tau_i, tau_1, 2, .5, T, dt);
 
 Gte(t) = g_esyn.*Ge(:, max(1,round(t/dt)));
-Itrain_e(t, v) = Gte(t).*(v - E_esyn);
+Itrain_e(t,v) = Gte(t).*(v - E_esyn);
 
-Gi = multi_Poisson(Npop, N_iinputs, rate, tau_i, tau_1, 5, .5, T, dt);
+Gi = multi_Poisson(Npop, N_iinputs, rate, 'individual', tau_i, tau_1, 5, .5, T, dt);
 
 Gti(t) = g_isyn.*G(:, max(1,round(t/dt)));
-Itrain_i(t, v) = Gti(t).*(v - E_isyn);
+Itrain_i(t,v) = Gti(t).*(v - E_isyn);
 
-Itrain(t, v) = Itrain_e(t, v) + Itrain_i(t,v);
+Itrain(t,v) = Itrain_e(t,v) + Itrain_i(t,v);
 
-current => -Itrain(t, IN)
+current => -Itrain(t,IN)
 
 
