@@ -1,0 +1,34 @@
+% iCorrPoissonExp.txt (connection mechanism: spikes from precomputed and saved spike train)
+% Poisson exponential synapse (one-to-one connectivity)
+
+rate=2; 	% Hz, Poisson spike rate
+T=2000; 	% ms, duration
+g_esyn=1;		% input strength
+g_isyn=1;
+E_esyn=0;
+E_isyn=-85;
+tau_i = 10;
+tau_1 = 1;
+N_einputs = 127;
+N_iinputs = 73;
+prop_shared = 20;
+
+Ge_ind = multi_Poisson(Npop, round(N_einputs*(1 - prop_shared)), rate, 'individual', tau_i, tau_1, 2, .5, T, dt);
+Ge_shared = multi_Poisson(Npop, round(N_einputs*prop_shared), rate, 'shared', tau_i, tau_1, 2, .5, T, dt);
+Ge = Ge_ind + Ge_shared;
+
+Gte(t) = g_esyn.*Ge(:, max(1,round(t/dt)));
+Itrain_e(t, v) = Gte(t).*(v - E_esyn);
+
+Gi_ind = multi_Poisson(Npop, round(N_iinputs*(1 - prop_shared)), rate, 'individual', tau_i, tau_1, 5, .5, T, dt);
+Gi_shared = multi_Poisson(Npop, round(N_iinputs*prop_shared), rate, 'shared', tau_i, tau_1, 5, .5, T, dt);
+Gi = Gi_ind + Gi_shared;
+
+Gti(t) = g_isyn.*Gi(:, max(1,round(t/dt)));
+Itrain_i(t, v) = Gti(t).*(v - E_isyn);
+
+Itrain(t, v) = Itrain_e(t, v) + Itrain_i(t,v);
+
+current => -Itrain(t, IN)
+
+
