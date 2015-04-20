@@ -1,30 +1,23 @@
-% ican: Slow Ca-dependent nonspecific cation current
+% iCan: slow cationic calcium-dependent current (ref: Tegner/Compte 2002)
+% Requires: calcium concentration "cai" (e.g., exposed by CaDyn mechanism)
+% Tags: calcium, channel, intrinsic
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parameters
-celsius	= 36   % (degC)
-ecan    = -20  % (mV)            	: reversal potential
-gcan    = .0002    % (mho/cm2)
-beta 	= 0.00015                     	
-cac	= 0.0001			
-taumin  = 0.1  % (ms)            	: minimal value of time constant
-IC=0; IC_noise=0
-
-% Derived parameters
-tadj = 3^((celsius-22.0)/10)
+gCan=.025; ECan=-20;
+alphacan=.0056;		% 1/(ms*mM)
+betacan=.002;		% 1/ms
 
 % Functions
-alpha2(cai) = beta*(cai/cac).^2
-minf(cai) = alpha2(cai)./(alpha2(cai)+beta)
-taum(cai) = max(taumin,1./(alpha2(cai)+beta)/tadj)
-ican(v,m) = .7*gcan.*m.^2.*(v-ecan)
+minf(cai)=alphacan*cai./(alphacan*cai+betacan);
+mtau(cai)=1./(alphacan*cai+betacan);
+ICan(IN,m)=gCan.*m.^2.*(IN-ECan)
 
 % ODEs
-m' = (minf(cai)-m)./taum(cai)
-m(0)=IC+IC_noise.*rand(Npop,1)
+mCan' = (minf(cai)-mCan)./mtau(cai);
+mCan(0)=rand(Npop,1)
 
 % Interface
-current => -ican(IN,m)
-ica => ican(IN,m)
+current => -ICan(IN,mCan)
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Reference: http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=155057&file=\L5microcircuit\mechanism\ican.mod
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
+
