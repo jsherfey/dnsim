@@ -1,0 +1,58 @@
+% iSYN: Synaptic mechanism for convolution approach to synapses, as opposed to ODEs
+%          Uses ODEs to approximate convolution operation; works for up to 5 sequential spikes.
+%          Can simulate any synaptic kernel. Here we are using the dual exponential function
+% Tags: synapse, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Main code
+% Parameters
+gsyn = [0.5]
+Esyn = [0]
+tauD = [1]
+tauR = [0.25]
+width = inf     					% fanout (connection distance)
+IC = [0.0]
+IC_noise = [0]
+dt = 0.01                           % FIX THIS - make follow DNSim time constant!
+smax = 20;                          % smax MUST BE LONGER than the decay time of the synaptic kernel, f
+
+ 
+% Connectivity
+Nmax = max(Npre,Npost)
+srcpos = linspace(1,Nmax,Npre)'*ones(1,Npost)		% linear position (sources)
+dstpos = (linspace(1,Nmax,Npost)'*ones(1,Npre))'	% linear position (targets)
+netcon = (abs(srcpos-dstpos)<=width)'               % adjacency matrix (connect elements closer than width)
+
+
+% Synaptic kernel, f. In this case, using a dual exponential
+tauDx=10; tauRx=.25; 
+c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))))/2;
+f = @(t) 1*(exp(-(t)/tauDx) - exp(-(t)/tauRx));
+
+% Functions
+ISYN(V,s1,s2,s3,s4,s5) = (gsyn.*(netcon*(f(smax-s1) + f(smax-s2) + f(smax-s3) + f(smax-s4) + f(smax-s5))).*(V-Esyn))
+
+
+% ODEs
+            % Each ODE variables s1..s5 track the time since the 1st..5th spikes
+            % It rises to the total desired time, smax, and then decays
+            % linearly to 0, at which point the PSP has passed)
+s1' = (smax*(smax-s1)/tauR).*(1+tanh(IN/10)).*(s2 < 1) - 1/dt*(s1 > 0);  % s1 can only rise if s2 is off
+s2' = (smax*(smax-s2)/tauR).*(1+tanh(IN/10)).*(s3 < 1) - 1/dt*(s2 > 0);  % s2 can only rise if s3 is off
+s3' = (smax*(smax-s3)/tauR).*(1+tanh(IN/10)).*(s4 < 1) - 1/dt*(s3 > 0);  % s3 can only rise if s4 is off
+s4' = (smax*(smax-s4)/tauR).*(1+tanh(IN/10)).*(s5 < 1) - 1/dt*(s4 > 0);  % s4 can only rise if s5 is off
+s5' = (smax*(smax-s5)/tauR).*(1+tanh(IN/10)) - 1/dt*(s5 > 0);           % s5 will saturate (maximum of 5 spikes before saturating; increase if needed)
+
+
+s1(0) = IC+IC_noise.*rand(Npre,1)
+s2(0) = IC+IC_noise.*rand(Npre,1)
+s3(0) = IC+IC_noise.*rand(Npre,1)
+s4(0) = IC+IC_noise.*rand(Npre,1)
+s5(0) = IC+IC_noise.*rand(Npre,1)
+ 
+% Interface
+current => -ISYN(OUT,s1,s2,s3,s4,s5)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References: 
+% Kramer, M. A., Roopun, A. K., Carracedo, L. M., Traub, R. D., Whittington, M. A., & Kopell, N. J. (2008). Rhythm generation through period concatenation in rat somatosensory cortex. PLoS computational biology, 4(9), e1000169. (http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000169)
+
