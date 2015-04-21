@@ -1,0 +1,21 @@
+# globals
+*~
+#*#
+
+# octave files
+octave-core
+
+# these files got dumped for some reason
+core.*
+
+
+# Mac/Linux/Windows files
+*.DS_Store
+.DS_Store
+Thumbs.db
+
+# Dropbox files
+.dropbox.attr
+
+# Publish
+html
