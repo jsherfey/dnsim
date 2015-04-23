@@ -7,10 +7,10 @@ psp = tau_i*(exp(-max(t - tau_1,0)/tau_d) - exp(-max(t - tau_1,0)/tau_r))/(tau_d
 psp = psp(psp > eps);    %?
 psp = [zeros(1,length(psp)) psp]; %?
 
-no_inputs = inputs_per_cell*no_cells;
+no_inputs = inputs_per_cell;
 
-C = repmat(eye(no_cells), 1, no_inputs/no_cells);
-
+C = ones(no_cells, inputs_per_cell);
+    
 spikes = rand(no_inputs, ceil(T/dt));
 spikes = spikes < rate*dt/1000;
 

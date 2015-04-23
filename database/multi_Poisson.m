@@ -10,20 +10,6 @@ psp = [zeros(1,length(psp)) psp]; %?
 no_inputs = inputs_per_cell*no_cells;
 
 C = repmat(eye(no_cells), 1, no_inputs/no_cells);
-
-% if strcmp(conn_flag, 'individual')
-% 
-%     no_inputs = inputs_per_cell*no_cells;
-% 
-%     C = repmat(eye(no_cells), 1, no_inputs/no_cells);
-% 
-% elseif strcmp(conn_flag, 'shared')
-%     
-%     no_inputs = inputs_per_cell;
-%    
-%     C = ones(no_cells, inputs_per_cell);
-%     
-% end
     
 spikes = rand(no_inputs, ceil(T/dt));
 spikes = spikes < rate*dt/1000;
