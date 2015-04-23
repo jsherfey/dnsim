@@ -1,0 +1,18 @@
+g_gaba = [0.1]
+E_gaba = [-80]
+tau_gaba = [13]
+IC = [0.0001]
+IC_noise = [0]
+ 
+Nmax = max(Npost,Npre)
+srcpos = linspace(1,Nmax,Npre)'*ones(1,Npost)
+dstpos = (linspace(1,Nmax,Npost)'*ones(1,Npre))'
+netcon = eye(Npost,Npre)
+
+i_gaba(v,s) = (g_gaba/(Npre-1)).*(netcon*s).*(v-E_gaba)
+ 
+s' = -s./tau_gaba + 2*(1+tanh(IN/4)).*(1-s);
+s(0) = IC+IC_noise.*rand(Npre,1)
+ 
+current => -i_gaba(OUT,s)
+ 

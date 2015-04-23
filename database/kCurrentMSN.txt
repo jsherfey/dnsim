@@ -1,0 +1,13 @@
+g_k = [80]
+E_k = [-100]
+V_IC = [-63]
+ 
+alpha_m(v) = 0.032*(v+52)./(1-exp(-(v+52)/5))
+beta_m(v) = 0.5*exp(-(v+57)/40)
+i_k(v,m) = g_k*m.^4.*(v-E_k)
+ 
+m' = alpha_m(v).*(1-m)-beta_m(v).*m;
+m(0) = 0.032*(V_IC+52)/(1-exp(-(V_IC+52)/5))/(0.032*(V_IC+52)/(1-exp(-(V_IC+52)/5))+0.5*exp(-(V_IC+57)/40))*ones(Npop,1)
+ 
+current => -i_k(IN,m)
+ 

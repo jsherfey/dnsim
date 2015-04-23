@@ -1,0 +1,16 @@
+g_m = [1.2]
+E_m = [-100]
+Q10 = [2.3]
+vhalf = [-30]
+ 
+Qs = Q10^(.1*(37-23))
+
+alpha_m(v) = Qs*1e-4*(v-vhalf)./(1-exp(-(v-vhalf)/9))
+beta_m(v) = -Qs*1e-4*(v-vhalf)./(1-exp((v-vhalf)/9))
+i_m(v,m) = g_m*m.*(v-E_m)
+ 
+m' = alpha_m(v).*(1-m) - beta_m(v).*m;
+m(0) = Q10^(.1*(37-23))*1e-4*(V_IC-vhalf)/(1-exp(-(V_IC-vhalf)/9))/(Q10^(.1*(37-23))*1e-4*(V_IC-vhalf)/(1-exp(-(V_IC-vhalf)/9))-Q10^(.1*(37-23))*1e-4*(V_IC-vhalf)/(1-exp((V_IC-vhalf)/9)))*ones(Npop,1)
+ 
+current => -i_m(IN,m)
+ 

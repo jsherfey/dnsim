@@ -1,0 +1,9 @@
+% noiseInputMSN
+
+% parameters
+sigma_noise = 4
+
+% current
+i_noise(t) = sigma_noise.*randn(Npop,1).*sqrt(dt)
+
+current => i_noise(t)
