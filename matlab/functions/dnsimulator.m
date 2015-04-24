@@ -78,7 +78,7 @@ fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 for k = 1:size(auxvars,1)
   if strncmp(solver,'rk',2)
     dt_scaling_factor = '0.5';
-    strParts = strsplit(auxvars{k,2},{'pset.p.'});
+    strParts = splitstr(auxvars{k,2},{'pset.p.'});
     for l = 2:length(strParts)
       strParts{l} = ['pset.p.',strParts{l}];
       if regexp(strParts{l}, '^.+_dt[,)]$')
