@@ -2,15 +2,15 @@ g_na = [100]
 E_na = [50]
 V_IC = [-63]
  
-alpha_m(v) = 0.32*(v+54)./(1-exp(-(v+54)/4))
-beta_m(v) = 0.28*(v+27)./(exp((v+27)/5)-1)
-alpha_h(v) = 0.128*exp(-(v+50)/18)
-beta_h(v) = 4./(1+exp(-(v+27)/5))
-i_na(v,m,h) = g_na*m.^3.*h.*(v-E_na)
+alpha_m(V) = 0.32*(V+54)./(1-exp(-(V+54)/4))
+beta_m(V) = 0.28*(V+27)./(exp((V+27)/5)-1)
+alpha_h(V) = 0.128*exp(-(V+50)/18)
+beta_h(V) = 4./(1+exp(-(V+27)/5))
+i_na(V,m,h) = g_na*m.^3.*h.*(V-E_na)
  
-m' = alpha_m(v).*(1-m)-beta_m(v).*m;
+m' = alpha_m(X).*(1-m)-beta_m(X).*m;
 m(0) = 0.32*(V_IC+54)/(1-exp(-(V_IC+54)/4))/(0.32*(V_IC+54)/(1-exp(-(V_IC+54)/4))+0.28*(V_IC+27)/(exp((V_IC+27)/5)-1))*ones(Npop,1)
-h' = alpha_h(IN).*(1-h)-beta_h(IN).*h;
+h' = alpha_h(V).*(1-h)-beta_h(V).*h;
 h(0) = 0.128*exp(-(V_IC+50)/18)/(0.128*exp(-(V_IC+50)/18)+4/(1+exp(-(V_IC+27)/5)))*ones(Npop,1)
  
 current => -i_na(IN,m,h)

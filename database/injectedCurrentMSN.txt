@@ -1,11 +1,4 @@
-% injectedCurrentMSN
-
-% parameters
-injectedCurrent = 1.19
-% onset = 0
-
-% current
-% iinj(t)=injectedCurrent*(t>onset)
-
-% current => iinj(t)
+injectedCurrent = [1.19]
+ 
 current => injectedCurrent
+ 

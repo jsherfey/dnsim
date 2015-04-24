@@ -9,7 +9,7 @@ srcpos = linspace(1,Nmax,Npre)'*ones(1,Npost)
 dstpos = (linspace(1,Nmax,Npost)'*ones(1,Npre))'
 netcon = eye(Npost,Npre)
 
-i_gaba(v,s) = (g_gaba/(Npre-1)).*(netcon*s).*(v-E_gaba)
+i_gaba(V,s) = (g_gaba/(Npre-1)).*(netcon*s).*(V-E_gaba)
  
 s' = -s./tau_gaba + 2*(1+tanh(IN/4)).*(1-s);
 s(0) = IC+IC_noise.*rand(Npre,1)
