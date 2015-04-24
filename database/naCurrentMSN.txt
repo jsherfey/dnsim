@@ -10,7 +10,7 @@ i_na(V,m,h) = g_na*m.^3.*h.*(V-E_na)
  
 m' = alpha_m(X).*(1-m)-beta_m(X).*m;
 m(0) = 0.32*(V_IC+54)/(1-exp(-(V_IC+54)/4))/(0.32*(V_IC+54)/(1-exp(-(V_IC+54)/4))+0.28*(V_IC+27)/(exp((V_IC+27)/5)-1))*ones(Npop,1)
-h' = alpha_h(V).*(1-h)-beta_h(V).*h;
+h' = alpha_h(X).*(1-h)-beta_h(X).*h;
 h(0) = 0.128*exp(-(V_IC+50)/18)/(0.128*exp(-(V_IC+50)/18)+4/(1+exp(-(V_IC+27)/5)))*ones(Npop,1)
  
 current => -i_na(IN,m,h)
