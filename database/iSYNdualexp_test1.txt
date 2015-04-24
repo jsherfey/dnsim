@@ -1,0 +1,44 @@
+% iSYN: Synaptic mechanism for convolution approach to synapses, as opposed to ODEs
+%          Uses ODEs to approximate convolution operation; works for up to 5 sequential spikes.
+%          Can simulate any synaptic kernel. Here we are using the dual exponential function
+% Tags: synapse, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Main code
+% Parameters
+gsyn = [0.0]
+Esyn = [0]
+tauD = [1]
+tauR = [0.25]
+width = inf     					% fanout (connection distance)
+IC = [0.0]
+IC_noise = [0]
+dt = 0.01                           % FIX THIS - make follow DNSim time constant!
+smax = 20;                          % smax MUST BE LONGER than the decay time of the synaptic kernel, f
+
+
+% Synaptic kernel, f. In this case, using a dual exponential
+tauDx=10; tauRx=.25; 
+c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))))/2;
+
+
+% Functions
+f(t) = 1*(exp(-(t)/tauDx) - exp(-(t)/tauRx))
+ISYN(V,s1) = (gsyn.*(f(smax-s1)).*(V-Esyn))
+
+
+% ODEs
+            % Each ODE variables s1..s5 track the time since the 1st..5th spikes
+            % It rises to the total desired time, smax, and then decays
+            % linearly to 0, at which point the PSP has passed)
+s1' = (smax*(smax-s1)/tauR).*(1+tanh(IN/10)) - 1/dt*(s1 > 0);  % s1 can only rise if s2 is off
+
+
+s1(0) = 0.5
+ 
+% Interface
+current => -ISYN(OUT,s1)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References: 
+% Kramer, M. A., Roopun, A. K., Carracedo, L. M., Traub, R. D., Whittington, M. A., & Kopell, N. J. (2008). Rhythm generation through period concatenation in rat somatosensory cortex. PLoS computational biology, 4(9), e1000169. (http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000169)
+
