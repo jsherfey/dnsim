@@ -1,0 +1,14 @@
+
+
+basket_only - Basket only based on .mat file
+basket_only2 - Basket only based on .mat file (should be same as above, recreation).
+basket_only3_0_script - Basket only based on Kramer script; all defaults; note I'm using the kramer.m containing sup_fanout. This is the one Jason sent in a later email. Can get original default by setting sup_fanout=inf.
+	basket_only3_1_script - As above, adjusted itonic, added iSYNconvol. Not working yet. kramer.m is the full file. kramer_test.m is a reduced model used for testing! Think of this as basically a testbed for the iSYNconvol.txt
+
+
+
+
+
+
+
+

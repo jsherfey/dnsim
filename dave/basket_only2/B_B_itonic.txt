@@ -1,4 +1,4 @@
-stim = [0]
+stim = [2]
 onset = [0]
  
 offset = inf

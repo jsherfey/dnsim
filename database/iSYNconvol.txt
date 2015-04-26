@@ -1,0 +1,112 @@
+% iSYN: Synaptic mechanism for convolution based synapses. 
+%          Traditionally, DNSim uses ODEs to represent synapses. However,
+%          an alternate formulation for synaptic currents is to represent
+%          the synaptic activation as a convlution of a synaptic response
+%          function with a train of delta functions. Here, synaptic
+%          response function fsyn(s) is a dual exponential function
+%          however, it can be customized to be any function. The
+%          train of delta functions denotes the timing of presynaptic
+%          spikes.
+%
+%          The algorithm uses ODEs to mimick the convolution operation.
+%          Each state variable (s1,s2..) stores the time since one spike. Each
+%          state variable (t1,t2..) is used to suppress s from being activated by
+%          further spikes until it expires.
+%          
+%          If you wish to use a custom synaptic response function fsyn(s) 
+%          you might need to change smax. Smax denotes the amount of time
+%          each state variable s will track before resetting. It should be
+%          LONGER than the decay time of the synapse
+%
+%          Having multiple state variables (s1,s2..) is what allows
+%          the system to store a history of multiple spikes. If you 
+%          have a very bursty neuron that spikes in rapid succession,
+%          you might want to add additional state variables to store
+%          these spikes. Once the spike state variable buffers are full,
+%          additional spikes will simply be dumped in the last spike variable.
+%
+%          Variants:
+%               iSYNconvols - default function with 3 state variables (s1..s3)
+%                               to track history of 3 spikes
+%               iSYNconvols5 - as iSYNconvols, but with 5 state variables
+%                               (s1..s5 ) to track history of 5 spikes
+% Tags: synapse, connection, convolution
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Main code
+% Parameters
+
+                % Synapse parameters
+gsynConvol = [0.0]
+EsynConvol = [0]
+widthConvol = inf     					% fanout (connection distance)
+ICConvol = [0.1]
+IC_noiseConvol = [0]
+tauDx=5;  % Time constant for synaptic response function, f
+tauRx=0.25; % Time constant for synaptic response function, f
+
+                % Parameters for convolution state variables
+                % Tweak these if the state variables misbehave
+VPreThresh = [-25]     % Threshold for presynaptic voltage to be considered a spike
+stauConvol = [0.1]   % Time constant of convolution s state vars
+ttauConvol = [0.05]   % Time constant of convolution t state vars
+sthresh = 0.01		 % threshold of timing variable
+tthresh = 0.01		 % threshold of inactivation variable
+smax = 20;           % smax MUST BE LONGER than the decay time of the synaptic kernel, f
+
+% Connectivity
+Nmax = max(Npre,Npost)
+srcpos = linspace(1,Nmax,Npre)'*ones(1,Npost)		% linear position (sources)
+dstpos = (linspace(1,Nmax,Npost)'*ones(1,Npre))'	% linear position (targets)
+netcon = (abs(srcpos-dstpos)<=widthConvol)'               % adjacency matrix (connect elements closer than widthConvol)
+
+
+% Synaptic kernel, f. In this case, using a dual exponential
+c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))));
+%fsyn = @(s) c*(exp(-(smax-s)/tauDx) - exp(-(smax-s)/tauRx));  % Causes (?) DNSim GUI to crash
+%fsyn(s) = c*(exp(-(smax-s)/tauDx) - exp(-(smax-s)/tauRx));  % Causes (?) runsim to crash
+    % Jason says to use this until bug is fixed
+fsyn(s1,s2,s5) = c*(exp(-(smax-s1)/tauDx)-exp(-(smax-s1)/tauRx))+c*(exp(-(smax-s2)/tauDx)-exp(-(smax-s2)/tauRx))+c*(exp(-(smax-s5)/tauDx)-exp(-(smax-s5)/tauRx));
+
+
+% Functions
+%iSYNconvol(V,s1,s2,s5) = (gsynConvol.*(netcon*(fsyn(s1) + fsyn(s2) + fsyn(s5))).*(V-EsynConvol))
+    % Jason says to use this until bug is fixed
+iSYNconvol(V,s1,s2,s5) = (gsynConvol.*(netcon*(fsyn(s1,s2,s5))).*(V-EsynConvol))
+
+
+
+% ODEs
+            % Each ODE variables s1..s5 track the time since the 1st..5th spikes
+            % It rises to the total desired time, smax, and then decays
+            % linearly to 0, at which point the PSP has passed)
+            % t1..t5 track inhibit the corresponding s1..s5 to ensure they
+            % don't spike multiple times.
+
+s1' = ((smax-s1)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t1 < (1-tthresh))/2 - 1*(s1 > 0);    % starts at 0, rises when there's a spike, then decays
+t1' = (1-t1)/ttauConvol.*(1+tanh((s1-smax*(1-sthresh))))/2 - 1/ttauConvol*t1.*(s1 < smax*sthresh);  % ~0 when s1 rising, ~1 when s1 decaying
+
+s2' = ((smax-s2)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t2 < (1-tthresh))/2.*(s1 > smax*sthresh).*(t1>(1-tthresh)) - 1*(s2 > 0);
+t2' = (1-t2)/ttauConvol.*(1+tanh((s2-smax*(1-sthresh))))/2 - 1/ttauConvol*t2.*(s2 < smax*sthresh);
+
+%s3' = ((smax-s3)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t3 < (1-tthresh))/2.*(s2 > smax*sthresh).*(t2>(1-tthresh)) - 1*(s3 > 0);
+%t3' = (1-t3)/ttauConvol.*(1+tanh((s3-smax*(1-sthresh))))/2 - 1/ttauConvol*t3.*(s3 < smax*sthresh);
+
+%s4' = ((smax-s4)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t4 < (1-tthresh))/2.*(s3 > smax*sthresh).*(t3>(1-tthresh)) - 1*(s4 > 0);
+%t4' = (1-t4)/ttauConvol.*(1+tanh((s4-smax*(1-sthresh))))/2 - 1/ttauConvol*t4.*(s4 < smax*sthresh);
+
+s5' = ((smax-s5)/stauConvol).*(1+tanh((IN-VPreThresh)/10))/2.*(s2 > smax*sthresh).*(t2>(1-tthresh)) - 1*(s5 > 0);
+
+
+s1(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
+t1(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
+s2(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
+t2(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
+s5(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
+
+ 
+% Interface
+current => -iSYNconvol(OUT,s1,s2,s5)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

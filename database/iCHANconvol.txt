@@ -1,0 +1,84 @@
+% iSYN: Synaptic mechanism for convolution based synapses. 
+%          Traditionally, DNSim uses ODEs to represent synapses. However,
+%          an alternate formulation for synaptic currents is to represent
+%          the synaptic activation as a convlution of a synaptic response
+%          function with a train of delta functions. Here, synaptic
+%          response function f(s) is a dual exponential function
+%          however, it can be customized to be any function. The
+%          train of delta functions denotes the timing of presynaptic
+%          spikes.
+%
+%          The algorithm uses ODEs to mimick the convolution operation.
+%          Each state variable (s1,s2..) stores the time since one spike. Each
+%          state variable (t1,t2..) is used to suppress s from being activated by
+%          further spikes until it expires.
+%          
+%          If you wish to use a custom synaptic response function f(s) 
+%          you might need to change smax. Smax denotes the amount of time
+%          each state variable s will track before resetting. It should be
+%          LONGER than the decay time of the synapse
+%
+%          Having multiple state variables (s1,s2..) is what allows
+%          the system to store a history of multiple spikes. If you 
+%          have a very bursty neuron that spikes in rapid succession,
+%          you might want to add additional state variables to store
+%          these spikes. Once the spike state variable buffers are full,
+%          additional spikes will simply be dumped in the last spike variable.
+%          
+%          This version is modified to work as a channel.
+% Tags: synapse, connection, convolution
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Main code
+% Parameters
+gsyn = [0.0]
+Esyn = [0]
+tauD = [1]
+tauC = [0.25]
+width = inf     					% fanout (connection distance)
+IC = [0.1]
+IC_noise = [0]
+smax = 10;                          % smax MUST BE LONGER than the decay time of the synaptic response function, f
+sthresh = 0.1		 % threshold of timing variable
+tthresh = 0.1		 % threshold of inactivation variable
+
+
+
+% Synaptic response function, f. In this case, using a dual exponential
+tauDx=10; tauRx=.25; 
+c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))))/2;
+f(s) = c*(exp(-(smax-s)/tauDx) - exp(-(smax-s)/tauRx));
+
+% Functions
+ISYN(V,s1,s2,s3) = (gsyn.*((f(s1) + f(s2) + f(s3))).*(V-Esyn))
+
+
+% ODEs
+            % Each ODE variables s1..s5 track the time since the 1st..5th spikes
+            % It rises to the total desired time, smax, and then decays
+            % linearly to 0, at which point the PSP has passed)
+            % t1..t5 track inhibit the corresponding s1..s5 to ensure they
+            % don't spike multiple times.
+
+s1' = (smax*(smax-s1)/tauC).*(1+tanh(X/10)).*(t1 < (1-tthresh))/2 - 1*(s1 > 0);    % starts at 0, rises when there's a spike, then decays
+t1' = (1-t1)/tauC.*(1+tanh((s1-smax*(1-sthresh))))/2 - 1/tauC*t1.*(s1 < smax*sthresh);  % ~0 when s1 rising, ~1 when s1 decaying
+
+s2' = (smax*(smax-s2)/tauC).*(1+tanh(X/10)).*(t2 < (1-tthresh))/2.*(s1 > smax*sthresh).*(t1>(1-tthresh)) - 1*(s2 > 0);
+t2' = (1-t2)/tauC.*(1+tanh((s2-smax*(1-sthresh))))/2 - 1/tauC*t2.*(s2 < smax*sthresh);
+
+s3' = (smax*(smax-s3)/tauC).*(1+tanh(X/10))/2.*(s2 > smax*sthresh).*(t2>(1-tthresh)) - 1*(s3 > 0);
+
+
+s1(0) = IC+IC_noise.*rand(Npre,1)
+t1(0) = IC+IC_noise.*rand(Npre,1)
+s2(0) = IC+IC_noise.*rand(Npre,1)
+t2(0) = IC+IC_noise.*rand(Npre,1)
+s3(0) = IC+IC_noise.*rand(Npre,1)
+t3(0) = IC+IC_noise.*rand(Npre,1)
+
+ 
+% Interface
+current => -ISYN(X,s1,s2,s3)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
