@@ -61,11 +61,15 @@ netcon = (abs(srcpos-dstpos)<=widthConvol)'               % adjacency matrix (co
 
 
 % Synaptic kernel, f. In this case, using a dual exponential
+    % Be sure to use heaviside because s1..s5 go slightly
+    % negative due to ODE
 c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))));
-%fsyn = @(s) c*(exp(-(smax-s)/tauDx) - exp(-(smax-s)/tauRx));  % Causes (?) DNSim GUI to crash
-%fsyn(s) = c*(exp(-(smax-s)/tauDx) - exp(-(smax-s)/tauRx));  % Causes (?) runsim to crash
+%fsyn = @(s) c*(exp(-(smax-heaviside(s).*s)/tauDsrf) - exp(-(smax-heaviside(s).*s)/tauRsrf));  % Causes (?) DNSim GUI to crash
+%fsyn(s) = c*(exp(-(smax-heaviside(s).*s)/tauDsrf) - exp(-(smax-heaviside(s).*s)/tauRsrf));  % Causes (?) runsim to crash
     % Jason says to use this until bug is fixed
-fsyn(s1,s2,s5) = c*(exp(-(smax-s1)/tauDx)-exp(-(smax-s1)/tauRx))+c*(exp(-(smax-s2)/tauDx)-exp(-(smax-s2)/tauRx))+c*(exp(-(smax-s5)/tauDx)-exp(-(smax-s5)/tauRx));
+fsyn(s1,s2s5) = c*(exp(-(smax-heaviside(s1).*s1)/tauDsrf)-exp(-(smax-heaviside(s1).*s1)/tauRsrf))+c*(exp(-(smax-heaviside(s2).*s2)/tauDsrf)-exp(-(smax-heaviside(s2).*s2)/tauRsrf))+c*(exp(-(smax-heaviside(s5).*s5)/tauDsrf)-exp(-(smax-heaviside(s5).*s5)/tauRsrf));
+%fsyn(s1,s2,s5) = c*(exp(-(smax-heaviside(s1).*s1)/tauDsrf)-exp(-(smax-heaviside(s1).*s1)/tauRsrf));          % For testing only
+%fsyn(s1,s2,s5) = c*(exp(-(smax-heaviside(s1).*s1)/tauDsrf));          % For testing only
 
 
 % Functions

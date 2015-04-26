@@ -25,6 +25,10 @@
 %          these spikes. Once the spike state variable buffers are full,
 %          additional spikes will simply be dumped in the last spike variable.
 %
+%          Usage note:
+%            In general, if it doesn't work properly, playing with 
+%            smax will fix most problems!
+%
 %          Variants:
 %               iSYNconvols - default function with 3 state variables (s1..s3)
 %                               to track history of 3 spikes
@@ -36,22 +40,23 @@
 % Parameters
 
                 % Synapse parameters
-gsynConvol = [0.0]
+gsynConvol = [20.0]
 EsynConvol = [-75]
 widthConvol = inf     					% fanout (connection distance)
 ICConvol = [0.1]
 IC_noiseConvol = [0]
 tauDsrf=5;  % Time constant for synaptic response function, f
-tauRsrf=0.25; % Time constant for synaptic response function, f
+tauRsrf=0.5; % Time constant for synaptic response function, f
 
                 % Parameters for convolution state variables
                 % Tweak these if the state variables misbehave
 VPreThresh = [-25]     % Threshold for presynaptic voltage to be considered a spike
-stauConvol = [0.1]   % Time constant of convolution s state vars
+stauConvol = [0.05]   % Time constant of convolution s state vars
 ttauConvol = [0.05]   % Time constant of convolution t state vars
-sthresh = 0.01		 % threshold of timing variable
+smax = 30;           % smax MUST BE LONGER than the decay time of the synaptic kernel, f
+sthresh = 0.05		 % threshold of timing variable
 tthresh = 0.01		 % threshold of inactivation variable
-smax = 20;           % smax MUST BE LONGER than the decay time of the synaptic kernel, f
+
 
 % Connectivity
 Nmax = max(Npre,Npost)
@@ -63,16 +68,24 @@ netcon = (abs(srcpos-dstpos)<=widthConvol)'               % adjacency matrix (co
 % Synaptic kernel, f. In this case, using a dual exponential
 c = (1/((tauRsrf/tauDsrf)^(tauRsrf/(tauDsrf-tauRsrf))-(tauRsrf/tauDsrf)^(tauDsrf/(tauDsrf-tauRsrf))));
 %fsyn = @(s) c*(exp(-(smax-s)/tauDsrf) - exp(-(smax-s)/tauRsrf));  % Causes (?) DNSim GUI to crash
+%fsyn = @(s) ((1-exp(-heaviside(smax-s-10).*(smax-s-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s-10).*(smax-s-10)/122) + 1.1*exp(-heaviside(smax-s-10).*(smax-s-10)/587))/4.225;       % Traub GABAB Synapse (Carracedo et al, 2013)
+% figure; plot(1:500,fsyn(500:-1:1))  % Test plots
 %fsyn(s) = c*(exp(-(smax-s)/tauDsrf) - exp(-(smax-s)/tauRsrf));  % Causes (?) runsim to crash
-    % Jason says to use this until bug is fixed
-fsyn(s1,s2,s3,s4,s5) = c*(exp(-(smax-s1)/tauDsrf)-exp(-(smax-s1)/tauRsrf))+c*(exp(-(smax-s2)/tauDsrf)-exp(-(smax-s2)/tauRsrf))+c*(exp(-(smax-s3)/tauDsrf)-exp(-(smax-s3)/tauRsrf))+c*(exp(-(smax-s4)/tauDsrf)-exp(-(smax-s4)/tauRsrf))+c*(exp(-(smax-s5)/tauDsrf)-exp(-(smax-s5)/tauRsrf));
-%fsyn(s1,s2,s3,s4,s5) = c*(exp(-(smax-s1)/tauDsrf)-exp(-(smax-s1)/tauRsrf));          % For testing only
-%fsyn(s1,s2,s3,s4,s5) = c*(exp(-(smax-s1)/tauDsrf));          % For testing only
+
+     % Jason says to use this until bug is fixed
+%fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = c*(exp(-(smax-s1)/tauDsrf)-exp(-(smax-s1)/tauRsrf))+c*(exp(-(smax-s2)/tauDsrf)-exp(-(smax-s2)/tauRsrf))+c*(exp(-(smax-s3)/tauDsrf)-exp(-(smax-s3)/tauRsrf))+c*(exp(-(smax-s4)/tauDsrf)-exp(-(smax-s4)/tauRsrf))+c*(exp(-(smax-s5)/tauDsrf)-exp(-(smax-s5)/tauRsrf)) - 5*c*(exp(-(smax)/tauDsrf)-exp(-(smax)/tauRsrf));   % The last term controls for bias
+%fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = ((1-exp(-heaviside(smax-s1-10).*(smax-s1-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s1-10).*(smax-s1-10)/122) + 1.1*exp(-heaviside(smax-s1-10).*(smax-s1-10)/587)) / 4.225 + ((1-exp(-heaviside(smax-s2-10).*(smax-s2-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s2-10).*(smax-s2-10)/122) + 1.1*exp(-heaviside(smax-s2-10).*(smax-s2-10)/587)) / 4.225 + ((1-exp(-heaviside(smax-s3-10).*(smax-s3-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s3-10).*(smax-s3-10)/122) + 1.1*exp(-heaviside(smax-s3-10).*(smax-s3-10)/587)) / 4.225 + ((1-exp(-heaviside(smax-s4-10).*(smax-s4-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s4-10).*(smax-s4-10)/122) + 1.1*exp(-heaviside(smax-s4-10).*(smax-s4-10)/587)) / 4.225 + ((1-exp(-heaviside(smax-s5-10).*(smax-s5-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s5-10).*(smax-s5-10)/122) + 1.1*exp(-heaviside(smax-s5-10).*(smax-s5-10)/587)) / 4.225 - 5*((1-exp(-heaviside(smax-10).*(smax-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-10).*(smax-10)/122) + 1.1*exp(-heaviside(smax-10).*(smax-10)/587)) / 4.225 % Traub GABAB Synapse (Carracedo et al, 2013)
+%fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = ((1-exp(-heaviside(smax-s1-10).*(smax-s1-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-s1-10).*(smax-s1-10)/122) + 1.1*exp(-heaviside(smax-s1-10).*(smax-s1-10)/587)) / 4.225 - 1*((1-exp(-heaviside(smax-10).*(smax-10)/38.1)).^4 .* 10.2.*exp(-heaviside(smax-10).*(smax-10)/122) + 1.1*exp(-heaviside(smax-10).*(smax-10)/587)) / 4.225 % Traub GABAB Synapse (Carracedo et al, 2013)
+    % Testing
+%fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = c*(exp(-(smax-s1+10*smax*(1-tthresh-t1))/tauDsrf)-exp(-(smax-s1+10*smax*(1-tthresh-t1))/tauRsrf))+c*(exp(-(smax-s2+10*smax*(1-tthresh-t2))/tauDsrf)-exp(-(smax-s2+10*smax*(1-tthresh-t2))/tauRsrf))+c*(exp(-(smax-s3+10*smax*(1-tthresh-t3))/tauDsrf)-exp(-(smax-s3+10*smax*(1-tthresh-t3))/tauRsrf))+c*(exp(-(smax-s4+10*smax*(1-tthresh-t4))/tauDsrf)-exp(-(smax-s4+10*smax*(1-tthresh-t4))/tauRsrf))+c*(exp(-(smax-s5+10*smax*(1-tthresh-t5))/tauDsrf)-exp(-(smax-s5+10*smax*(1-tthresh-t5))/tauRsrf)); % Using t variable method to control for bias. Too influential on the actual curves
+%fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = c*(exp(-(smax-s1)/tauDsrf)-exp(-(smax-s1)/tauRsrf));          % For testing only
+fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = (exp(-(smax-s1)/tauDsrf))+(exp(-(smax-s2)/tauDsrf))+(exp(-(smax-s3)/tauDsrf))+(exp(-(smax-s4)/tauDsrf))+(exp(-(smax-s5)/tauDsrf))-5*(exp(-(smax)/tauDsrf));                                  % For testing only
+
 
 % Functions
-%iSYNconvol(V,s1,s2,s3) = (gsynConvol.*(netcon*(fsyn(s1) + fsyn(s2) + fsyn(s3))).*(V-EsynConvol))
+%iSYNconvol(V,s1,s2,s3,s3,s4,s5) = (gsynConvol.*(netcon*(fsyn(s1) + fsyn(s2) + fsyn(s3) + fsyn(s4) + fsyn(s5))).*(V-EsynConvol))
     % Jason says to use this until bug is fixed
-iSYNconvol(V,s1,s2,s3,s4,s5) = (gsynConvol.*(netcon*(fsyn(s1,s2,s3,s4,s5))).*(V-EsynConvol))
+iSYNconvol(V,s1,s2,s3,s4,s5,t1,t2,t3,t4,t5) = (gsynConvol.*(netcon*(fsyn(s1,s2,s3,s4,s5,t1,t2,t3,t4,t5))).*(V-EsynConvol))
 
 
 
@@ -85,20 +98,26 @@ iSYNconvol(V,s1,s2,s3,s4,s5) = (gsynConvol.*(netcon*(fsyn(s1,s2,s3,s4,s5))).*(V-
 
     % s state variable starts at 0, rises when there's a spike, then decays
     % t state variable ~0 when s1 rising, ~1 when s1 decaying
+    
 s1' = ((smax-s1)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t1 < (1-tthresh))/2 - 1*(s1 > 0);
-t1' = (1-t1)/ttauConvol.*(1+tanh((s1-smax*(1-sthresh))))/2 - 1/ttauConvol*t1.*(s1 < smax*sthresh);
+t1' = (1-t1)/ttauConvol.*(1+tanh((s1-smax*(1-sthresh)) /(smax/30) ))/2 - 1/ttauConvol*t1.*(s1 < smax*sthresh);
 
-s2' = ((smax-s2)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t2 < (1-tthresh))/2.*(s1 > smax*sthresh).*(t1>(1-tthresh)) - 1*(s2 > 0);
-t2' = (1-t2)/ttauConvol.*(1+tanh((s2-smax*(1-sthresh))))/2 - 1/ttauConvol*t2.*(s2 < smax*sthresh);
+    % In words...
+    % s2 tracks time since last spike
+    %     s2 can rise up to s2 max; it does so when IN > threshold; t2 must be close to 0; s1 must not have spiked recently (to avoid double-counting the same spike); but s1 must still have spiked (indicated by t1 being high)
+    % t2 tracks whether s2 has spiked and is counting down the time since that spike
+    %     t2 can rise up to 1; s2 must be high; t2 can decay once s2 gets low
+s2' = ((smax-s2)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t2 < (1-tthresh))/2.*(s1 < smax*(1-sthresh)).*(t1>(1-tthresh)) - 1*(s2 > 0);
+t2' = (1-t2)/ttauConvol.*(1+tanh((s2-smax*(1-sthresh)) /(smax/30) ))/2 - 1/ttauConvol*t2.*(s2 < smax*sthresh);
 
-s3' = ((smax-s3)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t3 < (1-tthresh))/2.*(s2 > smax*sthresh).*(t2>(1-tthresh)) - 1*(s3 > 0);
-t3' = (1-t3)/ttauConvol.*(1+tanh((s3-smax*(1-sthresh))))/2 - 1/ttauConvol*t3.*(s3 < smax*sthresh);
+s3' = ((smax-s3)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t3 < (1-tthresh))/2.*(s1 < smax*(1-sthresh)).*(t1>(1-tthresh)).*(s2 < smax*(1-sthresh)).*(t2>(1-tthresh)) - 1*(s3 > 0);
+t3' = (1-t3)/ttauConvol.*(1+tanh((s3-smax*(1-sthresh)) /(smax/30) ))/2 - 1/ttauConvol*t3.*(s3 < smax*sthresh);
 
-s4' = ((smax-s4)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t4 < (1-tthresh))/2.*(s3 > smax*sthresh).*(t3>(1-tthresh)) - 1*(s4 > 0);
-t4' = (1-t4)/ttauConvol.*(1+tanh((s4-smax*(1-sthresh))))/2 - 1/ttauConvol*t4.*(s4 < smax*sthresh);
+s4' = ((smax-s4)/stauConvol).*(1+tanh((IN-VPreThresh)/10)).*(t4 < (1-tthresh))/2.*(s1 < smax*(1-sthresh)).*(t1>(1-tthresh)).*(s2 < smax*(1-sthresh)).*(t2>(1-tthresh)).*(s3 < smax*(1-sthresh)).*(t3>(1-tthresh)) - 1*(s4 > 0);
+t4' = (1-t4)/ttauConvol.*(1+tanh( (s4-smax*(1-sthresh))/(smax/30)   ))/2 - 1/ttauConvol*t4.*(s4 < smax*sthresh);
 
-s5' = ((smax-s5)/stauConvol).*(1+tanh((IN-VPreThresh)/10))/2.*(s4 > smax*sthresh).*(t4>(1-tthresh)) - 1*(s5 > 0);
-
+s5' = ((smax-s5)/stauConvol).*(1+tanh((IN-VPreThresh)/10))/2.*(s1 < smax*(1-sthresh)).*(t1>(1-tthresh)).*(s2 < smax*(1-sthresh)).*(t2>(1-tthresh)).*(s3 < smax*(1-sthresh)).*(t3>(1-tthresh)).*(s4 < smax*(1-sthresh)).*(t4>(1-tthresh)) - 1*(s5 > 0);
+t5' = (1-t5)/ttauConvol.*(1+tanh((s5-smax*(1-sthresh))/(smax/30) ))/2 - 1/ttauConvol*t5.*(s5 < smax*sthresh);      % Not used ATM
 
 
 s1(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
@@ -110,11 +129,11 @@ t4(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
 s4(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
 t5(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
 s5(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)
-
+t5(0) = ICConvol+IC_noiseConvol.*rand(Npre,1)       % Not used ATM
 
  
 % Interface
-current => -iSYNconvol(OUT,s1,s2,s3,s4,s5)
+current => -iSYNconvol(OUT,s1,s2,s3,s4,s5,t1,t2,t3,t4,t5)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

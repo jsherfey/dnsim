@@ -2,7 +2,7 @@ g_SYN = [20]
 E_SYN = [-75]
 tauDx = [5]
 tauRx = [0.5]
-IC = [0.1]
+IC = [0.0]
 IC_noise = [0]
  
 fanout = 0.5

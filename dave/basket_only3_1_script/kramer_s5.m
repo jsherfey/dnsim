@@ -28,7 +28,7 @@ gie=25;     % B -> RS
 gLe=2.5;    % LTS -> RS
 ggje=.04;   % RS -> RS
 gei=1;      % RS -> B
-gii=0;     % B -> B
+gii=20;     % B -> B
 gai=.045;   % IBa -> B, uniformly distributed +/- .01
 geL=2;      % RS -> LTS
 giL=8;      % B -> LTS
@@ -70,10 +70,10 @@ spec.nodes(1).parameters = {...
 
 spec.connections(1,1).label = 'B-B';
 % spec.connections(1,1).mechanisms = {'B_B_iSYN'};
-% spec.connections(1,1).parameters = {'g_SYN',gii,'E_SYN',-75,'tauDx',5,'tauRx',.5,'fanout',sup_fanout,'IC_noise',0};
-% spec.connections(1,1).mechanisms = {'B_B_iSYN'};
 % spec.connections(1,1).parameters = {'IC_noise',0};
-spec.connections(1,1).mechanisms = {'B_B_iSYN','iSYNconvols5'};
+%spec.connections(1,1).mechanisms = {'B_B_iSYN','iSYNconvols5'};
+% spec.connections(1,1).mechanisms = {'B_B_iSYN'};
+spec.connections(1,1).mechanisms = {'iSYNconvols5'};
 spec.connections(1,1).parameters = {'g_SYN',gii,'E_SYN',-75,'tauDx',5,'tauRx',.5,'fanout',sup_fanout,'IC_noise',0};
 
 
