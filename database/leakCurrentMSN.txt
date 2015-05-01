@@ -1,7 +1,0 @@
-g_l = [0.1]
-E_l = [-67]
- 
-i_l(X) = g_l*(X-E_l)
- 
-current => -i_l(X)
- 

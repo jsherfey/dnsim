@@ -1,4 +1,0 @@
-injectedCurrent = [1.19]
- 
-current => injectedCurrent
- 

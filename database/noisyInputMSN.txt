@@ -1,6 +1,0 @@
-sigma_noise = [4]
- 
-i_noise(t) = sigma_noise.*randn(Npop,1).*sqrt(dt)
- 
-current => i_noise(t)
- 
