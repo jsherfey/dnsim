@@ -8,13 +8,13 @@ function [spec,json,xml] = loadspec(inspec,varargin)
 %       - sim spec: json
 % output:
 %   spec = structure with model and sim info (whatever is available)
-% 
+%
 % Example:
 % spec = loadspec('cellspecs','cellspecs.csv',...
 %                 'connections','connections.csv',...
 %                 'fanout','fanout.csv',...
 %                 'netspecs','netspecs.csv');
-% 
+%
 % Created on 2012/08/24 by Jason Sherfey
 
 % use mmil_args2parms() or varargin2struct() ??
@@ -24,7 +24,7 @@ spec = [];
 
 % Load spec
 if nargin > 0 && isstruct(inspec)     % loadspec(spec) => return spec
-  spec = inspec; 
+  spec = inspec;
   return;
 elseif nargin==0                      % loadspec => load example spec
   fpath = '/space/mdeh3/9/halgdev/projects/jsherfey/inbox/20120824-182925_1';
@@ -38,11 +38,11 @@ elseif nargin==0                      % loadspec => load example spec
 %                   'fanout',[prefix 'fanout.csv'],...
   cd(cwd);
   return;
-elseif exist(inspec,'dir')          
+elseif exist(inspec,'dir')
   cwd = pwd; cd(inspec);
-  if nargin>1 && ischar(varargin{1})   % loadspec(fpath,prefix) 
+  if nargin>1 && ischar(varargin{1})   % loadspec(fpath,prefix)
     prefix = varargin{1};
-  else                                % loadspec(fpath) 
+  else                                % loadspec(fpath)
     if exist(fullfile(inspec,'cellspecs.csv'),'file')
       prefix = '';
     else
@@ -73,7 +73,7 @@ elseif exist(inspec,'file')           % loadspec(specfile)
     return
   end
 else                                  % loadspec('key',value,...) => load & return spec
-  % load files input 
+  % load files input
   varargin = {inspec,varargin{:}};
   cfg = mmil_args2parms( varargin, ...
          {  'connections',[],[],...%'connection.csv',[],...
@@ -95,15 +95,15 @@ else                                  % loadspec('key',value,...) => load & retu
   ext_code = [extensions{:}];
 
   if any(strfind(ext_code,'.csv'))
-    spec = loadcsv(files,names); 
+    spec = loadcsv(files,names);
   end
   if any(strfind(ext_code,'.json'))
-    simspec = loadjsonsim(files(strmatch('simspecs',names)),names(strmatch('simspecs',names))); 
+    simspec = loadjsonsim(files(strmatch('simspecs',names)),names(strmatch('simspecs',names)));
     spec.simulation = simspec;
   else
     spec.simulation = [];
   end
-  
+
   % create list of files associated with this spec
   for k=1:length(files)
     [a,b,c] = fileparts(files{k});
@@ -112,7 +112,7 @@ else                                  % loadspec('key',value,...) => load & retu
     elseif ~isempty(a) && exist([a '/' b c],'file')
       spec.files{k} = [a '/' b c];
     else
-      %spec.files{k} = which(files{k}); 
+      %spec.files{k} = which(files{k});
     end
   end
   files = {};
@@ -125,15 +125,15 @@ else                                  % loadspec('key',value,...) => load & retu
         m = [];
       end
       if iscell(m) && ~isempty(m) && ~isempty(m{1})
-        m=cellfun(@(x)splitstr(x,' '),m,'uniformoutput',false);
+        m=cellfun(@(x)strread(x,'%s','delimiter',' '),m,'uniformoutput',false);
         m=[m{:}];
       end
       for j = 1:length(m)
         tmp = m{j};
         if     exist([cfg.prefix tmp '.txt'],'file'), tmp = fullfile(pwd,[cfg.prefix tmp '.txt']);
-        elseif exist([cfg.prefix tmp '.m'  ],'file'), tmp = fullfile(pwd,[cfg.prefix tmp '.m'  ]);          
+        elseif exist([cfg.prefix tmp '.m'  ],'file'), tmp = fullfile(pwd,[cfg.prefix tmp '.m'  ]);
 %         elseif exist([tmp '.txt'],'file'), tmp = which([tmp '.txt']);
-%         elseif exist([tmp '.m'  ],'file'), tmp = which([tmp '.m']);          
+%         elseif exist([tmp '.m'  ],'file'), tmp = which([tmp '.m']);
         end
         if exist(tmp,'file'), files = {files{:} tmp}; end
       end
@@ -141,14 +141,14 @@ else                                  % loadspec('key',value,...) => load & retu
   end
   spec.files = unique({spec.files{:} files{:}});
   spec.files = spec.files(cellfun(@exist,spec.files)~=0);
-  
+
   % covert matlab structure in generic formats:
   % if any(strfind(ext_code,'.mat'))
   % if any(strfind(ext_code,'.xml'))
   json = savejson('model',spec);
 %   xml = xml_formatany(spec,'model');
   xml = '';
-end  
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBFUNCTIONS
@@ -179,7 +179,7 @@ if iscell(simspec.values) && numel(simspec.values)==1, simspec.values=simspec.va
 % if sz(1)==1 && max(sz)>1, simspec.scope = repmat({simspec.scope{1}(1:(numel(simspec.scope{1})/max(sz)))},[1 max(sz)]); end
 % if sz(2)==1 && max(sz)>1, simspec.variable = repmat({simspec.variable{1}(1:(numel(simspec.variable{1})/max(sz)))},[1 max(sz)]); end
 % if sz(3)==1 && max(sz)>1, simspec.values = repmat({simspec.values{1}(1:(numel(simspec.values{1})/max(sz)))},[1 max(sz)]); end
-  
+
 function spec = loadcsv(files,names)
 if ~ismember('cellspecs',names)
   error('You must supply a cellspecs file when giving csv files.');
@@ -198,8 +198,8 @@ cellspecs(del,:)=[];
 [Edynamics{1:npop}] =  deal('');
 if ncol > 5
   for k=1:npop
-    cellspecs{k,3} = [cellspecs{k,3} cellspecs{k,4}]; 
-    cellspecs{k,5} = [cellspecs{k,5} cellspecs{k,6}]; 
+    cellspecs{k,3} = [cellspecs{k,3} cellspecs{k,4}];
+    cellspecs{k,5} = [cellspecs{k,5} cellspecs{k,6}];
   end
   cellspecs = cellspecs(:,[1 2 3 5]);
 elseif ncol > 4
@@ -264,14 +264,14 @@ for i = 1:npop
   try spec.entities(i).mechanisms = parsecell(popMechs{i});
   catch spec.entities(i).mechanisms = popMechs{i}; end
   try spec.entities(i).parameters = parsecell(popParms{i});
-  catch spec.entities(i).parameters = popParms{i}; end  
+  catch spec.entities(i).parameters = popParms{i}; end
   spec.entities(i).dynamics = Edynamics{i};
 end
 for i = 1:npop
   for j = 1:npop
     spec.connections(i,j).label = sprintf('%s-%s',popID{i},popID{j});
     if ~all(cellfun(@isempty,fanout(:)))
-      spec.connections(i,j).fanout = fanout{i,j}; 
+      spec.connections(i,j).fanout = fanout{i,j};
     end
     if ~all(cellfun(@isempty,connType(:)))
       try spec.connections(i,j).mechanisms = parsecell(connType{i,j});
@@ -291,7 +291,7 @@ end
 %   spec.connections = [];
 % end
   % NOTE: spec.connections must be defined empty for buildmodel() to work
-  
+
 function val = correct_loadjson_arrstr(this)
 if size(this,1)>1 && ndims(this)==2
   val = cellfun(@(i)this(i,:),num2cell(1:size(this,1)),'uniformoutput',false);

@@ -45,7 +45,7 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'coder',0,[],...
                       'sims_per_job',1,[],...
                    }, false);
-                 
+
 % coder (0 or 1): whether to compile sim and run mex
 % sims_per_job (integer): # sims per job
 
@@ -60,12 +60,12 @@ if spec.simulation.coder==1
   else
     cwd=pwd;
     try
-      % create MEX file 
+      % create MEX file
       tmpparms=spec.simulation;
       tmpparms.cluster_flag=0; % set to 0 b/c job-specific params.mat should be created from the compute node
       args = mmil_parms2args(tmpparms);
       spec = buildmodel(spec,args{:});
-      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m   
+      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m
       [odefun_subdir,file]=fileparts(file);
       cd(odefun_subdir);
       tic
@@ -78,11 +78,11 @@ if spec.simulation.coder==1
       fprintf('Error: %s\n',err.message);
       for i=1:length(err.stack)
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
-      end     
+      end
       fprintf('Re-run simstudy() with "coder" set to 0\n');
       cd(cwd);
       return
-    end    
+    end
     % (below: copy mex and odefun.m to [batchdir]/odefun)
   end
 end
@@ -99,7 +99,7 @@ if (iscell(variable) && isequal(variable{1},'mechanisms')) && ((iscell(values) &
   scope=strrep(scope,'(','');
   scope=strrep(scope,')','');
   if ~isempty(scope)
-    scope=splitstr(scope,',');
+    scope=strread(scope,'%s','delimiter',',');
   end
   allspecs = get_leaveoneout_space(spec,scope);
 else
@@ -241,7 +241,7 @@ if spec.simulation.cluster_flag % run on cluster
       jobs{end+1}=sprintf('jobs%g.m',k);
       fileID=fopen(jobs{end},'wt');
       if spec.simulation.coder==1
-        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);      
+        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);
         fprintf(fileID,'addpath %s\n',subdir);
         mkdir(subdir);
       end
@@ -262,7 +262,7 @@ if spec.simulation.cluster_flag % run on cluster
     [a,this] = fileparts(jobs{i});
     fprintf(fileID,'%s\n',this);
   end
-  fclose(fileID);  
+  fclose(fileID);
   % submit the jobs
   cmd = sprintf('%s %s %s',spec.simulation.sim_qsubscript,batchname,spec.simulation.memlimit);
   fprintf(logfid,'executing: "%s" on cluster %s\n',cmd,spec.simulation.sim_cluster);
@@ -297,7 +297,7 @@ else
       fprintf('Error: %s\n',err.message);
       for i=1:length(err.stack)
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
-      end      
+      end
     end
     fprintf(logfid,'done (%g of %g)\n',specnum,length(allspecs));
   end

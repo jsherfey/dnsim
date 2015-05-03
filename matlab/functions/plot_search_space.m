@@ -61,7 +61,7 @@ if isnumeric(paramvals{1})
   parms1 = cellfun(@(x)x(1),paramvals);
 else
   parms1=cellfun(@(x)x(1),paramvals,'uni',0);
-  parms1=[parms1{:}];  
+  parms1=[parms1{:}];
 end
 % limit values of varied param
 if ~isempty(paramset)
@@ -73,7 +73,7 @@ if ~isempty(paramset)
     end
   elseif ischar(paramset) || iscellstr(paramset)
     if ischar(paramset)
-      paramset=splitstr(paramset,',');
+      paramset=strread(paramset,'%s','delimiter',',');
     end
     sel = [];
     for i=1:length(parms1)
@@ -122,7 +122,7 @@ for i=1:nrows
   for j=1:ncols
     cnt = cnt + 1;
     if j>length(file_index{i})
-      continue; 
+      continue;
     end
     file = files{file_index{i}(j)};
     if cnt>1
@@ -138,7 +138,7 @@ for i=1:nrows
       vars={data.sensor_info.label};
       varind=find(~cellfun(@isempty,regexp(vars,sprintf('(_%s)|(%s)',plotvar,plotvar))),1,'first');
       t=data.epochs.time;
-      if ~isempty(cfg.xlims), 
+      if ~isempty(cfg.xlims),
         sel=t>=cfg.xlims(1)&t<=cfg.xlims(2);
       else
         sel=ones(size(t))==1;
@@ -146,7 +146,7 @@ for i=1:nrows
       dat=squeeze(data.epochs.data(varind,sel,:));
       subplot(nrows,ncols,cnt); plot(t,dat(sel)); axis tight
       if ~isempty(cfg.xlims), xlim(cfg.xlims); end
-      xlabel('time'); ylabel(strrep(data.sensor_info(varind).label,'_','\_')); 
+      xlabel('time'); ylabel(strrep(data.sensor_info(varind).label,'_','\_'));
       if isnumeric(uniqparms1(i))
         title(strrep(sprintf('%s=%g',paramvaried,uniqparms1(i)),'_','\_'));
       elseif iscell(uniqparms1(i)) && ischar(uniqparms1{i})

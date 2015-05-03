@@ -193,7 +193,7 @@ for i=1:N % loop over entities
     tmpm={}; tmpp={}; tmpinp={};
     for j=1:length(m2)
       if ~iscell(m2{j})
-        tmp=splitstr(m2{j},' '); % multiple mechanisms are separated by a space
+        tmp=strread(m2{j},'%s','delimiter',' '); % multiple mechanisms are separated by a space
       else
         tmp=m2{j};
       end
@@ -232,7 +232,7 @@ for i=1:N % loop over entities
 %   end
   sys.entities(i).inputs = cat(2,inp1,inp2);
   if ~iscell(sys.entities(i).dynamics) && ~isempty(sys.entities(i).dynamics)
-    sys.entities(i).dynamics = splitstr(sys.entities(i).dynamics,' ');
+    sys.entities(i).dynamics = strread(sys.entities(i).dynamics,'%s','delimiter',' ');
   end
   M=length(mechs);
   % load mechanism models from text files
