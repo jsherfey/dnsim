@@ -13,7 +13,7 @@ parms = mmil_args2parms( varargin, ...
                             'plotpacoupling_flag',0,[],...
                             'reply_address','sherfey@bu.edu',[],...
                             'rootoutdir',[],[],...
-                            'prefix','sim',[],... 
+                            'prefix','sim',[],...
                             'verbose',1,[],...
                             'cluster_flag',0,[],...
                             'plot_flag',1,[],...
@@ -28,7 +28,7 @@ analysis_flag = parms.plotrates_flag || parms.plotpower_flag || parms.plotpacoup
 overwrite_flag = parms.overwrite_flag;
 
 logfid = parms.logfid;
-reply_address = parms.reply_address;  % FROM address on the emails that get generated. 
+reply_address = parms.reply_address;  % FROM address on the emails that get generated.
 rootoutdir = parms.rootoutdir;
 prefix = parms.prefix;
 % formats={'-dpng','-depsc'}; exts={'.png','.eps'}; % ,'-djpeg' ,'.jpg'
@@ -38,8 +38,8 @@ filenames={};
 % saveplot_flag = parms.saveplot_flag;
 % save_flag = parms.saveplot_flag || parms.savedata_flag || parms.cluster_flag;
 
-try 
-  
+try
+
 %% prepare output directory
 if save_flag
   datafile = fullfile(rootoutdir,'data',[prefix '_sim_data.mat']);
@@ -58,7 +58,7 @@ if save_flag
   save(specfile,'spec','parms');
   filenames{end+1}=specfile;
   % create directory for saving analysis results
-  if analysis_flag && ~exist(fullfile(rootoutdir,'data'),'dir'), mkdir(fullfile(rootoutdir,'data')); end  
+  if analysis_flag && ~exist(fullfile(rootoutdir,'data'),'dir'), mkdir(fullfile(rootoutdir,'data')); end
 end
 
 %% simulate
@@ -86,8 +86,8 @@ end
 %% analyze and plot simulated data
 
 % spectral analysis parameters
-NFFT=[]; 
-WINDOW=[]; 
+NFFT=[];
+WINDOW=[];
 NOVERLAP=[];
 % spike rate parameters
 window_size = 30/1000;%50/1000;
@@ -143,10 +143,10 @@ if parms.savepopavg_flag && ~isempty(vars)
   save(outfile,vars{:});%,'-v7.3');
   fprintf('LFP data saved to %s\n',outfile);
   clear vars
-end 
+end
 
 % -----------------------------------------------------
-% SPIKES 
+% SPIKES
 if parms.plotrates_flag || parms.savespikes_flag
   try
     [h3,rates,tmins,spiketimes,spikeinds]=plotspk(sim_data,spec,'plot_flag',parms.plotrates_flag,...
@@ -155,7 +155,7 @@ if parms.plotrates_flag || parms.savespikes_flag
       if ~exist(fullfile(rootoutdir,'data','spikes'),'dir'), mkdir(fullfile(rootoutdir,'data','spikes')); end
       % save spike data to spikes directory
       outfile = fullfile(rootoutdir,'data','spikes',[prefix '_sim_data_spikes.mat']);
-      save(outfile,'rates','tmins','spiketimes','spikeinds','window_size','dW','spikethreshold','spec');%,'-v7.3');  
+      save(outfile,'rates','tmins','spiketimes','spikeinds','window_size','dW','spikethreshold','spec');%,'-v7.3');
       fprintf('Spike data saved to %s\n',outfile);
     end
   catch err
@@ -192,11 +192,11 @@ if plot_flag && parms.saveplot_flag
       filenames{end+1} = fullfile(rootoutdir,'images',['raw' var],[prefix '_raw' var]);
       fprintf('saving plots - voltage traces: %s\n',filenames{end});
       for i=1:length(exts)
-        try 
-          print(h1(j),formats{i},[filenames{end} exts{i}]); 
+        try
+          print(h1(j),formats{i},[filenames{end} exts{i}]);
         catch err
           disperror(err);
-        end; 
+        end;
       end
     end
   end
@@ -205,11 +205,11 @@ if plot_flag && parms.saveplot_flag
     filenames{end+1} = fullfile(rootoutdir,'images','power',[prefix '_power']);
     fprintf('saving plots - field power: %s\n',filenames{end});
     for i=1:length(exts)
-      try 
-        print(h2,formats{i},[filenames{end} exts{i}]); 
+      try
+        print(h2,formats{i},[filenames{end} exts{i}]);
       catch err
-        disperror(err);        
-      end; 
+        disperror(err);
+      end;
     end
   end
   if ~isempty(h3)
@@ -217,11 +217,11 @@ if plot_flag && parms.saveplot_flag
     filenames{end+1} = fullfile(rootoutdir,'images','spikes',[prefix '_rates']);
     fprintf('saving plots - spike rates: %s\n',filenames{end});
     for i=1:length(exts)
-      try 
-        print(h3,formats{i},[filenames{end} exts{i}]); 
+      try
+        print(h3,formats{i},[filenames{end} exts{i}]);
       catch err
-        disperror(err);        
-      end; 
+        disperror(err);
+      end;
     end
   end
   if ~isempty(h4)
@@ -245,7 +245,7 @@ end
 % statevars = {sim_data.sensor_info.label};
 % - remove cell label prefixes from statevars
 % [h1,lfp,time]=plotv(sim_data,spec,'plot_flag',parms.plot_flag,'var',var);
-% todo: 
+% todo:
 %   - modify plotv() to use var labels instead of indices
 %   - loop over state vars; call plotv() once per var
 %   - in plotv(): skip subplot row if var label not present in pop
@@ -258,7 +258,7 @@ if 0 %parms.savedata_flag && ismember(SimMech,spec.entities(1).mechanisms)
     for i=1:length(sim_data)
       inputs{i}.sim_data=sim_data(i);
       inputs{i}.spec=spec;
-      inputs{i}.spec.entities = spec.entities(i);    
+      inputs{i}.spec.entities = spec.entities(i);
       inputs{i}.rootoutdir=fullfile(rootoutdir,'data');
       inputs{i}.prefix=prefix;
     end
@@ -275,10 +275,10 @@ if 0 %parms.savedata_flag && ismember(SimMech,spec.entities(1).mechanisms)
           fprintf('saving plots - cell characteristics (%s): %s\n',filenames{end},spec.entities(i).label);
           for j=1:length(exts)
             try
-              print(h(i),formats{j},[filenames{end} exts{j}]); 
+              print(h(i),formats{j},[filenames{end} exts{j}]);
             catch err
-              disperror(err);              
-            end; 
+              disperror(err);
+            end;
           end
         end
       end
@@ -318,7 +318,7 @@ end
 
 catch err
   disperror(err);
-  
+
   % save cluster log
   if parms.cluster_flag
     [p,name]=fileparts(parms.jobname);
@@ -344,34 +344,34 @@ function disperror(err)
   %rethrow(err);
 
 %% Old driver script
-% 
+%
 % % Things to adjust manually until a better solution exists
 % % output_list = parms.output_list;%'output'; % TODO: make this part of spec by adding to simtools.html
 % cfg = loadjson(strrep(spec.simulation.figure_keyvalue,'''','"'));
 % if isfield(cfg,'vars')
-%   plotvars = strtrim(splitstr(cfg.vars,',')); 
+%   plotvars = strtrim(strread(cfg.vars,'%s','delimiter',','));
 % else
 %   plotvars = [];
-% end  
+% end
 % if ~isempty(plotvars)
 %   if any(strcmp('output',plotvars))
 %     output_list = 'output';
 %   end
 % end
-% 
+%
 % layout=[];%if ~isempty(output_list), layout='ordered'; else layout=[]; end
-% 
+%
 % % Hard-coded values
 % pushscript = '/space/mdeh3/9/halgdev/projects/jsherfey/outbox/pushfiles.csh';
 % localoutbox = '/space/mdeh3/9/halgdev/projects/jsherfey/outbox';
-% 
+%
 % if ~isfield(spec.simulation,'ProjName'), spec.simulation.ProjName = 'sandbox'; end
 % if ~isfield(spec.simulation,'StudyName'), spec.simulation.StudyName = datestr(now,29); end
 % if ~isfield(spec.simulation,'SetName'), spec.simulation.SetName = datestr(now,30); end
 % if ischar(spec.simulation.sim_start), spec.simulation.sim_start = str2num(spec.simulation.sim_start); end
 % if ischar(spec.simulation.sim_stop), spec.simulation.sim_stop = str2num(spec.simulation.sim_stop); end
 % spec.simulation.timelimits = [spec.simulation.sim_start spec.simulation.sim_stop];
-% 
+%
 % ProjName        = spec.simulation.ProjName;
 % StudyName       = spec.simulation.StudyName;
 % SetName         = spec.simulation.SetName;
@@ -386,10 +386,10 @@ function disperror(err)
 % timelimits      = spec.simulation.timelimits;
 % dt              = str2num(spec.simulation.sim_dt);
 % target_fs       = spec.simulation.sim_target_fs;   try target_fs = str2num(target_fs); end
-% 
+%
 % rootoutdir = strrep(rootoutdir,',','-');
 % rootoutdir = strrep(rootoutdir,' ','_');
-% 
+%
 % % Derived parameters
 % prefix = sprintf('%s_%s_%s',prefix,StudyName,SetName);
 % localfilepath = rootoutdir;
@@ -407,23 +407,23 @@ function disperror(err)
 % if ~exist(localfilepath,'dir') && ~log_flag && saveplot_flag
 %   mkdir(localfilepath);
 % end
-% 
+%
 % xmlfile = fullfile(localfilepath,'biosim.xml');
 % driverscript = mfilename('fullpath') ;       % Name of this current file. Note: matlab leaves off the .m extension when the 'fullpath' switch is used.
 % SimDescription = sprintf('t=%g-%gms, %s',timelimits,SOLVER); % change to inc
 % ModelName = StudyName;
-% 
+%
 % if ~isempty(target_fs)
 %   orig_fs = 1/(dt/1000);
 %   dsfact = max(1,round(orig_fs/target_fs));
 % else
 %   dsfact = 1;
 % end
-% 
+%
 % if log_flag==0 && saveplot_flag==0 && cluster_flag==1
 %   fprintf('Forcing cluster_flag=0 because user indicated no results should be saved.\n');
 % end
-% 
+%
 % script_begin = tic;  % Start keeping time for the whole script.
 % % -------------------------------------------------------------------------
 % if log_flag
@@ -434,12 +434,12 @@ function disperror(err)
 %     % becomes likely to occur at least once when reading pref files/etc).
 %     pause(10*randn);
 %   end
-% 
+%
 %   %% Log Parameters
 %   % ## Variables and Settings generated from parameters above. ## %
 %   results_dir        = fullfile(localfilepath,'matfiles');
-%   figures_dir        = fullfile(localfilepath,'images');  
-%   spec_dir           = fullfile(localfilepath,'spec');  
+%   figures_dir        = fullfile(localfilepath,'images');
+%   spec_dir           = fullfile(localfilepath,'spec');
 %   matfile             = fullfile(results_dir,[prefix '_simulation_results.mat']);
 %   reportfile          = fullfile(localfilepath,[prefix '_simulation_report.txt']);   % filename for progress report file for the script.
 % %   figfile_pop         = fullfile(figures_dir,[prefix '_population_responses']);
@@ -450,7 +450,7 @@ function disperror(err)
 % %   cpuinfo='removedbcslow';
 % %   CPU_type='removedbcslow';
 % %   CPU_cache='removedbcslow';
-%   [zzz, computername] = system('hostname');           % Uses linux system command to get the machine name of host. 
+%   [zzz, computername] = system('hostname');           % Uses linux system command to get the machine name of host.
 %   [zzz, meminfo]      = system('cat /proc/meminfo');  % Uses linux system command to get a report on system memory
 %   total_memory        = textscan(meminfo, '%*s %s %s', 1);  % Parses the memory report for 2nd and 3rd space-delimited items of first line: memory amount.
 %   total_memory        = [total_memory{1}{1} ' ' total_memory{2}{1}];  % Extracts the info from cell array to create char array.
@@ -497,7 +497,7 @@ function disperror(err)
 %     addpath(genpath(codepath));
 %   end
 % end
-% 
+%
 % % figure; k=1; plot(t,data(:,k)); title(datalabels{k});
 % try
 %   [data,spec,parms] = biosim(spec,'timelimits',timelimits,'dsfact',dsfact,'SOLVER',SOLVER,'dt',dt,'logfid',fileID,'output_list',output_list);
@@ -512,18 +512,18 @@ function disperror(err)
 %   end
 % end
 % run_time = toc(script_begin)/60;
-% 
+%
 % if log_flag || saveplot_flag
-%   % Save results. This is what will be used in future for all figures & spike train & LFP analysis. 
+%   % Save results. This is what will be used in future for all figures & spike train & LFP analysis.
 %   try
 %     save(matfile,'data','spec','parms','-v7.3'); %,'t','pop','NetCon','parms','model','spec','-v7.3');
 %     fprintf(fileID,'Results saved successfully: %s\n',matfile);
 %   catch exception
 %     fprintf(fileID,'Failed to save results: %s\n',matfile);
 %     fprintf(fileID,'%s\n',getReport(exception));
-%   end  
+%   end
 % end
-% 
+%
 % % copy spec files to project dir
 % if log_flag
 %   for k = 1:length(spec.files)
@@ -534,11 +534,11 @@ function disperror(err)
 %   fprintf('\nFinished! The %s simulation (%g ms) took %0.2f minutes.\n\n',[ProjName '_' ModelName '_' SetName],diff(timelimits),toc(script_begin)/60);
 %   fprintf(fileID,'\n ==> The %s simulation (%g ms) took %0.2f minutes.\n\n',[ProjName '_' ModelName '_' SetName],diff(timelimits),toc(script_begin)/60);
 % end
-% 
+%
 % % Plot results
 % try
 %   imgfiles = biosim_plots(data,'cluster_flag',cluster_flag,'saveplot_flag',saveplot_flag,'plotvars',plotvars,'format',{'jpg','png'},'rootoutdir',localfilepath,'prefix',prefix,'layout',layout,'powrepmat',powrepmat);
-%   fprintf(fileID,'Results plotted successfully:\n'); 
+%   fprintf(fileID,'Results plotted successfully:\n');
 %   for i = 1:length(imgfiles)
 %     if exist(imgfiles{i},'file')
 %       fprintf(fileID,'saved: %s\n',imgfiles{i});
@@ -554,9 +554,9 @@ function disperror(err)
 %   end
 %   fprintf(fileID,'An error occurred while plotting or saving figures.\n');
 % end
-% 
+%
 % if log_flag
-%   
+%
 %   % cluster logs
 %   clusterscript = ''; clusterstdout=''; clusterstderr='';
 %   try
@@ -569,7 +569,7 @@ function disperror(err)
 %       if exist(f{1},'file')
 %   %       email_attachments = {email_attachments{:} f{:}};
 %         clusterstdout = f{1};
-%         clusterstderr = f{2};        
+%         clusterstderr = f{2};
 %       end
 %     end
 %   catch exception
@@ -583,7 +583,7 @@ function disperror(err)
 %   csvfiles = spec.files(idx);
 %   idx = ~cellfun(@isempty,regexp(spec.files,'.json$','match'));
 %   jsonfiles = spec.files(idx);
-%   
+%
 %   % email attachments
 %   simulator = which('biosim.m');
 %   driver = which([driverscript '.m']);
@@ -592,8 +592,8 @@ function disperror(err)
 %   allfiles = {csvfiles{:} jsonfiles{:} driver clusterscript cstlogs{:} reportfile imgfiles{:} mechfiles{:} simulator};
 %   [allfiles{~cellfun(@exist,allfiles)}] = deal('');
 %   web_files = allfiles;
-%   email_attachments = allfiles(~cellfun(@isempty,allfiles));  
-%     
+%   email_attachments = allfiles(~cellfun(@isempty,allfiles));
+%
 %   %% Create XML specifications and transfer files
 % %   addpath /space/mdeh3/9/halgdev/projects/jsherfey/code/hhnetsim/scripts/xml_toolbox
 %   model_files = [csvfiles mechfiles];
@@ -605,45 +605,45 @@ function disperror(err)
 %     fprintf(fileID,'Failed to prepare XML spec for web server!\n');
 %     fprintf(fileID,'%s\n',getReport(exception));
 %   end
-%   
+%
 %   try
 %     fprintf(fileID,'Saving model and result info in XML format for updating Django models.\n');
 %     fid = fopen(xmlfile,'w+');
 %     fprintf(fid,'%s',XML);
 %     fclose(fid);
-% 
+%
 %     % add biosim.xml to the other file lists
 %     allfiles{end+1} = xmlfile;
 %     web_files = allfiles;
 %     email_attachments = allfiles(~cellfun(@isempty,allfiles));
-% 
+%
 %     %% Prepare outbox
 %     % Add archived temp copies of the results to outbox
 %     fprintf(fileID,'Preparing temporary result archive for transfer to web server:\n');
-% 
+%
 %     % create outbox
 %     if ~exist(localoutbox,'dir')
 %       [s,m]=mkdir(localoutbox);
 %       if ~s, fprintf(fileID,'%s\n',m); end
 %     end
-% 
+%
 %     % create temp dir
 %     tag = sprintf('%s_%g',datestr(now,30),round(100*rand));
 %     tempdir = fullfile(localoutbox,tag);
 %     [s,m]=mkdir(tempdir);
 %     if ~s, fprintf(fileID,'%s\n',m); end
-% 
+%
 %     % copy files to temp dir
 %     % Compress in /inbox
-%     web_files_ = cellfun(@(x)[x ' '],web_files,'uniformoutput',false); 
+%     web_files_ = cellfun(@(x)[x ' '],web_files,'uniformoutput',false);
 %     [s,m]=unix(sprintf('cp %s %s',[web_files_{:}],tempdir));
 %     if s, fprintf(fileID,'%s\n',m); end
-% 
+%
 %     % archive files
 %     fprintf(fileID,'Archiving files for transfer to web server...\n');
 %     cd(localoutbox);[s,m]=unix(sprintf('tar cvzf %s.tar.gz %s',tag,tag));cd(cwd);
 %     fprintf(fileID,'%s\n',m);
-%     
+%
 %     outfile = [tag '.tar.gz'];
 %     if exist(fullfile(localoutbox,outfile),'file')
 %       fprintf(fileID,'Archive file: %s\n',outfile);
@@ -709,7 +709,7 @@ function disperror(err)
 %     fprintf(fileID,'Failed to transfer files to web server.\n');
 %     fprintf(fileID,'%s\n',getReport(exception));
 %   end
-%   
+%
 %   % Closing remarks before emailing results
 %   fprintf('\nMaster script finished. Total elapsed time: %0.2f minutes]\n',run_time);
 %   fprintf(fileID,'\nANALYSIS SUMMARY\n\nProcessed simulation "%s".\n',[ProjName '_' ModelName '_' SetName]);
@@ -721,7 +721,7 @@ function disperror(err)
 % %                    '  Processor Cache: %s.\n  Total Memory: %s.\n  Matlab Version: %s.\n\n'],...
 % %                    computername,CPUs, CPU_type, CPU_cache, total_memory, matlab_version);
 %   fclose(fileID);
-% 
+%
 %   %% Send Email
 %   try
 %     setpref('Internet','SMTP_Server','127.0.0.1'); % Sets the outgoing mail server - often the default 127.0.0.1
@@ -730,18 +730,18 @@ function disperror(err)
 %     email_attachments{:}
 %     sendmail(report_address,sprintf('Analysis report for model "%s"',ModelName),...
 %        [10 prefix '. Total proc time: ' sprintf('%0.2f min',toc(script_begin)/60) '. Browse results online at http://www.neurophilosophica.com/browse. Current time: ' datestr(now,31) '  (Automated message from my Matlab script: NeuroDriver.m.)' 10],...
-%        {email_attachments{:}});  
+%        {email_attachments{:}});
 %     fprintf('\nReport emailed successfully to: %s\n',report_address);
 %   catch exception
 %     fprintf('\nFailed to email report to: %s\n',report_address);
 %     fprintf('%s\n',getReport(exception));
 %   end
 % end
-% 
+%
 % if cluster_flag
 %   exit;
 % end
-% 
+%
 % if nargout>0, varargout{1} = data; end
 % if nargout>1, varargout{2} = spec; end
 % if nargout>2, varargout{3} = parms; end

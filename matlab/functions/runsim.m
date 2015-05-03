@@ -107,7 +107,7 @@ try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
     file = dnsimulator(spec,args{:});
-    tmp_str = splitstr(file,'/');
+    tmp_str = strread(file,'%s','delimiter','/');
     odefun_dir = tmp_str{1};
     file = tmp_str{2};
     cwd=pwd; cd(odefun_dir);
@@ -368,7 +368,7 @@ if ~isempty(parms.output_list)
       arg_str = regexp(src.mech(j).substitute{1,2},'\(.+\)','match');
       arg_str = arg_str{1};
       if strcmp(srctype{k},'connections')
-        tmp = splitstr(spec.(srctype{k})(srcidx(k)).label,'-');
+        tmp = strread(spec.(srctype{k})(srcidx(k)).label,'%s','delimiter','-');
         tmpsrc=tmp{1}; tmpdst=tmp{2};
         % switch src and dst b/c of structure vs algorithm organization
           srcidx(k) = find(strcmp(tmpsrc,{spec.entities.label}));

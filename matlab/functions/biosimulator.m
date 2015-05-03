@@ -56,12 +56,12 @@ switch lower(parms.SOLVER)
         case {'modifiedeuler','rk2'}
           Y(:,k) = Y(:,k-1) + dt*model(t+.5*dt,Y(:,k-1)+.5*dt*model(t,Y(:,k-1)));
         case {'rungekutta','rk','rk4'}
-         k1 = model(t,Y(:,k-1)); 
+         k1 = model(t,Y(:,k-1));
          k2 = model(t+0.5*dt,Y(:,k-1)+0.5*dt*k1);
          k3 = model(t+0.5*dt,Y(:,k-1)+0.5*dt*k2);
-         k4 = model(t+dt,Y(:,k-1)+dt*k3);   
+         k4 = model(t+dt,Y(:,k-1)+dt*k3);
          Y(:,k) = Y(:,k-1)+(k1+2*(k2+k3)+k4)*dt/6;
-      end        
+      end
       if any(k == enableLog)
         elapsedTime = toc(tstart);
         elapsedTimeMinutes = floor(elapsedTime/60);
@@ -74,7 +74,7 @@ switch lower(parms.SOLVER)
       end
     end
     t = T; clear T
-    data = Y'; clear Y       
+    data = Y'; clear Y
   otherwise % ode23, ode... (any built-in matlab solver)
     [t,data] = feval(parms.SOLVER,model,tspan,IC);
 end
@@ -100,7 +100,7 @@ fprintf(fid,'Y = zeros(size(X));\n');
 tmp = regexp(model,'X\(\d+:\d+','match','once');
 N = length(str2num(strrep(tmp,'X(','')));
 % split model into state ODEs
-eqns = splitstr(model(9:end-2),';');
+strread(model(9:end-2),'%s','delimiter',';');
 cnt = 1;
 for i=1:length(eqns)
   fprintf(fid,'Y(%g:%g) = %s;\n',cnt,cnt+N-1,eqns{i});

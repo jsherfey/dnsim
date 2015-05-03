@@ -18,7 +18,7 @@ if nargin>1
 else
   log_flag = 0; % 1, ~~~~~ TEMPORARILY SET TO ZERO ~~~~~~~
   savefig_flag = 1; web_update_flag = 1;
-  reply_address = 'sherfey@bu.edu';  % FROM address on the emails that get generated. 
+  reply_address = 'sherfey@bu.edu';  % FROM address on the emails that get generated.
   output_list=[]; powrepmat=1;
 end
 
@@ -26,10 +26,10 @@ end
 % output_list = parms.output_list;%'output'; % TODO: make this part of spec by adding to simtools.html
 cfg = loadjson(strrep(spec.simulation.figure_keyvalue,'''','"'));
 if isfield(cfg,'vars')
-  plotvars = strtrim(splitstr(cfg.vars,',')); 
+  plotvars = strtrim(strread(cfg.vars,'%s','delimiter',','));
 else
   plotvars = [];
-end  
+end
 if ~isempty(plotvars)
   if any(strcmp('output',plotvars))
     output_list = 'output';
@@ -115,8 +115,8 @@ if log_flag
   %% Log Parameters
   % ## Variables and Settings generated from parameters above. ## %
   results_dir        = fullfile(localfilepath,'matfiles');
-  figures_dir        = fullfile(localfilepath,'images');  
-  spec_dir           = fullfile(localfilepath,'spec');  
+  figures_dir        = fullfile(localfilepath,'images');
+  spec_dir           = fullfile(localfilepath,'spec');
   matfile             = fullfile(results_dir,[prefix '_simulation_results.mat']);
   reportfile          = fullfile(localfilepath,[prefix '_simulation_report.txt']);   % filename for progress report file for the script.
 %   figfile_pop         = fullfile(figures_dir,[prefix '_population_responses']);
@@ -127,7 +127,7 @@ if log_flag
 %   cpuinfo='removedbcslow';
 %   CPU_type='removedbcslow';
 %   CPU_cache='removedbcslow';
-  [zzz, computername] = system('hostname');           % Uses linux system command to get the machine name of host. 
+  [zzz, computername] = system('hostname');           % Uses linux system command to get the machine name of host.
   [zzz, meminfo]      = system('cat /proc/meminfo');  % Uses linux system command to get a report on system memory
   total_memory        = textscan(meminfo, '%*s %s %s', 1);  % Parses the memory report for 2nd and 3rd space-delimited items of first line: memory amount.
   total_memory        = [total_memory{1}{1} ' ' total_memory{2}{1}];  % Extracts the info from cell array to create char array.
@@ -190,14 +190,14 @@ end
 run_time = toc(script_begin)/60;
 
 if log_flag || savefig_flag
-  % Save results. This is what will be used in future for all figures & spike train & LFP analysis. 
+  % Save results. This is what will be used in future for all figures & spike train & LFP analysis.
   try
     save(matfile,'data','spec','parms','-v7.3'); %,'t','pop','NetCon','parms','model','spec','-v7.3');
     fprintf(fileID,'Results saved successfully: %s\n',matfile);
   catch exception
     fprintf(fileID,'Failed to save results: %s\n',matfile);
     fprintf(fileID,'%s\n',getReport(exception));
-  end  
+  end
 end
 
 % copy spec files to project dir
@@ -214,7 +214,7 @@ end
 % Plot results
 try
   imgfiles = biosim_plots(data,'cluster_flag',cluster_flag,'savefig_flag',savefig_flag,'plotvars',plotvars,'format',{'jpg','png'},'rootoutdir',localfilepath,'prefix',prefix,'layout',layout,'powrepmat',powrepmat);
-  fprintf(fileID,'Results plotted successfully:\n'); 
+  fprintf(fileID,'Results plotted successfully:\n');
   for i = 1:length(imgfiles)
     if exist(imgfiles{i},'file')
       fprintf(fileID,'saved: %s\n',imgfiles{i});
@@ -232,7 +232,7 @@ catch exception
 end
 
 if log_flag
-  
+
   % cluster logs
   clusterscript = ''; clusterstdout=''; clusterstderr='';
   try
@@ -245,7 +245,7 @@ if log_flag
       if exist(f{1},'file')
   %       email_attachments = {email_attachments{:} f{:}};
         clusterstdout = f{1};
-        clusterstderr = f{2};        
+        clusterstderr = f{2};
       end
     end
   catch exception
@@ -259,7 +259,7 @@ if log_flag
   csvfiles = spec.files(idx);
   idx = ~cellfun(@isempty,regexp(spec.files,'.json$','match'));
   jsonfiles = spec.files(idx);
-  
+
   % email attachments
   simulator = which('biosim.m');
   driver = which([driverscript '.m']);
@@ -268,8 +268,8 @@ if log_flag
   allfiles = {csvfiles{:} jsonfiles{:} driver clusterscript cstlogs{:} reportfile imgfiles{:} mechfiles{:} simulator};
   [allfiles{~cellfun(@exist,allfiles)}] = deal('');
   web_files = allfiles;
-  email_attachments = allfiles(~cellfun(@isempty,allfiles));  
-    
+  email_attachments = allfiles(~cellfun(@isempty,allfiles));
+
   %% Create XML specifications and transfer files
 %   addpath /space/mdeh3/9/halgdev/projects/jsherfey/code/hhnetsim/scripts/xml_toolbox
   model_files = [csvfiles mechfiles];
@@ -281,7 +281,7 @@ if log_flag
     fprintf(fileID,'Failed to prepare XML spec for web server!\n');
     fprintf(fileID,'%s\n',getReport(exception));
   end
-  
+
   try
     fprintf(fileID,'Saving model and result info in XML format for updating Django models.\n');
     fid = fopen(xmlfile,'w+');
@@ -311,7 +311,7 @@ if log_flag
 
     % copy files to temp dir
     % Compress in /inbox
-    web_files_ = cellfun(@(x)[x ' '],web_files,'uniformoutput',false); 
+    web_files_ = cellfun(@(x)[x ' '],web_files,'uniformoutput',false);
     [s,m]=unix(sprintf('cp %s %s',[web_files_{:}],tempdir));
     if s, fprintf(fileID,'%s\n',m); end
 
@@ -319,7 +319,7 @@ if log_flag
     fprintf(fileID,'Archiving files for transfer to web server...\n');
     cd(localoutbox);[s,m]=unix(sprintf('tar cvzf %s.tar.gz %s',tag,tag));cd(cwd);
     fprintf(fileID,'%s\n',m);
-    
+
     outfile = [tag '.tar.gz'];
     if exist(fullfile(localoutbox,outfile),'file')
       fprintf(fileID,'Archive file: %s\n',outfile);
@@ -385,7 +385,7 @@ if log_flag
     fprintf(fileID,'Failed to transfer files to web server.\n');
     fprintf(fileID,'%s\n',getReport(exception));
   end
-  
+
   % Closing remarks before emailing results
   fprintf('\nMaster script finished. Total elapsed time: %0.2f minutes]\n',run_time);
   fprintf(fileID,'\nANALYSIS SUMMARY\n\nProcessed simulation "%s".\n',[ProjName '_' ModelName '_' SetName]);
@@ -406,7 +406,7 @@ if log_flag
     email_attachments{:}
     sendmail(report_address,sprintf('Analysis report for model "%s"',ModelName),...
        [10 prefix '. Total proc time: ' sprintf('%0.2f min',toc(script_begin)/60) '. Browse results online at http://www.neurophilosophica.com/browse. Current time: ' datestr(now,31) '  (Automated message from my Matlab script: NeuroDriver.m.)' 10],...
-       {email_attachments{:}});  
+       {email_attachments{:}});
     fprintf('\nReport emailed successfully to: %s\n',report_address);
   catch exception
     fprintf('\nFailed to email report to: %s\n',report_address);

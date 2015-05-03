@@ -78,7 +78,7 @@ fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 for k = 1:size(auxvars,1)
   if strncmp(solver,'rk',2)
     dt_scaling_factor = '0.5';
-    strParts = splitstr(auxvars{k,2},{'pset.p.'});
+    strParts = regexp(auxvars{k,2},'pset.p.','split')';
     for l = 2:length(strParts)
       strParts{l} = ['pset.p.',strParts{l}];
       if regexp(strParts{l}, '^.+_dt[,)]$')
@@ -90,7 +90,6 @@ for k = 1:size(auxvars,1)
   end
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
-
 %  % evaluate anonymous functions
 %  if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
 %    for k = 1:size(functions,1)
@@ -139,7 +138,7 @@ for k = 1:length(ulabels)
 end
 
 % split model into state ODEs
-odes = splitstr(model(9:end-2),';');
+odes = strread(model(9:end-2),'%s','delimiter',';');
 
 % Integrate
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
