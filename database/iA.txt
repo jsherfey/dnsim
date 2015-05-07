@@ -1,0 +1,17 @@
+# A: A-current
+# Jason’s email:
+# Here are two different A-type K+ current mechanisms I've implemented.
+# However, I have not worked with these much or carefully verified that
+# they are working properly. The reference for iAPoirazi.txt is included in
+# it; I don't remember where I got the model in iA.txt though.
+gA=1; EA=-80;
+ainf(V)=1./(1+exp(-(V+60)/8.5))
+atau(V)=.37+1./(exp((V+46)/5)+exp(-(V+238)/37.5))
+binf(V)=1./(1+exp((V+78)/6))
+btau(V)=19+1./(exp((V+46)/5)+exp((V+238)/(-37.5)))
+a' = (ainf(V)-a)./atau(V)
+b' = (binf(V)-b)./btau(V)
+a(0)=rand(Npop,1)
+b(0)=rand(Npop,1)
+IA(V,a,b)=gA.*a.^4.*b.*(V-EA)
+current => -IA(V,a,b)
