@@ -114,7 +114,6 @@ switch parms.SOLVER
     try
       if  ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
         [data,t] = feval(file);
-        delete([file,'.m']);
       else
         odefun_mfiles = {};
         dirinfo = dir('.');
@@ -124,7 +123,6 @@ switch parms.SOLVER
           if ~dirinfo(j).isdir && ~strcmp(dirinfo(j).name(1:end-2),file) && strncmp(dirinfo(j).name,file,6) &&  strncmp(dirinfo(j).name(end-1:end),'.m',2)
             [~,res_diff] = system(['diff ',file,'.m ',dirinfo(j).name]);
             if isempty(res_diff)
-              delete([file,'.m']);
               file = dirinfo(j).name(1:end-2);
               display('Using previous mex file');
               filemex = [file,'_mex']
@@ -141,10 +139,8 @@ switch parms.SOLVER
         tic
         [data,t] = feval(filemex);
         if parms.debug==0
-          delete('params.mat');
         end
         if exist('codemex','dir')
-          rmdir('codemex','s');
         end
         toc
       end
@@ -156,10 +152,8 @@ switch parms.SOLVER
       end
       simdata=[];
       if exist([file,'.m'],'file') && ~exist([file,'.mex'],'file') && parms.debug==0
-         delete([file,'.m']);
       end
       if exist('params.mat','file') && parms.debug==0
-        delete('params.mat');
       end
       if exist('codemex','dir')
         rmdir('codemex','s');
@@ -168,7 +162,7 @@ switch parms.SOLVER
       return
     end
     if exist('odefun','dir') && length(dir('odefun'))==2 % empty directory
-      rmdir('odefun');
+      % rmdir('odefun');
     end
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});

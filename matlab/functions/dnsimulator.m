@@ -52,7 +52,7 @@ if exist('codegen') && parms.coder==1
 end
 
 % create odefun file that integrates the ODE system
-odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS')];
+odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSSFFF') '_' spec.jobnumber];
 odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
@@ -70,7 +70,7 @@ fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
-
+fprintf(fid,'fprintf(''\\nThe odefun file used is: %s \\n'');\n',odefun_file);
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
 fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
