@@ -212,6 +212,7 @@ if spec.simulation.cluster_flag % run on cluster
       auxcmd2 = auxcmd;
     end
     modelspec=allspecs{k};
+    modelspec.jobnumber = sprintf('job%4.4i',k);
     specfile = sprintf('spec%g.mat',k);
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
@@ -286,6 +287,7 @@ else
   % run on local machine
   for specnum = 1:length(allspecs) % loop over elements of search space
     modelspec = allspecs{specnum};
+    modelspec.jobnumber = sprintf('job%4.4i',1);
     fprintf(logfid,'processing simulation...');
     try
       biosimdriver(modelspec,'rootoutdir',rootoutdir{specnum},'prefix',prefix{specnum},'verbose',1,...
