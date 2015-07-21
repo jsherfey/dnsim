@@ -110,7 +110,8 @@ switch parms.SOLVER
     tmp_str = strread(file,'%s','delimiter','/');
     odefun_dir = tmp_str{1};
     file = tmp_str{2};
-    cwd=pwd; cd(odefun_dir);
+    cwd=pwd;
+    cd(odefun_dir);
     try
       if  ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
         [data,t] = feval(file);
@@ -139,8 +140,10 @@ switch parms.SOLVER
         tic
         [data,t] = feval(filemex);
         if parms.debug==0
-        end
-        if exist('codemex','dir')
+          delete('params.mat');
+          if exist('codemex','dir')
+            rmdir('codemex','s');
+          end
         end
         toc
       end
@@ -154,9 +157,10 @@ switch parms.SOLVER
       if exist([file,'.m'],'file') && ~exist([file,'.mex'],'file') && parms.debug==0
       end
       if exist('params.mat','file') && parms.debug==0
-      end
-      if exist('codemex','dir')
-        rmdir('codemex','s');
+        delete('params.mat');
+        if exist('codemex','dir')
+          rmdir('codemex','s');
+        end
       end
       cd(cwd);
       return

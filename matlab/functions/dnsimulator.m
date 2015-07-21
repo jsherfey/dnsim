@@ -61,11 +61,17 @@ if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or y
   fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
+  % setting initial conditions as varsize for codegen
+  labels = spec.variables.labels;
+  [ulabels,I] = unique(labels,'stable');
+  for k = 1:length(ulabels)
+    fprintf(fid,'coder.varsize(''%s.%s'');\n',coderprefix,['IC_' ulabels{k}]);
+  end
   % load params.mat at start of odefun file
   fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
-  fprintf(fid,'tspan=%s.timelimits; dt=%s.dt;\n',coderprefix,coderprefix);
+  fprintf(fid,'tspan=%s.timelimits;\ndt=%s.dt;\n',coderprefix,coderprefix);
 end
-fprintf(fid,'T=tspan(1):dt:tspan(2); nstep=length(T);\n');
+fprintf(fid,'T=tspan(1):dt:tspan(2);\nnstep=length(T);\n');
 
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
@@ -106,17 +112,16 @@ labels = spec.variables.labels;
 [ulabels,I] = unique(labels,'stable');
 ids = spec.variables.entity;
 uids = ids(I);
-cnt = 1; ns=zeros(1,length(ulabels));
+cnt = 1;
 for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); % # cells in the pop with this var   % Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-%   if ~exist('codegen') || parms.coder==0
+  if ~exist('codegen') || parms.coder==0
     fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
-%   else
-%     fprintf(fid,'coder.varsize(''%s'');\n',ulabels{k});
-%     fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
-%   end
+  else
+    fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
+  end
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});

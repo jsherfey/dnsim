@@ -957,16 +957,16 @@ for i=1:nvar
     ic=repmat(ic,[NE(Spop(i)) 1]);
   end
   if size(ic,1)<size(ic,2), ic=ic'; end
-%   if any(find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1))))
-%     ind2=find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1)));
-%     if parms.coder==0 || ~exist('codegen')
-%       icnoise=Pg{ind2(1),2};
-%       ic=ic+icnoise.*rand(size(ic));
-%     else
-%       icnoise=modelparams.(Pg{ind2(1),2});
-%       ic=ic+icnoise.*rand(size(ic));
-%     end
-%   end
+  if any(find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1))))
+    ind2=find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1)));
+    if parms.coder==0 || ~exist('codegen')
+      icnoise=Pg{ind2(1),2};
+      ic=ic+icnoise.*rand(size(ic));
+    else
+      icnoise=modelparams.(Pg{ind2(1),2});
+      ic=ic+icnoise.*rand(size(ic));
+    end
+  end
   Svars{i,4}=ic;
   Svars{i,3}=stateindx+(1:length(ic));
   stateindx=stateindx+length(ic);
