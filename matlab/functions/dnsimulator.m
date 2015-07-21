@@ -52,7 +52,10 @@ if exist('codegen') && parms.coder==1
 end
 
 % create odefun file that integrates the ODE system
-odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSSFFF') '_' spec.jobnumber];
+odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS_FFF')];
+if parms.cluster_flag % not assuming the cluster is always used
+  odefun_file = [odefun_file '_' spec.jobnumber]
+end
 odefun = [subdir,'/',odefun_file];
 fid=fopen([odefun '.m'],'wt');
 
@@ -76,7 +79,9 @@ fprintf(fid,'T=tspan(1):dt:tspan(2);\nnstep=length(T);\n');
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
-fprintf(fid,'fprintf(''\\nThe odefun file used is: %s \\n'');\n',odefun_file);
+if parms.debug % this is kept only for debugging purposes, as otherwise a new mex file needs to be regenerated each time
+  fprintf(fid,'fprintf(''\\nThe odefun file used is: %s \\n'');\n',odefun_file);
+end
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
 fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
