@@ -131,7 +131,7 @@ switch parms.SOLVER
               delete([odefun_filename,'.m']);
               odefun_filename = dirinfo(j).name(1:end-2);
               filemex = [odefun_filename,'_mex'];
-              display('Using previous mex file');
+              fprintf('\n\nUsing previous mex file: %s\n\n',filemex);
               copyfile([filemex,'.mexa64'],odefun_subdir);
               cd(odefun_subdir);
             end
