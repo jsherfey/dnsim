@@ -64,6 +64,7 @@ parms = mmil_args2parms( varargin, ...
                               'coder',0,[],...
                               'debug',0,[],...
                               'timesurfer_flag',1,[],...
+                              'identifier','default',[],...
                            }, false);
 % ----------------------------------------------------------
 % get model
@@ -106,46 +107,51 @@ end
 try args = mmil_parms2args(parms); catch args = {}; end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
-    file = dnsimulator(spec,args{:});
-    tmp_str = strread(file,'%s','delimiter','/');
-    odefun_dir = tmp_str{1};
-    file = tmp_str{2};
+    odefun_filepath = dnsimulator(spec,args{:});
+    tmp_str = strread(odefun_filepath,'%s','delimiter','/');
+    odefun_filename = tmp_str{end};
     cwd=pwd;
-    cd(odefun_dir);
+    odefun_subdir = fullfile('/',tmp_str{1:end-1});
+    cd(odefun_subdir);
     try
       if  ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
-        [data,t] = feval(file);
+        [data,t] = feval(odefun_filename);
       else
+        odefun_dir = fullfile('/',tmp_str{1:end-2});
+        copyfile([odefun_filepath,'.m'],odefun_dir)
+        cd(odefun_dir);
         odefun_mfiles = {};
         dirinfo = dir('.');
         res_diff = 'not empty';
         j = 1;
         while ~isempty(res_diff) && j <= length(dirinfo)
-          if ~dirinfo(j).isdir && ~strcmp(dirinfo(j).name(1:end-2),file) && strncmp(dirinfo(j).name,file,6) &&  strncmp(dirinfo(j).name(end-1:end),'.m',2)
-            [~,res_diff] = system(['diff ',file,'.m ',dirinfo(j).name]);
+          if ~dirinfo(j).isdir && ~strcmp(dirinfo(j).name(1:end-2),odefun_filename) && strncmp(dirinfo(j).name,odefun_filename,6) &&  strncmp(dirinfo(j).name(end-1:end),'.m',2)
+            [~,res_diff] = system(['diff ',odefun_filename,'.m ',dirinfo(j).name]);
             if isempty(res_diff)
-              file = dirinfo(j).name(1:end-2);
+              delete([odefun_filename,'.m']);
+              odefun_filename = dirinfo(j).name(1:end-2);
+              filemex = [odefun_filename,'_mex'];
               display('Using previous mex file');
-              filemex = [file,'_mex']
+              copyfile([filemex,'.mexa64'],odefun_subdir);
+              cd(odefun_subdir);
             end
           end
           j = j+1;
         end
         if ~exist('filemex')
+          cd(odefun_subdir);
           tic
-          codegen_odefun(file);
+          codegen_odefun(odefun_filename);
           toc
-          filemex = [file,'_mex'];
+          filemex = [odefun_filename,'_mex'];
+          copyfile([filemex,'.mexa64'],odefun_dir);
         end
         tic
         [data,t] = feval(filemex);
-        if parms.debug==0
-          delete('params.mat');
-          if exist('codemex','dir')
-            rmdir('codemex','s');
-          end
-        end
         toc
+      end
+      if parms.debug==0
+        rmdir(odefun_subdir,'s');
       end
       cd(cwd);
     catch err
@@ -154,19 +160,11 @@ switch parms.SOLVER
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
       end
       simdata=[];
-      if exist([file,'.m'],'file') && ~exist([file,'.mex'],'file') && parms.debug==0
-      end
-      if exist('params.mat','file') && parms.debug==0
-        delete('params.mat');
-        if exist('codemex','dir')
-          rmdir('codemex','s');
-        end
+      if parms.debug==0
+        rmdir(odefun_subdir,'s');
       end
       cd(cwd);
       return
-    end
-    if exist('odefun','dir') && length(dir('odefun'))==2 % empty directory
-      % rmdir('odefun');
     end
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
