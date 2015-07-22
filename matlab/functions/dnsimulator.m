@@ -260,5 +260,5 @@ while ~exist([odefun_filepath '.m'],'file')
   pause(.01);
 end
 
-fprintf('running simulation...\n');
+fprintf('Starting the simulation...\n');
 % eval(sprintf('[data,t]=%s;',odefun_file));

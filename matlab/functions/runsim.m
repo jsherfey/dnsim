@@ -139,6 +139,7 @@ switch parms.SOLVER
           j = j+1;
         end
         if ~exist('filemex')
+          fprintf('\nNew model detected: generating the mex file...\n');
           cd(odefun_subdir);
           tic
           codegen_odefun(odefun_filename);
