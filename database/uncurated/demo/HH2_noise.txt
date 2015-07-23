@@ -1,0 +1,6 @@
+scale = [100]
+ 
+noise(t) = scale.*randn(Npop,1).*sqrt(dt)
+ 
+current => noise(t)
+ 

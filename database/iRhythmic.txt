@@ -1,10 +1,10 @@
 %% iSYN: HH synaptic current with predefined dual exponential conductance
 
-E_SYN=0; g_SYN=.5;
+E_SYN=0; g_SYN=1;
 IC_noise=0; IC=0;
 
 tauDx=10; tauRx=.25; 
-c = (1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))));
+c = .5*(1/((tauRx/tauDx)^(tauRx/(tauDx-tauRx))-(tauRx/tauDx)^(tauDx/(tauDx-tauRx))));
 
 fLFP = 100; %timelimits = [0 300];
 spiketimes = [0 (timelimits(1):1000/fLFP:timelimits(2))];

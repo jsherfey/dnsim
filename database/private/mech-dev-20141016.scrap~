@@ -1,0 +1,52 @@
+((-((0.25)*(1./max(.001,(1+exp(-(a_x+20)/9)))).^2.*(a_x-(120))))+((((1)*(t>(0) & t<a_itonic_offset)))+((-((1).*a_iCan_mCan.^2.*(a_x-(-20))))+current)))
+((-((0.25)*(1./max(.001,(1+exp(-(a_V+20)/9)))).^2.*(a_V-(120))))+((((1)*(t>(0) & t<a_itonic_offset)))+((-((1).*a_iCan_mCan.^2.*(a_V-(-20))))+current)))
+
+model = @(t,X) [((-((0.25)*(1./max(.001,(1+exp(-(X(1:1)+20)/9)))).^2.*(X(1:1)-(120))))+((((1)*(t>(0) & t<a_itonic_offset)))+((-((1).*X(3:3).^2.*(X(1:1)-(-20))))+0)));(0.002).*(-((0.25)*(1./max(.001,(1+exp(-(X(1:1)+20)/9)))).^2.*(X(1:1)-(120))))-(X(2:2)-(0))/(80);(((0.0056)*X(2:2)./((0.0056)*X(2:2)+(0.002)))-X(3:3))./(1./((0.0056)*X(2:2)+(0.002)));];
+
+model = @(t,X) [((-((0.25)*(1./max(.001,(1+exp(-(X(1:1)+20)/9)))).^2.*(X(1:1)-(120))))+((((1)*(t>(0) & t<a_itonic_offset)))+((-((1).*X(3:3).^2.*(X(1:1)-(-20))))+0)));(0.002).*(-((0.25)*(1./max(.001,(1+exp(-(X(1:1)+20)/9)))).^2.*(X(1:1)-(120))))-(X(2:2)-(0))/(80);(((0.0056)*X(2:2)./((0.0056)*X(2:2)+(0.002)))-X(3:3))./(1./((0.0056)*X(2:2)+(0.002)));];
+f
+
+
+alphacaf=.002; 		% uM 1/(ms uA) cm2, .000667 (soma); .002 (dend)
+tauca=80;		% ms, 240 (soma), 80 (dend)
+c0=0;
+cai' = alphacaf.*(-ICaf)-(cai-c0)/tauca;
+
+alphacaf=.0288;
+tauca=28.57;
+c0 = .00005;
+
+
+
+test model:
+x'=current
+CaDyn, iCa, itonic, iCan
+stim=1, gCan=1
+mCan(0) = [0.5]
+cai(0) = [0.5]
+# peaks @ 15ms
+
+
+dgKdr, dgKS, dgNaf, itonic, iNa
+
+wbK, wbNa, itonic
+
+dgKdr, dgKS, dgNaf, itonic, wbK, wbNa; wbSYN
+adjusting wbgSYN between .2 and 2 produces rhythms ranging alpha to gamma
+
+dgKdr, dgKS, dgNaf, itonic, wbK, wbNa, CaDyn, iCa, iCan; wbSYN
+
+Kramer:
+RS: iNaF, iKDR, iAR, ileak, itonic (stim=-10)
+IBdend: iNaF, iKDR, iCaH, iM, iAR, itonic, ileak
+
+iNa, iK, ileak, itonic
+iNa, iKs, ileak, itonic
+iNa, iKs, ileak, itonic, iNap
+----
+
+iNa, iK, itonic, cal, cadyn
+
+
+
+

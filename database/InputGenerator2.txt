@@ -1,0 +1,44 @@
+% InputGenerator.txt
+amp=1; % amplitude
+onset=0;
+offset=inf;
+inputtype=1;
+%timelimits=1000; % [beg end], if scalar, InputGenerator() assumes [0 end]
+targets=1:Npop;
+
+% Type-specific parameters
+
+% type 1 (tonic)
+
+% type 2 (sin)
+f0=10; % oscillation frequency
+
+% type 3 (ZAP)
+fmin=1; % start frequency
+fmax=40; % final frequency
+deltaf=1; % step between frequencies
+Ncycles=3; % number of cycles at each frequency
+
+% type 4...
+% ...
+
+% type 7 (Poisson; Ben's method)
+sharedfraction=0;
+Ninputs=10;
+lambda=50;%2;     % Hz, modulation poisson rate
+lambda0=0;        % Hz, baseline poisson rate
+tauD=2;
+tauR=.5;
+wavetype='sin'; % {'sin','square','sawtooth'}
+
+% type 8 (coincidence detection probe)
+mode='increasing'; % {'increasing','decreasing'}
+isi=100; % time between stimuli [ms]
+tshift=1; % time shift varying coincidence (ms)
+
+I=InputGenerator2('TIMELIMITS',timelimits,'DT',dt,'INPUTTYPE',inputtype,'NPOP',Npop,'AMP',amp,'ONSET',onset,'OFFSET',offset,'F0',f0,'FMIN',fmin,'FMAX',fmax,'DELTAF',deltaf,'NCYCLES',Ncycles,'SHAREDFRACTION',sharedfraction,'NINPUTS',Ninputs,'TAUD',tauD,'TAUR',tauR,'LAMBDA',lambda,'TARGETS',targets,'LAMBDA0',lambda0,'WAVETYPE',wavetype,'MODE',mode,'ISI',isi,'TSHIFT',tshift);
+
+input(t) = I(:,floor(1+(t/dt)));
+
+current => input(t)
+

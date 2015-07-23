@@ -1,0 +1,9 @@
+gL = [0.05]
+gKL = [0]
+EL = [-90]
+EKL = [-100]
+ 
+IL(V) = gL*(V-EL)+gKL*(V-EKL)
+ 
+current => -IL(V)
+ 

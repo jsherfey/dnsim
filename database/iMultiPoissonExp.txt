@@ -1,0 +1,30 @@
+% iMultiPoissonExp.txt (connection mechanism: spikes from precomputed and saved spike train)
+% Poisson exponential synapse
+
+Ninputs=10;
+sharedfraction=0;
+lambda=50;        % Hz, modulation poisson rate
+lambda0=0;        % Hz, baseline poisson rate
+tauD=2;
+tauR=.5;
+targets=1:Npop;
+
+g_syn=1;		% input strength
+E_syn=0;    % AMPA input
+%E_syn=-85; % GABAa input
+
+inputtype=6; % 6 or 7
+onset=0;
+offset=inf;
+amp=1;
+
+% nonhomogeneous modulation
+f0=0; % lambda modulation frequency (Hz). set f0=0 for constant lambda
+wavetype='sin'; % {'sin','square','sawtooth'}
+
+G=InputGenerator2('TIMELIMITS',timelimits,'DT',dt,'INPUTTYPE',inputtype,'NPOP',Npop,'AMP',amp,'ONSET',onset,'OFFSET',offset,'SHAREDFRACTION',sharedfraction,'NINPUTS',Ninputs,'TAUD',tauD,'TAUR',tauR,'LAMBDA',lambda,'TARGETS',targets,'F0',f0,'LAMBDA0',lambda0,'WAVETYPE',wavetype);
+
+Gt(t) = (g_syn/Ninputs).*G(:,max(1,round(t/dt)));
+Itrain(t,v) = Gt(t).*(v - E_syn);
+
+current => -Itrain(t,IN)

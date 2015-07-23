@@ -1,0 +1,15 @@
+% INa: HH sodium current
+gNa=120; % mS/cm^2
+ENa=50; % mV
+IC_noise=0; h_IC=0; m_IC=0; % h_IC=.54; m_IC=.05;
+
+aM(IN) = (2.5-.1*(IN+65))./(exp(2.5-.1*(IN+65))-1)
+bM(IN) = 4*exp(-(IN+65)/18)
+aH(IN) = .07*exp(-(IN+65)/20)
+bH(IN) = 1./(exp(3-.1*(IN+65))+1)
+mNaf' = aM(IN).*(1-mNaf)-bM(IN).*mNaf
+hNaf' = aH(IN).*(1-hNaf)-bH(IN).*hNaf
+hNaf(0)=h_IC+IC_noise*rand(Npop,1)
+mNaf(0)=m_IC+IC_noise*rand(Npop,1)
+INaf(IN,m,h) = gNa.*m.^3.*h.*(IN-ENa)
+current => -INaf(IN,mNaf,hNaf)

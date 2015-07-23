@@ -1,0 +1,29 @@
+# iSYN: fast threshold modulation
+
+# constants
+g_SYN=.5; E_SYN=-80; tauDx=1; tauRx=.25; span=1;
+IC=.1; IC_noise=0
+
+# precompute linear positions (index)
+Nmax = max(Npre,Npost)
+Xpre = linspace(1,Nmax,Npre)'*ones(1,Npost)
+Xpost = (linspace(1,Nmax,Npost)'*ones(1,Npre))'
+# Npre,Npost are reserved variables = entity multiplicities
+
+# compute mask
+fanout=(span*Nmax)/2
+kernel=exp(-(Xpre-Xpost).^2/fanout^2);
+mask = abs(Xpre-Xpost)<=fanout
+gbar = g_SYN / mean(sum(mask,1))
+
+# gating dynamics
+sSYNpre' = -sSYNpre./tauDx + ((1-sSYNpre)/tauRx).*(1+tanh(Vpre/10))
+
+# initial conditions
+sSYNpre(0)=IC+IC_noise.*rand(Npre,1)
+
+# synaptic current
+ISYN(V,s) = (gbar.*((mask.*kernel)*s).*(V-E_SYN))
+
+# interface statement
+current => -ISYN(Vpost,sSYNpre)

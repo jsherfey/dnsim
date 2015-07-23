@@ -1,0 +1,18 @@
+% iCa: calcium current (ref: Tegner/Compte 2002)
+% Exposes: calcium current "ICaf" for other mechanisms (e.g., required by CaDyn mechanism)
+% Tags: calcium, channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+ECaf=120; 	% mV
+gCaf=.25; 	% mS/cm2, 1.5 (soma), .25 (dend)
+
+% Functions
+minf(IN)=1./max(.001,(1+exp(-(IN+20)/9)));
+ICaf(IN)=gCaf*minf(IN).^2.*(IN-ECaf);
+
+% Interface
+current => -ICaf(IN) 	% for node dynamics (schema)
+ICaf => ICaf(IN)	% for other mech dynamics
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
+

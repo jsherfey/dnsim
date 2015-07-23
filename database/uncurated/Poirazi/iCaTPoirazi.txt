@@ -1,0 +1,14 @@
+% CaTPoirazi: low threshold activated calcium current (Poirazi 2003)
+gCaT=.1; ECaT=120; IC=.1; IC_noise=.1; celsius=36;
+am(V)=exp((.001*(3).*(V+36)*96480)./(8.315*(273.16+celsius)))
+bm(V)=exp((.001*(5.2).*(V+68)*96480)./(8.315*(273.16+celsius)))
+minf(V)=1./(1+am(V))
+mtau(V)=1.5
+hinf(V)=1./(1+bm(V))
+htau(V)=10
+m'=(minf(V)-m)./mtau(V)
+h'=(hinf(V)-h)./htau(V)
+m(0)=IC+IC_noise.*rand(Npop,1)
+h(0)=IC+IC_noise.*rand(Npop,1)
+ICaT(V,m,h)=gCaT.*m.^2.*h.*(V-ECaT)
+current => -ICaT(V,m,h)

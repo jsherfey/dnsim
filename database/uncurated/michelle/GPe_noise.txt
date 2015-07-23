@@ -1,0 +1,6 @@
+V_noise = [0]
+ 
+noise(t) = V_noise.*randn(Npop,1).*sqrt(dt)
+ 
+current => noise(t)
+ 

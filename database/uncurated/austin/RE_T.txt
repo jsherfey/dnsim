@@ -1,0 +1,16 @@
+gT = [2]
+ET = [0]
+ 
+taumT(V) = .44+(.15./(exp((V+2+27)/10)+exp(-(V+2+102)/15)))
+mTss(V) = 1./(1+exp(-(V+2+52)/7.4))
+tauhT(V) = 22.7+(.27./(exp((V+2+48)/4)+exp(-(V+2+407)/50)))
+hTss(V) = 1./(1+exp((V+2+80)/5))
+IT(V,m,h) = gT.*m.^2.*h.*(V-ET)
+ 
+mT' = (mTss(V)-mT)./taumT(V);
+mT(0) = [0]
+hT' = (hTss(V)-hT)./tauhT(V);
+hT(0) = [0]
+ 
+current => -IT(V,mT,hT)
+ 

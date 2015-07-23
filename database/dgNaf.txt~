@@ -1,0 +1,28 @@
+% iNaf in Poirazi 2013; Na in Durstewitz & Gabriel 2007
+% Tags: sodium, channel
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gNaf=100; ENaf=55; IC=0; IC_noise=0;
+
+% Functions
+ma(IN)=(-.2816*(IN+28))./(-1+exp((-IN+28)/9.3))
+mb(IN)=(.2464*(IN+1))./(-1+exp((IN+1)/6))
+minf(IN)=ma(IN)./(ma(IN)+mb(IN))
+mtau(IN)=1./(ma(IN)+mb(IN))
+ha(IN)=.098*exp(-(IN+43.1)/20)
+hb(IN)=1.4./(1+exp(-(IN+13.1)/10))
+hinf(IN)=ha(IN)./(ha(IN)+hb(IN))
+htau(IN)=1./(ha(IN)+hb(IN))
+INaf(IN,m,h)=gNaf.*m.^3.*h.*(IN-ENaf)
+
+% ODEs
+m'=(minf(IN)-m)./mtau(IN)
+h'=(hinf(IN)-h)./htau(IN)
+m(0)=IC+IC_noise.*rand(Npop,1)
+h(0)=IC+IC_noise.*rand(Npop,1)
+
+% Interface
+current => -INaf(IN,m,h)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
+

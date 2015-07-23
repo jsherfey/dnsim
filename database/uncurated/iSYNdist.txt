@@ -1,0 +1,21 @@
+g_SYN=.1; E_SYN=-80; tauDx=25; tauRx=1;
+IC=.1;
+SYNspan=.1;                % span = fraction of the larger pre/post to cover from pre to post
+SYNscale=1;                % scale = factor amplifying conductance*kernel
+
+# positions
+Nmax=max(Npre,Npost);
+xpre = linspace(1,Nmax,Npre)'*ones(1,Npost);
+xpost = (linspace(1,Nmax,Npost)'*ones(1,Npre))';
+
+# gaussian kernel and threshold mask
+sigma=(SYNspan*Nmax);
+kernel=(SYNscale*exp(-(xpre-xpost).^2/sigma^2))';
+
+# gating dynamics
+sSYNpre' = (((1-sSYNpre)/tauRx).*(1+tanh(Vpre/10)))-sSYNpre./tauDx
+sSYNpre(0)=IC+.1*rand(Npre,1)
+
+# synaptic current
+ISYN(V,s) = (g_SYN.*(kernel*s).*(V-E_SYN))
+current => -ISYN(Vpost,sSYNpre)

@@ -1,0 +1,38 @@
+% CaHVA
+% Requires: calcium concentration "cai" (e.g., exposed by cadyn mechanism)
+% Exposes: calcium current "ica" for other mechanisms (e.g., required by cadyn mechanism)
+% Tags: calcium, current, papoutsi, pfc, layer 5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gCaHVA = 0.00001 % (S/cm2) 
+eca = 126.1   % (mV)
+IC=0; IC_noise=0
+
+% Functions
+v2(v) = (abs(v+27)<1e-4).*(v+1e-4)+(abs(v+27)>=1e-4).*(v)
+mAlpha(v) =  (0.055*(-27-v2(v)))./(exp((-27-v2(v))/3.8) - 1)        
+mBeta(v)  =  (0.94*exp((-75-v2(v))/17))
+hAlpha(v) =  (0.000457*exp((-13-v2(v))/50))
+hBeta(v)  =  (0.0065./(exp((-v2(v)-15)/28)+1))
+mInf(v) = mAlpha(v)./(mAlpha(v)+mBeta(v))
+mTau(v) = 1./(mAlpha(v) + mBeta(v))
+hInf(v) = hAlpha(v)./(hAlpha(v) + hBeta(v))
+hTau(v) = 1./(hAlpha(v) + hBeta(v))
+ica(v,m,h) = gCaHVA.*m.^2.*h.*(v-eca)
+
+% ODEs
+m' = (mInf(v)-m)/mTau(v)
+h' = (hInf(v)-h)/hTau(v)
+m(0)=IC+IC_noise.*rand(Npop,1)
+h(0)=IC+IC_noise.*rand(Npop,1)
+
+
+% Interface
+current => -ica(IN,m,h)
+ica => ica(IN,m,h)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% http://senselab.med.yale.edu/modeldb/ShowModel.asp?model=139653&file=\L5bPCmodelsEH\mod\Ca_HVA.mod
+% Reuveni, Friedman, Amitai, and Gutnick, J.Neurosci. 1993
+
+

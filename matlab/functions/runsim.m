@@ -103,7 +103,11 @@ if issubfield(spec,'model.parms')
 end
 % ----------------------------------------------------------
 % run simulation
-try args = mmil_parms2args(parms); catch args = {}; end
+try
+    args = mmil_parms2args(parms);
+catch
+    args = {};
+end
 switch parms.SOLVER
   case {'euler','rk2','modifiedeuler','rk4'}
     file = dnsimulator(spec,args{:});

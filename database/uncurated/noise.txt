@@ -1,0 +1,7 @@
+# gaussian noise
+
+# constants
+V_noise = 0;
+
+# interface statement
+current => V_noise.*randn(Npop,1)*sqrt(dt)

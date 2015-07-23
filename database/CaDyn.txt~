@@ -1,0 +1,16 @@
+% CaDyn: calcium buffer dynamics (ref: Tegner/Compte 2002)
+% Requires: calcium current "ICaf" (e.g., exposed by iCa mechanism)
+% Exposes: calcium concentration "cai" for other mechanisms (e.g., required by iCan mechanism)
+% Tags: calcium, buffer
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+alphacaf=.002; 		% uM 1/(ms uA) cm2, .000667 (soma); .002 (dend)
+tauca=80;		% ms, 240 (soma), 80 (dend)
+c0=0; 
+
+% ODEs
+cai' = alphacaf.*(-ICaf)-(cai-c0)/tauca;
+cai(0) = rand(Npop,1);
+
+% Interface (left replaced by right in node dynamics (schema) and other mechanisms of the same node)
+cai => cai

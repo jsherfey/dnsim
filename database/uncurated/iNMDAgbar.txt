@@ -1,0 +1,24 @@
+g_NMDA=0; E_NMDA=0; Tmax=.001; Vpp=2; Kp=5; Mg0=1.5; IC=.1; IC_noise=.1;
+alphar=7.2E4; NtauD=100; #betar=1/100;
+NMspan=.1;                % span = fraction of the larger pre/post to cover from pre to post
+Nmax=max(Npre,Npost);
+
+% precompute linear positions (index) and mask
+Nmax = max(Npre,Npost)
+Xpre = linspace(1,Nmax,Npre)'*ones(1,Npost)
+Xpost = (linspace(1,Nmax,Npost)'*ones(1,Npre))'
+fanout=(NMspan*Nmax)/2
+kernel=exp(-(Xpre-Xpost).^2/fanout^2);
+mask = abs(Xpre-Xpost)<=fanout
+gbar = g_NMDA / mean(sum(mask,1))
+
+% Functions:
+BMg(V) = 1./(1+exp(-.062*V)*Mg0/3.57)
+NT(V) = Tmax./(1+exp(-(V-Vpp)/Kp))
+INMDA(V,s) = gbar.*BMg(V).*((mask.*kernel)*s).*(V-E_NMDA)
+
+% gating dynamics
+sNMDApre' = alphar*NT(Vpre).*(1-sNMDApre)-sNMDApre/NtauD #betar*sNMDApre
+sNMDApre(0)=IC+IC_noise*rand(Npre,1)
+
+current => -INMDA(Vpost,sNMDApre)

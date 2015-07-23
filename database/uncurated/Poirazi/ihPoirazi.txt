@@ -1,0 +1,10 @@
+% ihPoirazi: hyperpolarization activated current (Poirazi 2003)
+gh=18.72; Eh=-10; IC=.1; IC_noise=.1;
+ninf(V)=1-(1./(1+exp((-90-V)/10)))
+ntau(V)=((2*(10+(1./(exp((V+145)/(-17.5))+exp((V+16.8)/16.5))))).*(V<=-10)) + (1.*(V>-10))
+n'=(ninf(V)-n)./ntau(V)
+n(0)=IC+IC_noise.*rand(Npop,1)
+Ih(V,n)=gh.*n.*(V-Eh)
+current => -Ih(V,n)
+
+

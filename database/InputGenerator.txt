@@ -1,0 +1,32 @@
+% InputGenerator.txt
+amp=1; % amplitude
+onset=0;
+offset=inf;
+inputtype=1;
+%timelimits=1000; % [beg end], if scalar, InputGenerator() assumes [0 end]
+
+% Type-specific parameters
+
+% type 1 (tonic)
+
+% type 2 (sin)
+f0=10; % oscillation frequency
+
+% type 3 (ZAP)
+fmin=1; % start frequency
+fmax=40; % final frequency
+deltaf=1; % step between frequencies
+Ncycles=3; % number of cycles at each frequency
+
+% type 4...
+% ...
+
+% type 7 (Poisson; Ben's method)
+sharedfraction=0;
+
+I=InputGenerator(timelimits,dt,inputtype,Npop,amp,onset,offset,f0,fmin,fmax,deltaf,Ncycles,sharedfraction);
+
+input(t) = I(floor(1+(t/dt)));
+
+current => input(t)
+

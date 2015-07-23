@@ -1,0 +1,9 @@
+gcom = [0.2]
+ 
+compcon = eye(Npre,Npost)
+
+dV(IN,OUT) = ((IN*ones(1,size(IN,1)))'-(OUT*ones(1,size(OUT,1))))
+ICOM(IN,OUT) = gcom.*sum(dV(IN,OUT).*compcon,2)
+ 
+current => ICOM(IN,OUT)
+ 

@@ -1,0 +1,20 @@
+gNa = [90]
+ENa = [50]
+ 
+am(V) = .32*(13-(V+55))./(exp((13-(V+55))/4)-1)
+bm(V) = .28*((V+55)-40)./(exp(((V+55)-40)/5)-1)
+taum(V) = 1./(am(V)+bm(V))
+mss(V) = am(V).*taum(V)
+ah(V) = .128*exp((17-(V+55))/18)
+bh(V) = 4./(1+exp((40-(V+55))/5))
+tauh(V) = 1./(ah(V)+bh(V))
+hss(V) = ah(V).*tauh(V)
+INa(V,m,h) = gNa.*m.^3.*h.*(V-ENa)
+ 
+m' = (mss(V)-m)./taum(V);
+m(0) = [0]
+h' = (hss(V)-h)./tauh(V);
+h(0) = [0]
+ 
+current => -INa(V,m,h)
+ 

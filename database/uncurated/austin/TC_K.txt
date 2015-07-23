@@ -1,0 +1,12 @@
+gKf = [10]
+EKf = [-100]
+ 
+aN(V) = .032*(15-(V+25))./(exp((15-(V+25))/5)-1)
+bN(V) = .5*exp((10-(V+25))/40)
+IKf(V,n) = gKf.*n.^4.*(V-EKf)
+ 
+nKf' = aN(V).*(1-nKf)-bN(V).*nKf;
+nKf(0) = .34+.1*rand(Npop,1)
+ 
+current => -IKf(V,nKf)
+ 

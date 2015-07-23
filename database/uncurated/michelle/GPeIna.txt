@@ -1,0 +1,20 @@
+gna = [80]
+Ena = [50]
+ 
+GPeIna(V,m,h,s) = -gna*m.^3.*h.*s.*(V-Ena)
+minf(V) = ((1.0) ./ (1 + exp((-39 - V)/5.0)))
+hinf(V) = ((1.0) ./ (1 + exp(-(-48 - V)/2.8)))
+sinf(V) = 0.15 + ((1.0 - 0.15) ./ (1 + exp(-(-40 - V)/5.4)))
+taum(V) = 0.028
+tauh(V) = 0.25 + ((4.0 - 0.25) ./ (exp((-43-V)/10.0) + exp(-(-43-V)/5.0)))
+taus(V) = 10.0 + ((1000 - 10.0) ./ (exp((-40-V)/18.3) + exp(-(-40-V)/10.0)))
+ 
+m' = (minf(V)-m)./taum(V);
+m(0) = .9*ones(Npop,1)
+h' = (hinf(V)-h)./tauh(V);
+h(0) = .1*ones(Npop,1)
+s' = (sinf(V)-s)./taus(V);
+s(0) = .1*ones(Npop,1)
+ 
+current => GPeIna(V,m,h,s)
+ 

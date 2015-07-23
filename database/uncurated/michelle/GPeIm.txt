@@ -1,0 +1,12 @@
+gm = [0.04]
+Ek = [-100]
+ 
+minf(V) = 1.0 ./ (1.0+exp((-61.0-V)/19.5))
+taum(V) = 6.7 + ( (100-6.7)./(exp((-61-V)/35) + exp(-(-61-V)/25)))
+GPeIm(V,w) = -gm.*w.^4.*(V-Ek)
+ 
+w' = (minf(V)-w)./taum(V);
+w(0) = .9*ones(Npop,1)
+ 
+current => GPeIm(V,w)
+ 

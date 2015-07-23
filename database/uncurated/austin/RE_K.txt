@@ -1,0 +1,14 @@
+gK = [10]
+EK = [-100]
+ 
+an(V) = 0.032*(15-(V + 55))./(exp((15-(V+55))/5)-1)
+bn(V) = .05*exp((10-(V+55))/40)
+taun(V) = 1./(an(V)+bn(V))
+nss(V) = an(V).*taun(V)
+IK(V,n) = gK.*n.^4.*(V-EK)
+ 
+n' = (nss(V)-n)./taun(V);
+n(0) = [0]
+ 
+current => -IK(V,n)
+ 

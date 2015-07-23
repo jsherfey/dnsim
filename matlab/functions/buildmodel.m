@@ -723,7 +723,12 @@ for e=1:length(E)
   old=Svars(idx,1); new=Svars(idx,2);
   o=substitute(old,new,o);
   % parameters into odes
-  old=Pdata(Ptype==0,1); new=Pdata(Ptype==0,2);
+  % -------------------------------------
+  % edit: JSS constrained to same pop on 06-Jun-2015)
+%   old=Pdata(Ptype==0,1); new=Pdata(Ptype==0,2);
+  old=Pdata(Ptype==0 & Ppop==e,1); 
+  new=Pdata(Ptype==0 & Ppop==e,2);
+  % -------------------------------------
   if parms.coder==1
     for k=1:length(new)
       if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
@@ -1423,7 +1428,7 @@ function varargout = substitute(old,new,varargin)
         l = length(key);
         key = strrep(key,'[','\[');
         key = strrep(key,']','\]');
-        if isnumeric(new{k})
+        if isnumeric(new{k}) && any(size(new{k})==1)
           val=sprintf('(%g)',new{k});
         elseif ischar(new{k})
           val=new{k};

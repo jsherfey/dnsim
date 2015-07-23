@@ -1,0 +1,32 @@
+% wbSYN: 1st-order synaptic current (ref: Wang-Buzsaki interneuron model, 1996)
+% Tags: synapse, first-order, connection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+wbgSYN=1; wbESYN=-75; wbtauRx=.083; wbtauDx=10; theta=0; IC_noise=0; IC=0; % IC=.1;
+wbPrSYN=1 % probability of two cells being connected
+
+% Random connectivity
+mask=rand(Npost,Npre)<=wbPrSYN
+
+% Functions
+F(V)=1./(1+exp(-(V-theta)/2))
+ISYN(V,s)=(wbgSYN/(wbPrSYN*Npre)).*(mask*s).*(V-wbESYN)
+
+% ODEs
+s'=(F(IN)./wbtauRx).*(1-s)-s/wbtauDx
+s(0)=IC+IC_noise.*rand(Npre,1)
+
+% Interface
+current => -ISYN(OUT,s)
+
+% Tip: given "X => Y": X will be replaced by Y in node dynamics (schema) and other mechanisms of the same node.
+
+% for N cells and M synapses per cell (on average):
+% set gsyn=gsyn/M
+% random connectivity: Pr[i->j or j->i]=M/N
+
+% units:
+% a=12 [units: 1/ms]
+% b=.1 [units: 1/ms; i.e., tauDx=10ms]
+% theta=0 [units: mV; set high so NT only when pre spike]
+

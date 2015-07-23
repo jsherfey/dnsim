@@ -1,0 +1,14 @@
+gTf = [2]
+ 
+ETf(Caf) = 1000*((8.31441*309.15)/(2*96846))*log(2./Caf)
+tauH(V) = (30.8+(211.4+exp(((V+2)+113.2)/5))./(1+exp(((V+2)+84)/3.2)))./3.73
+Hinf(V) = (1)./(1+exp(((V+2)+81)/4))
+Minf(V) = (1)./(1+exp((-((V+2)+57))/6.2))
+ITf(V,h,Caf) = gTf.*Minf(V).^2.*h.*(V-ETf(Caf))
+ 
+hTf' = (Hinf(V)-hTf)./tauH(V);
+hTf(0) = .34+.1*rand(Npop,1)
+ 
+current => -ITf(V,hTf,Caf)
+ITf => ITf(V,hTf,Caf)
+ 

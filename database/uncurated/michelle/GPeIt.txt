@@ -1,0 +1,14 @@
+gt = [0]
+Eca = [120]
+taum = [30]
+ 
+a(V) = 1.0 ./ (1.0 + exp(-(V+57.0)/2.0))
+minf(V) = 1.0 ./ (1.0 + exp((V+70.0)/2.0))
+GPeIt(V,m) = -gt*a(V).^3.*m.*(V-Eca)
+ 
+m' = (minf(V)-m)./taum;
+m(0) = .005*ones(Npop,1)
+ 
+current => GPeIt(V,m)
+GPeIt => -GPeIt(V,m)
+ 

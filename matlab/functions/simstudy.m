@@ -42,6 +42,7 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'addpath',[],[],...
                       'coder',0,[],...
                       'sims_per_job',1,[],...
+                      'timesurfer_flag',1,[],...
                    }, false);
                  
 % coder (0 or 1): whether to compile sim and run mex
@@ -214,7 +215,7 @@ if spec.simulation.cluster_flag % run on cluster
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd2,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g,''timesurfer_flag'',%g);\n',auxcmd2,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag,p.timesurfer_flag);
     if spec.simulation.sims_per_job==1
       fprintf(fileID,'exit\n');
     end

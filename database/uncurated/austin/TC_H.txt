@@ -1,0 +1,18 @@
+gHf = [0.061]
+EHf = [-43]
+ 
+tauS(V) = 20 + 1000./(exp((V+71.5)/14.2)+exp((-(V+89))/11.6))
+Hinf(V) = (1)./(1+exp((V+75)/5.5))
+aH(V) = Hinf(V)./tauS(V)
+bH(V) = (1-Hinf(V))./tauS(V)
+IHf(V,C,OPEN) = gHf.*(OPEN+2.*(1-C-OPEN)).*(V-EHf)
+ 
+Conef' = bH(V).*OPENonef - aH(V).*Conef;
+Conef(0) = [1]
+Pzerof' = 0.0004.*(1-Pzerof)-0.0004.*((Caf/0.002).^4);
+Pzerof(0) = [1]
+OPENonef' = 0.001.*(1-Conef-OPENonef)-0.001.*((1-Pzerof)./0.01);
+OPENonef(0) = [0]
+ 
+current => -IHf(V,Conef,OPENonef)
+ 

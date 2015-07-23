@@ -1,0 +1,24 @@
+ga = [4]
+Ek = [-100]
+ 
+GPeIa(V,m,h,ms,hs) = -ga.*(m.^4.*h + ms.^4.*hs).*(V-Ek)
+minf(V) = ((1.0) ./ (1 + exp((-49.0 - V)/12.5)))
+hinf(V) = ((1.0) ./ (1 + exp(-(-83.0 - V)/10.0)))
+taumf(V) = 0.25 + ((7.0 - 0.25) ./ (exp((-49.0-V)/29.0) + exp(-(-49.0-V)/29.0)))
+tauhf(V) = 7.0 + ((21.0 - 7.0) ./ (exp((-83.0-V)/10.0) + exp(-(-83.0-V)/10.0)))
+msinf(V) = ((1.0) ./ (1 + exp((-49.0 - V)/12.5)))
+hsinf(V) = ((1.0) ./ (1 + exp(-(-83.0 - V)/10.0)))
+taums(V) = 0.25 + ((7.0 - 0.25) ./ (exp((-49.0-V)/29.0) + exp(-(-49.0-V)/29.0)))
+tauhs(V) = 50.0 + ((121.0 - 50.0) ./ (exp((-83.0-V)/10.0) + exp(-(-83.0-V)/10.0)))
+ 
+m' = (minf(V)-m)./taumf(V);
+m(0) = .9*ones(Npop,1)
+h' = (hinf(V)-h)./tauhf(V);
+h(0) = .1*ones(Npop,1)
+ms' = (msinf(V)-ms)./taums(V);
+ms(0) = .9*ones(Npop,1)
+hs' = (hsinf(V)-hs)./tauhs(V);
+hs(0) = .1*ones(Npop,1)
+ 
+current => GPeIa(V,m,h,ms,hs)
+ 

@@ -1,0 +1,19 @@
+% iK: HH-type fast potassium current
+% Tags: potassium, current, intrinsic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+gKf=36;  % mS/cm^2
+EKf=-77; % mV
+IC_noise=0; n_IC=0; % n_IC=.34;
+
+% Functions
+aN(V) = (.1-.01*(V+65))./(exp(1-.1*(V+65))-1)
+bN(V) = .125*exp(-(V+65)/80)
+IKf(V,n) = gKf.*n.^4.*(V-EKf)
+
+% ODEs
+nKf' = aN(V).*(1-nKf)-bN(V).*nKf
+nKf(0)=n_IC+IC_noise*rand(Npop,1)
+
+% Interface
+current => -IKf(V,nKf)
