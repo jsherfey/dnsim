@@ -118,7 +118,7 @@ switch parms.SOLVER
         [data,t] = feval(odefun_filename);
       else
         odefun_dir = fullfile('/',tmp_str{1:end-2});
-        copyfile([odefun_filepath,'.m'],odefun_dir)
+        copyfile([odefun_filepath,'.m'],[odefun_dir,'/'])
         cd(odefun_dir);
         odefun_mfiles = {};
         dirinfo = dir('.');
@@ -132,7 +132,7 @@ switch parms.SOLVER
               odefun_filename = dirinfo(j).name(1:end-2);
               filemex = [odefun_filename,'_mex'];
               fprintf('\n\nUsing previous mex file: %s\n\n',filemex);
-              copyfile([filemex,'.mexa64'],odefun_subdir);
+              copyfile([filemex,'.mexa64'],[odefun_subdir,'/']);
               cd(odefun_subdir);
             end
           end
@@ -145,7 +145,7 @@ switch parms.SOLVER
           codegen_odefun(odefun_filename);
           toc
           filemex = [odefun_filename,'_mex'];
-          copyfile([filemex,'.mexa64'],odefun_dir);
+          copyfile([filemex,'.mexa64'],[odefun_dir,'/']);
         end
         tic
         [data,t] = feval(filemex);
