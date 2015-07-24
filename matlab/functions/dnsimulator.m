@@ -80,7 +80,7 @@ for k = 1:length(ulabels)
   fprintf(fid,'coder.varsize(''%s.%s'');\n',coderprefix,['IC_' ulabels{k}]);
 end
 % load params.mat at start of odefun file
-fprintf(fid,'pset=load(''params'',''-mat'');\n'); % variable name 'pset' must match coderprefix
+fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
 fprintf(fid,'tspan=%s.timelimits;\ndt=%s.dt;\n',coderprefix,coderprefix);
 fprintf(fid,'T=tspan(1):dt:tspan(2);\nnstep=length(T);\n');
 
