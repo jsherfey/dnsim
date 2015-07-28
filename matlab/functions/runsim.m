@@ -127,13 +127,15 @@ switch parms.SOLVER
         while ~isempty(res_diff) && j <= length(dirinfo)
           if ~dirinfo(j).isdir && ~strcmp(dirinfo(j).name(1:end-2),odefun_filename) && strncmp(dirinfo(j).name,odefun_filename,6) &&  strncmp(dirinfo(j).name(end-1:end),'.m',2)
             [~,res_diff] = system(['diff ',odefun_filename,'.m ',dirinfo(j).name]);
-            if isempty(res_diff)
+            if isempty(res_diff) && exist([dirinfo(j).name(1:end-2),'_mex.mexa64'],'file')
               delete([odefun_filename,'.m']);
               odefun_filename = dirinfo(j).name(1:end-2);
               filemex = [odefun_filename,'_mex'];
               fprintf('\n\nUsing previous mex file: %s\n\n',filemex);
               copyfile([filemex,'.mexa64'],[odefun_subdir,'/']);
               cd(odefun_subdir);
+            elseif isempty(res_diff)
+              delete([dirinfo(j).name(1:end-2),'.m']);
             end
           end
           j = j+1;
