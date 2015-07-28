@@ -48,11 +48,13 @@ if parms.cluster_flag % write params to job-specific subdir
 end
 odefun_subdir = fullfile(pwd,odefun_dir,subdir);
 if exist(odefun_subdir,'dir')
-  cont = 0;
+  cont = 1;
+  subdir = [subdir,'_',num2str(cont)];
+  odefun_subdir = fullfile(pwd,odefun_dir,subdir);
   while exist(odefun_subdir,'dir')
     cont = cont+1;
     tmpstr = strread(subdir,'%s','delimiter','_');
-    subdir = [tmpstr{1},'_',num2str(cont)];
+    subdir = [tmpstr{1:end-1},'_',num2str(cont)];
     odefun_subdir = fullfile(pwd,odefun_dir,subdir);
   end
 end
