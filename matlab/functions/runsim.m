@@ -158,16 +158,12 @@ switch parms.SOLVER
       end
       cd(cwd);
     catch err
-      fprintf('Error: %s\n',err.message);
-      for i=1:length(err.stack)
-        fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
-      end
       simdata=[];
       if parms.debug==0
         rmdir(odefun_subdir,'s');
       end
       cd(cwd);
-      return
+      rethrow(err);
     end
   otherwise
     [data,t] = biosimulator(model,ic,functions,auxvars,args{:});
