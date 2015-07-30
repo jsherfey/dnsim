@@ -54,7 +54,11 @@ if exist(odefun_subdir,'dir')
   while exist(odefun_subdir,'dir')
     cont = cont+1;
     tmpstr = strread(subdir,'%s','delimiter','_');
-    subdir = [tmpstr{1:end-1},'_',num2str(cont)];
+    tmpstr2 = tmpstr{1};
+    for i = 2:length(tmpstr)-1
+      tmpstr2 = [tmpstr2,'_',tmpstr{i}];
+    end
+    subdir = [tmpstr2,'_',num2str(cont)];
     odefun_subdir = fullfile(pwd,odefun_dir,subdir);
   end
 end

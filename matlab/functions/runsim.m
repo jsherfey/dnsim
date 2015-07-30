@@ -158,6 +158,10 @@ switch parms.SOLVER
       end
       cd(cwd);
     catch err
+      fprintf('\n\n%s\n\n',err.message);
+      for i=1:length(err.stack)
+        fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
+      end
       simdata=[];
       if parms.debug==0
         rmdir(odefun_subdir,'s');
