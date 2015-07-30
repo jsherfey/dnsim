@@ -153,7 +153,7 @@ switch parms.SOLVER
         [data,t] = feval(filemex);
         toc
       end
-      if parms.debug==0
+      if parms.debug==0 && parms.cluster_flag == 0
         rmdir(odefun_subdir,'s');
       end
       cd(cwd);
@@ -163,7 +163,7 @@ switch parms.SOLVER
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
       end
       simdata=[];
-      if parms.debug==0
+      if parms.debug==0 && parms.cluster_flag == 0
         rmdir(odefun_subdir,'s');
       end
       cd(cwd);

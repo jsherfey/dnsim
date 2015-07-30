@@ -67,9 +67,10 @@ save(fullfile(odefun_subdir,'params.mat'),'p');
 
 % create odefun file that integrates the ODE system
 odefun_file = [odefun_dir,'_' datestr(now,'yyyymmdd_HHMMSS_FFF')];
-if parms.cluster_flag % not assuming the cluster is always used
-  odefun_file = [odefun_file '_' spec.jobnumber]
-end
+% this doesn't work for me and I don't think it is actually needed
+%  if parms.cluster_flag % not assuming the cluster is always used
+%    odefun_file = [odefun_file '_' spec.jobnumber]
+%  end
 odefun_filepath = [odefun_subdir,'/',odefun_file];
 fid=fopen([odefun_filepath '.m'],'wt');
 
