@@ -42,10 +42,11 @@ subdir = parms.identifier;
 
 % write params.mat
 p = spec.model.parameters; % variable name 'p' must match coderprefix
-if parms.cluster_flag % write params to job-specific subdir
-  stck = dbstack;
-  subdir = fullfile(subdir,stck(end).name); % create subdir for this job
-end
+% this is not needed anymore for new odefun identifiers
+% if parms.cluster_flag % write params to job-specific subdir
+%   stck = dbstack;
+%   subdir = fullfile(subdir,stck(end).name); % create subdir for this job
+% end
 odefun_subdir = fullfile(pwd,odefun_dir,subdir);
 if exist(odefun_subdir,'dir')
   cont = 1;
