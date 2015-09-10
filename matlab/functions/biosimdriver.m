@@ -97,17 +97,18 @@ spikethreshold=0;
 SimMech='iStepProtocol';
 
 % -----------------------------------------------------
-
 % Data and LFP
 % get and plot results
-h1=[]; h2=[]; h3=[]; h4=[];
+h1=[]; h2=[]; h3=[]; h4=[]; h5=[];
 if issubfield(spec,'variables.global_oldlabel')
   varlabels=unique(spec.variables.global_oldlabel);
 else
   varlabels={'V'};
 end
 % state variables
-vars={}; h1vars={};
+vars={}; h1vars={}; h5vars={}
+
+
 if parms.plotvars_flag || parms.savepopavg_flag
   for i=1:length(varlabels)
   try
@@ -116,11 +117,17 @@ if parms.plotvars_flag || parms.savepopavg_flag
     vars={vars{:},'lfp','time'};
     h1=[h1 h];
     h1vars{end+1}=varlabels{i};
+
+    [h_derp,lfp,time]=plotv_single(sim_data,spec,'plot_flag',parms.plotvars_flag,'varlabel',varlabels{i}); % V (per population): image and (traces + mean(V))
+    h5=[h5 h_derp];
+    h5vars{end+1}=varlabels{i};
+
   catch err
     disperror(err);
   end
   end
 end
+
 
 % power spectrum
 if parms.plotpower_flag
@@ -176,7 +183,8 @@ if parms.plotpacoupling_flag
   end
 end
 
-figs = [h1 h2 h3 h4];
+figs = [h1 h2 h3 h4 h5];
+% figs = [h1 h2 h3 h4];
 % figs = [h1 h2 h3];
 
 
@@ -193,9 +201,11 @@ if plot_flag && parms.saveplot_flag
       fprintf('saving plots - voltage traces: %s\n',filenames{end});
       for i=1:length(exts)
         try
-          print(h1(j),formats{i},[filenames{end} exts{i}]);
+          % print(h1(j),formats{i},[filenames{end} exts{i}]);
+          % '-mXXX' is an option to magnify the on-screen pixel dimensions, where XXX is a number
+          export_fig([filenames{end} exts{i}],h1(j),'-m1.5','-painters');
         catch err
-          disperror(err);
+            disperror(err);
         end;
       end
     end
@@ -206,9 +216,10 @@ if plot_flag && parms.saveplot_flag
     fprintf('saving plots - field power: %s\n',filenames{end});
     for i=1:length(exts)
       try
-        print(h2,formats{i},[filenames{end} exts{i}]);
+        % print(h2,formats{i},[filenames{end} exts{i}]);
+        export_fig([filenames{end} exts{i}],h2,'-m1.5','-painters');
       catch err
-        disperror(err);
+            disperror(err);
       end;
     end
   end
@@ -218,9 +229,10 @@ if plot_flag && parms.saveplot_flag
     fprintf('saving plots - spike rates: %s\n',filenames{end});
     for i=1:length(exts)
       try
-        print(h3,formats{i},[filenames{end} exts{i}]);
+        % print(h3,formats{i},[filenames{end} exts{i}]);
+        export_fig([filenames{end} exts{i}],h3,'-m1.5','-painters');
       catch err
-        disperror(err);
+            disperror(err);
       end;
     end
   end
@@ -231,13 +243,29 @@ if plot_flag && parms.saveplot_flag
     fprintf('saving plots - phase amplitude coupling: %s\n',filenames{end});
     for i=1:length(exts)
       try
-        print(h4,formats{i},[filenames{end} exts{i}]);
+        % print(h4,formats{i},[filenames{end} exts{i}]);
+        export_fig([filenames{end} exts{i}],h4,'-m1.5','-painters');
       catch err
-        disperror(err);
+            disperror(err);
       end;
     end
   end
-
+  if ~isempty(h5)
+    for j=1:length(h5)
+      var=h5vars{j};
+      if ~exist(fullfile(rootoutdir,'images','rawv'),'dir'), mkdir(fullfile(rootoutdir,'images',['raw' var])); end
+      filenames{end+1} = fullfile(rootoutdir,'images',['raw' var],[prefix '_raw02' var]);
+      fprintf('saving plots - SINGLE voltage traces: %s\n',filenames{end});
+      for i=1:length(exts)
+        try
+          % print(h5(j),formats{i},[filenames{end} exts{i}]);
+          export_fig([filenames{end} exts{i}],h5(j),'-m1.5','-painters');
+        catch err
+            disperror(err);
+        end;
+      end
+    end
+  end
 end
 
 % -----------------------------------------------------
