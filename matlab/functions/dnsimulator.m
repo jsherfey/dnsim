@@ -1,4 +1,4 @@
-function odefun = dnsimulator(spec,varargin)
+function odefun_filepath = dnsimulator(spec,varargin)
 parms = mmil_args2parms( varargin, ...
                          {...
                             'timelimits',[0 200],[],...
@@ -8,6 +8,7 @@ parms = mmil_args2parms( varargin, ...
                             'cluster_flag',0,[],...
                             'coder',0,[],...
                             'debug',0,[],...
+                            'identifier','default',[],...
                          }, false);
 coderprefix = 'pset.p';
 % (param struct in odefun).(param var below).(param name in buildmodel)
@@ -32,57 +33,72 @@ T = tspan(1):dt:tspan(2);
 nstep = length(T);
 
 % create subdirectory for temporary integrator scripts
-subdir = 'odefun';
-if ~exist(fullfile(pwd,subdir),'dir')
-  mkdir(subdir);
+odefun_dir = 'odefun';
+if ~exist(fullfile(pwd,odefun_dir),'dir')
+  mkdir(odefun_dir);
 end
 
-% write params.mat if using coder
-if exist('codegen') && parms.coder==1
-  p=spec.model.parameters; % variable name 'p' must match coderprefix
-  if parms.cluster_flag % write params to job-specific subdir
-    stck=dbstack;
-    subdir2=fullfile(subdir,stck(end).name); % create subdir for this job
-    if ~exist(subdir2,'dir')
-      mkdir(subdir2);
+subdir = parms.identifier;
+
+% write params.mat
+p = spec.model.parameters; % variable name 'p' must match coderprefix
+% this is not needed anymore for new odefun identifiers
+% if parms.cluster_flag % write params to job-specific subdir
+%   stck = dbstack;
+%   subdir = fullfile(subdir,stck(end).name); % create subdir for this job
+% end
+odefun_subdir = fullfile(pwd,odefun_dir,subdir);
+if exist(odefun_subdir,'dir')
+  cont = 1;
+  subdir = [subdir,'_',num2str(cont)];
+  odefun_subdir = fullfile(pwd,odefun_dir,subdir);
+  while exist(odefun_subdir,'dir')
+    cont = cont+1;
+    tmpstr = strread(subdir,'%s','delimiter','_');
+    tmpstr2 = tmpstr{1};
+    for i = 2:length(tmpstr)-1
+      tmpstr2 = [tmpstr2,'_',tmpstr{i}];
     end
-    save(fullfile(subdir2,'params.mat'),'p');
-  else
-    save(fullfile(subdir,'params.mat'),'p');
+    subdir = [tmpstr2,'_',num2str(cont)];
+    odefun_subdir = fullfile(pwd,odefun_dir,subdir);
   end
 end
+mkdir(odefun_subdir);
+save(fullfile(odefun_subdir,'params.mat'),'p');
 
 % create odefun file that integrates the ODE system
-odefun_file = [subdir,'_' datestr(now,'yyyymmdd_HHMMSS_FFF')];
+odefun_file = [odefun_dir,'_' datestr(now,'yyyymmdd_HHMMSS_FFF')];
 if parms.cluster_flag % not assuming the cluster is always used
-  odefun_file = [odefun_file '_' spec.jobnumber]
+  odefun_file = [odefun_file '_jid' getenv('JOB_ID')];
+  % couldn't get this to work
+  % odefun_file = [odefun_file '_' spec.jobnumber];
 end
-odefun = [subdir,'/',odefun_file];
-fid=fopen([odefun '.m'],'wt');
+odefun_filepath = [odefun_subdir,'/',odefun_file];
+fid=fopen([odefun_filepath '.m'],'wt');
 
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'function [Y,T] = %s\n',odefun_file);
   fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
-  % setting initial conditions as varsize for codegen
-  labels = spec.variables.labels;
-  [ulabels,I] = unique(labels,'stable');
-  for k = 1:length(ulabels)
-    fprintf(fid,'coder.varsize(''%s.%s'');\n',coderprefix,['IC_' ulabels{k}]);
-  end
-  % load params.mat at start of odefun file
-  fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
-  fprintf(fid,'tspan=%s.timelimits;\ndt=%s.dt;\n',coderprefix,coderprefix);
 end
+
+labels = spec.variables.labels;
+[ulabels,I] = unique(labels,'stable');
+for k = 1:length(ulabels)
+  fprintf(fid,'coder.varsize(''%s.%s'');\n',coderprefix,['IC_' ulabels{k}]);
+end
+% load params.mat at start of odefun file
+fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
+fprintf(fid,'tspan=%s.timelimits;\ndt=%s.dt;\n',coderprefix,coderprefix);
 fprintf(fid,'T=tspan(1):dt:tspan(2);\nnstep=length(T);\n');
 
 if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
   fprintf(fid,'nreports = 5; tmp = 1:(nstep-1)/nreports:nstep; enableLog = tmp(2:end);\n');
 end
-if parms.debug % this is kept only for debugging purposes, as otherwise a new mex file needs to be regenerated each time
-  fprintf(fid,'fprintf(''\\nThe odefun file used is: %s \\n'');\n',odefun_file);
-end
+% if parms.debug % commented as otherwise a new mex file is regenerated for each simulation
+%   fprintf(fid,'fprintf(''\\nThe odefun file used is: %s \\n'');\n',odefun_file);
+% end
 fprintf(fid,'fprintf(''\\nSimulation interval: %%g-%%g\\n'',tspan(1),tspan(2));\n');
 fprintf(fid,'fprintf(''Starting integration (%s, dt=%%g)\\n'',dt);\n',solver);
 
@@ -102,12 +118,6 @@ for k = 1:size(auxvars,1)
   end
   fprintf(fid,'%s = %s;\n',auxvars{k,1},auxvars{k,2});
 end
-%  % evaluate anonymous functions
-%  if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or you don't want to use it because it does not support your code
-%    for k = 1:size(functions,1)
-%      fprintf(fid,'%s = %s;\n',functions{k,1},functions{k,2});
-%    end
-%  end
 
 % REPLACE X(#:#) with unique variable names X#
 % Set Initial conditions
@@ -123,26 +133,14 @@ for k = 1:length(ulabels)
   varinds = find(strcmp(ulabels{k},labels));
   n = length(varinds); % # cells in the pop with this var   % Npops(ids(varinds(1))==PopID);
   ns(k)=n;
-  if ~exist('codegen') || parms.coder==0
-    fprintf(fid,'%s = zeros(%g,nstep);\n',ulabels{k},n);
-  else
-    fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
-  end
+  fprintf(fid,'%s = zeros(length(%s.%s),nstep);\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
   old = sprintf('X(%g:%g)',cnt,cnt+n-1);
   if n>1
     new = sprintf('%s(:,k-1)',ulabels{k});
-    if ~exist('codegen') || parms.coder==0
-      fprintf(fid,'%s(:,1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
-    else
-      fprintf(fid,'%s(:,1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
-    end
+    fprintf(fid,'%s(:,1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
   else
     new = sprintf('%s(k-1)',ulabels{k});
-    if ~exist('codegen') || parms.coder==0
-      fprintf(fid,'%s(1) = [%s];\n',ulabels{k},num2str(IC(varinds)'));
-    else
-      fprintf(fid,'%s(1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
-    end
+    fprintf(fid,'%s(1) = %s.%s;\n',ulabels{k},coderprefix,['IC_' ulabels{k}]);
   end
   model = strrep(model,old,new);
   cnt = cnt + n;
@@ -267,11 +265,9 @@ fprintf(fid,')'';\n');
 fclose(fid);
 
 % wait for file before continuing to simulation
-while ~exist([odefun '.m'],'file')
+while ~exist([odefun_filepath '.m'],'file')
   pause(.01);
 end
-%fprintf('model written to: %s.m\n',odefun);
-%{
-fprintf('running simulation...\n');
-eval(sprintf('[data,t]=%s;',odefun));
-%}
+
+fprintf('Starting the simulation...\n');
+% eval(sprintf('[data,t]=%s;',odefun_file));
