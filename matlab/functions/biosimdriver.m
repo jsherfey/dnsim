@@ -78,7 +78,7 @@ if parms.savedata_flag
       savejson('', {sim_data,spec,parms}, fullfile(rootoutdir,'data',[prefix '_sim_data.json']));
       fprintf(logfid,'Simulated data saved to: %s\n',fullfile(rootoutdir,'data',[prefix '_sim_data.json']));
     else
-      save(datafile,'sim_data','spec','parms');%,'-v7.3');
+      save(datafile,'sim_data','spec','parms','-v7.3');
       fprintf(logfid,'Simulated data saved to: %s\n',datafile);
     end
 end
@@ -147,7 +147,7 @@ if parms.savepopavg_flag && ~isempty(vars)
   if ~exist(fullfile(rootoutdir,'data','lfp'),'dir'), mkdir(fullfile(rootoutdir,'data','lfp')); end
   vars{end+1}='spec';
   outfile = fullfile(rootoutdir,'data','lfp',[prefix '_sim_data_LFPs.mat']);
-  save(outfile,vars{:});%,'-v7.3');
+  save(outfile,vars{:},'-v7.3');
   fprintf('LFP data saved to %s\n',outfile);
   clear vars
 end
@@ -162,7 +162,7 @@ if parms.plotrates_flag || parms.savespikes_flag
       if ~exist(fullfile(rootoutdir,'data','spikes'),'dir'), mkdir(fullfile(rootoutdir,'data','spikes')); end
       % save spike data to spikes directory
       outfile = fullfile(rootoutdir,'data','spikes',[prefix '_sim_data_spikes.mat']);
-      save(outfile,'rates','tmins','spiketimes','spikeinds','window_size','dW','spikethreshold','spec');%,'-v7.3');
+      save(outfile,'rates','tmins','spiketimes','spikeinds','window_size','dW','spikethreshold','spec','-v7.3');
       fprintf('Spike data saved to %s\n',outfile);
     end
   catch err
