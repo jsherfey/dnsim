@@ -63,8 +63,8 @@ for pop=1:npop
     spiketimes{pop}{cell}=t(ind);
     spikeinds{pop}{cell}=ind;
 
-    first_spike_post_initial_index = find(spiketimes{pop}{cell} > initial_time_threshold, 1)
-    total_spikerate_minus_initial{pop}{cell} = (length(spiketimes{pop}{cell}) - first_spike_post_initial_index + 1) / (max(t) - spiketimes{pop}{cell}(first_spike_post_initial_index))
+    first_spike_post_initial_index = find(spiketimes{pop}{cell} > initial_time_threshold, 1);
+    total_spikerate_minus_initial{pop}{cell} = (length(spiketimes{pop}{cell}) - first_spike_post_initial_index + 1) / (max(t) - spiketimes{pop}{cell}(first_spike_post_initial_index));
   end
   % calc firing rate from point process
   [frates, tmins, ordered_elec] = frate(dn, parms);
