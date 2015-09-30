@@ -38,7 +38,11 @@ if ~exist(fullfile(pwd,odefun_dir),'dir')
   mkdir(odefun_dir);
 end
 
-subdir = parms.identifier;
+if isfield(spec,'jobnumber')
+  subdir = [parms.identifier,'_',spec.jobnumber];
+else
+  subdir = parms.identifier;
+end
 
 % write params.mat
 p = spec.model.parameters; % variable name 'p' must match coderprefix
