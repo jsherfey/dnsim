@@ -81,29 +81,30 @@ if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or y
   fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
-end
-
-% This only works for matlab releases >= 2013b
-matlab_version = version('-release');
-if hex2dec(matlab_version) >= hex2dec('2013b')
-  label = {spec.(fld).label};
-  mechanisms = spec.(fld).mechanisms;
-  parameters = spec.(fld).parameters;
-  for k = 1:length(parameters)
-    if ~isempty(strfind(parameters{1,k},'stim'))
-      for i = 1:length(label)
-        for j = 1:length(mechanisms)
-          fprintf(fid,'coder.varsize(''%s.%s'',[1,%d],[false,true]);\n',coderprefix,[label{1,i} '_' mechanisms{1,j} '_' parameters{1,k}],100);
+  % This only works for matlab releases >= 2013b
+  matlab_version = version('-release');
+  if hex2dec(matlab_version) >= hex2dec('2013b')
+    label = {spec.(fld).label};
+    mechanisms = spec.(fld).mechanisms;
+    parameters = spec.(fld).parameters;
+    for k = 1:length(parameters)
+      if size(parameters{1,k},1) > 1
+        continue
+      end
+      if ~isempty(strfind(parameters{1,k},'stim'))
+        for i = 1:length(label)
+          for j = 1:length(mechanisms)
+            fprintf(fid,'coder.varsize(''%s.%s'',[5,10],[true,true]);\n',coderprefix,[label{1,i} '_' mechanisms{1,j} '_' parameters{1,k}]); % up to 5 simultaneous stimulus components in up to 10 different trial epochs
+          end
         end
       end
     end
   end
-end
-
-labels = spec.variables.labels;
-[ulabels,I] = unique(labels,'stable');
-for k = 1:length(ulabels)
- fprintf(fid,'coder.varsize(''%s.%s'',[%d,1],[true,false]);\n',coderprefix,['IC_' ulabels{k}],1e4);
+  labels = spec.variables.labels;
+  [ulabels,I] = unique(labels,'stable');
+  for k = 1:length(ulabels)
+    fprintf(fid,'coder.varsize(''%s.%s'',[1e4,1],[true,false]);\n',coderprefix,['IC_' ulabels{k}]); % multiplicity up to 1e4 for variable initial conditions
+  end
 end
 
 % load params.mat at start of odefun file
