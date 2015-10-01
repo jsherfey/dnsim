@@ -85,13 +85,32 @@ if ~exist('codegen') || parms.coder == 0 % if matlab coder is not available or y
   fprintf(fid,'tspan=[%g %g]; dt=%g;\n',tspan,dt);
 else % use codegen
   fprintf(fid,'function [Y,T] = odefun\n'); % this is useful to avoid codegen to be called if the mex file is already created
+  % This only works for matlab releases >= 2013b
+  matlab_version = version('-release');
+  if hex2dec(matlab_version) >= hex2dec('2013b')
+    label = {spec.(fld).label};
+    mechanisms = spec.(fld).mechanisms;
+    parameters = spec.(fld).parameters;
+    for k = 1:length(parameters)
+      if size(parameters{1,k},1) > 1
+        continue
+      end
+      if ~isempty(strfind(parameters{1,k},'stim'))
+        for i = 1:length(label)
+          for j = 1:length(mechanisms)
+            fprintf(fid,'coder.varsize(''%s.%s'',[5,10],[true,true]);\n',coderprefix,[label{1,i} '_' mechanisms{1,j} '_' parameters{1,k}]); % up to 5 simultaneous stimulus components in up to 10 different trial epochs
+          end
+        end
+      end
+    end
+  end
+  labels = spec.variables.labels;
+  [ulabels,I] = unique(labels,'stable');
+  for k = 1:length(ulabels)
+    fprintf(fid,'coder.varsize(''%s.%s'',[1e4,1],[true,false]);\n',coderprefix,['IC_' ulabels{k}]); % multiplicity up to 1e4 for variable initial conditions
+  end
 end
 
-labels = spec.variables.labels;
-[ulabels,I] = unique(labels,'stable');
-for k = 1:length(ulabels)
-  fprintf(fid,'coder.varsize(''%s.%s'');\n',coderprefix,['IC_' ulabels{k}]);
-end
 % load params.mat at start of odefun file
 fprintf(fid,'pset=load(''params.mat'');\n'); % variable name 'pset' must match coderprefix
 fprintf(fid,'tspan=%s.timelimits;\ndt=%s.dt;\n',coderprefix,coderprefix);
@@ -126,7 +145,6 @@ end
 % REPLACE X(#:#) with unique variable names X#
 % Set Initial conditions
 Npops = [spec.(fld).multiplicity];
-EL = {spec.(fld).label};
 PopID = 1:length(Npops);
 labels = spec.variables.labels;
 [ulabels,I] = unique(labels,'stable');
