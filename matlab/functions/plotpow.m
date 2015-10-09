@@ -170,25 +170,3 @@ if parms.plot_flag
     end
   end
 end
-
-% res = PowerSpecTA(t,y,parms.FreqRange,WINDOW,NormAbs,parms.Notch);
-% %res = PowerSpecTA(x,y,[10 80],min(8000,round(numel(T)/2)),'Normalized',[]);
-% % PowerSpecTA(x,y,FreqRange,Bins,NormAbs,Notch)
-% % plot(res.f,log10(res.Pxx));
-%     
-% res = SpecGramTA(x,y,'mtm',[],8000,7800,2.5);
-% %Wind=parms.WINDOW; WindOL=parms.NOVERLAP;
-% %   % SpecGramTA(x,y,Smooth,Notch,Wind,WindOL,SmoothWindow)
-% %   Fs = fix(1/(x(2)-x(1))); %Fs = roundn(1/(data{1}(2,1)-data{1}(1,1)),3);
-% %   d = y.*1e6;
-% %   case {'standard','std'}
-% %     [yo,fo,to] = specmw(detrend(d),Wind,Fs,Wind,WindOL);
-% %   case {'pwelch','pw'}
-% %       [yo,fo,to] = mtmspecTA2(detrend(d),Wind,Fs,Wind,WindOL);
-% %   case {'multitaper','mtm'}
-% %       [yo,fo,to] = mtmspecTA(detrend(d),Wind,Fs,Wind,WindOL,SmoothWindow);
-% %   surf(to,fo,yo), shading interp, set(gca,'YScale','log','YTick',[[1:10] [15:5:50] [100 200]])
-% %   view(2), axis tight, ylim([1 250]), colormap(flipud(colormap('hot'))), colorbar
-% %   %imagesc(to,fo,(abs(yo)+eps).^2); axis xy; colormap(flipud(colormap('hot'))), axis tight, ylim([0 250]), colorbar
-% %   xlabel('Time (secs)'), ylabel('Frequency (Hz)')
-% 

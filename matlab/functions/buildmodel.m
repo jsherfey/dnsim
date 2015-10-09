@@ -942,17 +942,15 @@ model = SodesVec;
 for k=1:nvar, if model{k}(end) ~= ';', model{k} = [model{k} ';']; end; end
 model = ['@(t,X) [' [model{:}] '];'];
 
-% How to use:
-if 0
-  for k = 1:size(Cexpr,1)
-    eval( sprintf('%s = %s;',Cexpr{k,2},Cexpr{k,3}) );
-  end
-  for k = 1:size(Hfunc,1)
-    eval( sprintf('%s = %s;',Hfunc{k,2},Hfunc{k,3}) );
-  end
-  model = eval(model);
-  Y=model(0,IC);
-end
+% % How to use:
+% for k = 1:size(Cexpr,1)
+%   eval( sprintf('%s = %s;',Cexpr{k,2},Cexpr{k,3}) );
+% end
+% for k = 1:size(Hfunc,1)
+%   eval( sprintf('%s = %s;',Hfunc{k,2},Hfunc{k,3}) );
+% end
+% model = eval(model);
+% Y=model(0,IC);
 
 functions=Hfunc(:,[2 3 1]);
 auxvars=Cexpr(:,[2 3 1]);
@@ -1023,13 +1021,6 @@ for i=1:N
         sys.connections(ii,jj).parameters = sys.entities(i).connection_parameters{j};
       else
         sys.connections(ii,jj).parameters = [];
-      end
-      if 0%isempty(sys.connections(ii,jj).parameters) % pull default params from mech structure
-        p = sys.entities(i).connection_mechs(j).params;
-        keys = fieldnames(p);
-        vals = struct2cell(p);
-        tmp=[keys(:) vals(:)]';
-        sys.connections(ii,jj).parameters = [tmp(:)]';
       end
       if ~isfield(sys.connections,'mechs') || isempty(sys.connections(ii,jj).mechs)
         sys.connections(ii,jj).mechs = sys.entities(i).connection_mechs(j);

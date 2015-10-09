@@ -270,9 +270,6 @@ if spec.simulation.cluster_flag % run on cluster
   fprintf(logfid,'executing: "%s" on cluster %s\n',cmd,spec.simulation.sim_cluster);
   if ~strmatch(host,spec.simulation.sim_cluster);
     % connect to cluster and submit jobs
-    if 0
-      [s,m] = system(sprintf('ssh %s "%s"',spec.simulation.sim_cluster,cmd));
-    end
   else
     % submit jobs on the current host
     [s,m] = system(cmd);
@@ -295,7 +292,6 @@ else
        'savedata_flag',p.savedata_flag,'jsondata_flag',p.jsondata_flag,'savepopavg_flag',p.savepopavg_flag,'savespikes_flag',p.savespikes_flag,...
        'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag,...
        'plotpacoupling_flag',p.plotpacoupling_flag,'overwrite_flag',p.overwrite_flag,'timesurfer_flag',p.timesurfer_flag);
-        %'savefig_flag',0,'savedata_flag',0);
     catch err
       fprintf('Error: %s\n',err.message);
       for i=1:length(err.stack)
