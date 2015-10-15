@@ -1,0 +1,16 @@
+a=25; % intensity scale
+L=.4; % spatial frequency
+T=1000;  % ms, duration
+type=1;
+nchange=1000;
+
+% stimulus
+Iext = getstim(sqrt(Npop),ceil(T/dt),L,type,nchange);
+stim(t,V) = a.*((2-V).*Iext(:,max(1,round(t/dt))))
+term => stim(t,V)
+
+% leaky integrator
+%B' = a*(-B+(2-B).*Iext(max(1,round(t/dt))))
+%dBdt = @(B,I,A) PB(1)*(-B + (2-B).*I - (B+PAB(1)).*(PAB(2)*A'*KPBA)');
+%dzdt = @(z,B) PB(2)*(1 - z - 100*B.*z);
+%Bout = @(B,z) B.*z;
