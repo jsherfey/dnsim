@@ -47,3 +47,4 @@ Setup as Standalone Application (Linux)
     - to see what these environment variables' values are, enter `echo $LD_LIBRARY_PATH` into the shell
 4. Run DNSim from the shell via `$DNSIM/run_dnsim.sh` or `cd $DNSIM ; ./run_dnsim.sh`
     - Tip: don't forget to replace `$DNSIM = /path/to/dnsim/here` with your own directory in your ~/.bashrc.
+# dnsim

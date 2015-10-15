@@ -7,8 +7,6 @@ if ~isdeployed
 end
 
 % randomize seed
-% lulz
-% this is for local_branch branc
 % see: http://www.mathworks.com/help/matlab/math/updating-your-random-number-generator-syntax.html
 try
   rng('shuffle'); % - exception: rand in parfor does not use this new seed

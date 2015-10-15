@@ -1,7 +1,10 @@
-% this comment is for a toy pull requiest
-
-%function [model,IC,functions,auxvars,sys,Sodes,Svars,txt] = buildmodel(spec,varargin)
 function varargout = buildmodel(spec,varargin)
+% 20150210 - modified: added option (coder) to construct ODEs containing parameter names and construct a parameter structure for all parameters (scope_mech*_param). add param struct to spec.
+
+% NEED TO: assess whether the conditional at line ~519 is necessary to
+% prevent mechanism parameters from overriding global entity parameters.
+% i.e., check which value is used given conflict b/w entity and mech parms
+
 % get input structure into the right form
 if isempty(spec)
   model=[]; IC=[]; functions=[]; auxvars=[]; sys=[]; Sodes=[]; Svars=[]; txt=[];
@@ -19,7 +22,7 @@ if ~isfield(spec,'connections')
     if isfield(spec,'files')
       tmp.files = spec(1).files;
     end
-    spec=tmp; clear tmp    
+    spec=tmp; clear tmp
   end
   spec.connections.label='';
   spec.connections.mechanisms={};
@@ -33,7 +36,7 @@ if isfield(spec,'cells') && ~isfield(spec,'entities')
 elseif isfield(spec,'nodes') && ~isfield(spec,'entities')
   nodefield='nodes';
   spec.entities = spec.nodes;
-  spec = rmfield(spec,'nodes');  
+  spec = rmfield(spec,'nodes');
 end
 if isempty(spec.entities)
   model=[];
@@ -73,9 +76,17 @@ parms = mmil_args2parms( varargin, ...
                             'timelimits',[],[],...
                             'DBPATH',[],[],...
                             'couple_flag',0,[],...
+                            'coder',0,[],...
                          }, false);
 % note: override = {label,field,value,[arg]; ...}
 fileID = parms.logfid;
+
+if parms.coder==1
+  coderprefix = 'pset.p.';
+  % (param struct in odefun).(param var below).(param name in buildmodel)
+else
+  coderprefix = '';
+end
 
 if ischar(spec)
   spec=loadspec(spec);
@@ -102,12 +113,12 @@ if ~isempty(parms.override)
   o = parms.override;
   [nover,ncols] = size(o);
   for k = 1:nover
-    l = o{k,1}; f = o{k,2}; v = o{k,3}; 
+    l = o{k,1}; f = o{k,2}; v = o{k,3};
     if ncols>3, a = o{k,4}; else a = []; end
     if ~ischar(l) || ~ischar(f), continue; end
     if ismember(l,Elabels), type='entities';
     elseif ismember(l,Clabels), type='connections';
-    else continue; 
+    else continue;
     end
     n = strmatch(l,{spec.(type).label},'exact');
     if isequal(f,'N'), f='multiplicity'; end
@@ -151,7 +162,10 @@ if issubfield(spec,'simulation.timelimits')
 else
   timelimits = parms.timelimits;
 end
-
+if parms.coder==1
+  modelparams.dt = dt;
+  modelparams.timelimits = timelimits;
+end
 % combine intrinsic and connection mechanisms per entity; load mech models
 mechtype={}; % 0=connection, 1=intrinsic
 mechsrc=[]; mechdst=[];
@@ -174,7 +188,7 @@ for i=1:N % loop over entities
   m2=m2(sel);
   p2=p2(sel);
   mechtype{i}=ones(size(m1));
-  mechsrc{i}=i*ones(size(m1)); mechdst{i}=i*ones(size(m1)); 
+  mechsrc{i}=i*ones(size(m1)); mechdst{i}=i*ones(size(m1));
   if ~isempty(m2) % there are connections to this entity
     tmpm={}; tmpp={}; tmpinp={};
     for j=1:length(m2)
@@ -223,7 +237,7 @@ for i=1:N % loop over entities
   M=length(mechs);
   % load mechanism models from text files
   for j=1:M
-    ML=mechs{j};    
+    ML=mechs{j};
     % check for existing intrinsic mechanism
     if issubfield(sys.entities(i),'mechs.label')
       if ismember(ML,{sys.entities(i).mechs.label}) && length(sys.entities(i).mechs)>=j
@@ -255,7 +269,7 @@ for i=1:N % loop over entities
         idx = find(~cellfun(@isempty,idx));
         if ~isempty(idx)
           sys.files(idx)=[];
-        end          
+        end
         sys.files{end+1} = file;
       end
     else
@@ -299,9 +313,9 @@ end
 
 % Compute total number of state vars, params, funcs, expressions
 nGvar=sum(cellfun(@length,{sys.entities.dynamics}));
-nMvar=0; 
-nGparm=0; 
-nMparm=0; 
+nMvar=0;
+nGparm=0;
+nMparm=0;
 nfunc=0;
 nexpr=0;
 nsubst=0;
@@ -327,7 +341,7 @@ for k=1:N
     nGparm=nGparm+length(sys.entities(k).parameters)/2;
   else
     nGparm=nGparm+sum(cellfun(@(x)length(x),sys.entities(k).parameters)/2);
-  end  
+  end
   if issubfield(sys.entities(k),'mechs.odes')
     nMvar=nMvar+sum(cellfun(@(y)size(y,1),{sys.entities(k).mechs.odes}));
   end
@@ -342,42 +356,6 @@ for k=1:N
   end
 end
 
-% if issubfield(sys.entities,'mechs.odes')
-%   nMvar=sum(cellfun(@sum,arrayfun(@(x)sum(cellfun(@(y)size(y,1),{x.mechs.odes})),sys.entities,'unif',0)));
-% else
-%   nMvar=0;
-% end
-% nGparm=0; nMparm=0;
-% for k=1:N
-%   if issubfield(sys.entities,'mechs.params')
-%     nMparm=nMparm+sum(arrayfun(@(x)length(fieldnames(x.params)),sys.entities(k).mechs));
-%   end
-%   if ~isempty(sys.entities(k).parameters) && ischar(sys.entities(k).parameters{1})
-%     nGparm=nGparm+length(sys.entities(k).parameters)/2;
-%   else
-%     nGparm=nGparm+sum(cellfun(@(x)length(x),sys.entities(k).parameters)/2);
-%   end
-% end
-% if issubfield(sys.entities,'mechs.functions')
-%   nfunc=sum(cellfun(@sum,arrayfun(@(x)sum(cellfun(@(y)size(y,1),{x.mechs.functions})),sys.entities,'unif',0)));
-% else
-%   nfunc=0;
-% end
-% if issubfield(sys.entities,'mechs.auxvars')
-%   nexpr=sum(cellfun(@sum,arrayfun(@(x)sum(cellfun(@(y)size(y,1),{x.mechs.auxvars})),sys.entities,'unif',0)));
-% else
-%   nexpr=0;
-% end
-% if issubfield(sys.entities,'mechs.substitute')
-%   nsubst=sum(cellfun(@sum,arrayfun(@(x)sum(cellfun(@(y)size(y,1),{x.mechs.substitute})),sys.entities,'unif',0)));
-% else
-%   nsubst=0;
-% end
-% if isfield(sys.entities,'mechs')
-%   nmech=sum(cellfun(@length,{sys.entities.mechs}));
-% else
-%   nmech=0;
-% end
 nvar=nGvar+nMvar;
 nparm=nGparm+nMparm;
 %[nGvar nMvar nvar nGparm nMparm nparm nfunc nexpr nmech]
@@ -416,6 +394,7 @@ Mid=zeros(nmech,1);
 %      Hmk: pop_mech_label
 %      + associated lists of Hpop (entity index) and Hmech (mech index)
 
+% COLLECT MODEL INFO
 scnt=0; % state var label index
 stateindx=0; % state var vector indices
 pcnt=0; ccnt=0; hcnt=0; tcnt=0; mcnt=0;
@@ -425,6 +404,7 @@ for i=1:N
 %   % correct for savejson() effects (added 01-Aug-2014)
 %   tmp=E.dynamics; if isempty(tmp), tmp={}; elseif ischar(tmp), tmp={tmp}; end; E.dynamics=tmp;
 %   % -----
+  % entity-level state variables
   tmp=regexp(E.dynamics,'\w+''','match');
   tmp=cellfun(@(x)x{1}(1:end-1),tmp,'unif',0);
   [Svars{I,1}]=deal(tmp{:});                % varlabel
@@ -434,24 +414,38 @@ for i=1:N
     Svars{I(j),4}= ['[' num2str(zeros(1,NE(i))) ']'];           % initial conditions
     stateindx=stateindx+NE(i);
   end
+  % entity-level dynamics
   tmp=regexp(E.dynamics,'=(.)*','match');
   tmp=cellfun(@(x)x{1}(2:end),tmp,'unif',0);
   [Sodes{I}]=deal(tmp{:});                  % ODEs
-  Spop(I)=i; 
+  Spop(I)=i;
   Smech(I)=0;
   Stype(I)=0;                               % var scope (0=global)
   scnt=scnt+n;
+  % store enitity-level parameters if no mechanisms
   if length(E.mechanisms)==0
     if ~isempty(E.parameters) && ~iscell(E.parameters{1})  % USER PARAMETERS
       n=length(E.parameters)/2; I=pcnt+(1:n);
-      tmp=E.parameters(1:2:end); [Pdata{I,1}]=deal(tmp{:});
-      tmp=E.parameters(2:2:end); [Pdata{I,2}]=deal(tmp{:});
+      keys=E.parameters(1:2:end);
+      vals=E.parameters(2:2:end);
+      if parms.coder==0
+        [Pdata{I,1}]=deal(keys{:});
+        [Pdata{I,2}]=deal(vals{:});
+      else
+        for j=1:length(I)
+          newlabel=[EL{i} '_' keys{j}];
+          Pdata{I(j),1} = keys{j};
+          Pdata{I(j),2} = newlabel;
+          modelparams.(newlabel) = vals{j};
+        end
+      end
       Ppop(I)=i;
-      Pmech(I)=0;%mcnt;
+      Pmech(I)=0;
       Ptype(I)=0;
       pcnt=pcnt+n;
-    end    
+    end
   end
+  % store mechanism info
   for m=1:length(E.mechanisms)
     mcnt=mcnt+1;
     Mid(mcnt)=mcnt;
@@ -463,58 +457,81 @@ for i=1:N
 %     % ------
     Minputs{mcnt}=E.inputs{m};
     Mlabels{mcnt}=E.mechanisms{m};
-    if Minputs{mcnt}~=i || mechtype{i}(m)==0
+    if Minputs{mcnt}~=i || mechtype{i}(m)==0 % connection or input from another population
       prefix = [EL{Minputs{mcnt}} '_' EL{i} '_' Mlabels{mcnt}];
     else
       prefix = [EL{i} '_' Mlabels{mcnt}];
     end
+    % entity-level parameters
     if ~isempty(E.parameters{m})  % USER PARAMETERS
       if numel(E.parameters)==numel(E.mechanisms)
         n=length(E.parameters{m})/2; I=pcnt+(1:n);
-        tmp=E.parameters{m}(1:2:end); [Pdata{I,1}]=deal(tmp{:});
-        tmp=E.parameters{m}(2:2:end); [Pdata{I,2}]=deal(tmp{:});
+        keys=E.parameters{m}(1:2:end);
+        vals=E.parameters{m}(2:2:end);
       else
         n=floor(length(E.parameters)/2); I=pcnt+(1:n);
-        tmp=E.parameters(1:2:2*n); [Pdata{I,1}]=deal(tmp{:});
-        tmp=E.parameters(2:2:2*n); [Pdata{I,2}]=deal(tmp{:});        
+        keys=E.parameters(1:2:2*n);
+        vals=E.parameters(2:2:2*n);
       end
-      %[Pdata{I,1}]=deal(E.parameters{m}{1:2:end});  % user param key
-      %[Pdata{I,2}]=deal(E.parameters{m}{2:2:end});  % user param value
+      if parms.coder==0
+        [Pdata{I,1}]=deal(keys{:});
+        [Pdata{I,2}]=deal(vals{:});
+      else
+        for j=1:length(I)
+          %newlabel=[EL{i} '_' keys{j}]; 
+          newlabel=[prefix '_' keys{j}];
+          Pdata{I(j),1} = keys{j};
+          Pdata{I(j),2} = newlabel;
+          modelparams.(newlabel) = vals{j};
+        end
+      end
       Ppop(I)=i;
       Pmech(I)=mcnt;
       Ptype(I)=0;
       pcnt=pcnt+n;
     end
+    % mechanism-level state variables
     if ~isempty(M.statevars)      % MECH STATE VARS
       tmp=M.statevars;
       n=length(tmp); I=scnt+(1:n);
       [Svars{I,1}]=deal(tmp{:});                            % varlabel
       for j=1:length(I)
-%         if Minputs{mcnt}~=i
-%           Svars{I(j),2}=[prefix '_' tmp{j}]; % Pre_E_M_varlabel
-%         else
-          Svars{I(j),2}=[prefix '_' tmp{j}]; % E_M_varlabel
-%         end
+        Svars{I(j),2}=[prefix '_' tmp{j}]; % E_M_varlabel
         Svars{I(j),3}=stateindx+(1:NE(i));                  % state vector indices
         Svars{I(j),4}=M.ic{j};                              % initial conditions
         stateindx=stateindx+NE(i);
-      end      
+      end
       [Sodes{I}]=deal(M.odes{:});                           % ODEs
-      Spop(I)=i; 
+      Spop(I)=i;
       Smech(I)=mcnt;
       Stype(I)=1;                                           % var scope (0=global)
       scnt=scnt+n;
     end
+    % mechanism-level parameters
     if ~isempty(M.params)         % DEFAULT MECH PARAMETERS
-      key=fieldnames(M.params); val=struct2cell(M.params);
-      n=length(key); I=pcnt+(1:n);
-      [Pdata{I,1}]=deal(key{:});  % default param key
-      [Pdata{I,2}]=deal(val{:});  % default param value
+      keys=fieldnames(M.params);
+      vals=struct2cell(M.params);
+      n=length(keys); I=pcnt+(1:n);
+      if parms.coder==0
+        [Pdata{I,1}]=deal(keys{:});
+        [Pdata{I,2}]=deal(vals{:});
+      else
+        for j=1:length(I)
+          %if ~isfield(modelparams,[EL{i} '_' keys{j}]) % use only if not specified at entity level
+          if ~isfield(modelparams,[prefix '_' keys{j}]) % use only if not specified at entity level
+            newlabel=[prefix '_' keys{j}];
+            Pdata{I(j),1} = keys{j};
+            Pdata{I(j),2} = newlabel;
+            modelparams.(newlabel) = vals{j};
+          end
+        end
+      end
       Ppop(I)=i;
       Pmech(I)=mcnt;
       Ptype(I)=1;
       pcnt=pcnt+n;
     end
+    % mechanism-level auxiliary variables/expression
     if ~isempty(M.auxvars)        % MECH EXPRESSIONS (label,prefix_label,expression)
       LHS=M.auxvars(:,1); RHS=M.auxvars(:,2);
       n=length(LHS); I=ccnt+(1:n);
@@ -532,9 +549,10 @@ for i=1:N
           end
           Cexpr{I(j),2}=LHS{j};                 % exprlabel
         end
-      end      
+      end
       ccnt=ccnt+n;
     end
+    % mechanism-level functions
     if ~isempty(M.functions)      % MECH FUNCTIONS  (label,prefix_label,function)
       LHS=M.functions(:,1); RHS=M.functions(:,2);
       n=length(LHS); I=hcnt+(1:n);
@@ -544,9 +562,10 @@ for i=1:N
       Hmech(I)=mcnt;
       for j=1:length(I)
         Hfunc{I(j),2}=[prefix '_' LHS{j}];    % E_M_exprlabel
-      end      
+      end
       hcnt=hcnt+n;
     end
+    % mechanism-level interface statements
     if ~isempty(M.substitute)     % SUBSTITUTIONS {entity ode label, mech term}
       LHS=M.substitute(:,1); RHS=M.substitute(:,2);
       n=length(LHS); I=tcnt+(1:n);
@@ -571,34 +590,73 @@ Stype(ismember(Svars(:,1),Tsubst(:,1)))=0; % make global if in substitution term
 % Hfunc, [Hpop Hmech] % functions:          {label, prefix_label, function}
 % Tsubst,[Tpop Tmech] % term substitutions: {label, mech_term}
 
-% SUBSTITUTIONS
+% PERFORM SUBSTITUTIONS
+% substitutions into mechanism data
 Hfunc0=Hfunc; Cexpr0=Cexpr; Sodes0=Sodes; Tsubst0=Tsubst; Svars0=Svars;
 for m=1:nmech
-  f=Hfunc(Hmech==m,3); 
-  e=Cexpr(Cmech==m,3); 
-  o=Sodes(Smech==m); 
+  f=Hfunc(Hmech==m,3);
+  e=Cexpr(Cmech==m,3);
+  o=Sodes(Smech==m);
   t=Tsubst(Tmech==m,2);
   ic=Svars(Smech==m,4);
-  % global user params: (expressions, functions, odes, terms)
+  % substitute global user params: into (expressions, functions, odes, terms)
   old=Pdata(Pmech==m & Ptype==0,1); new=Pdata(Pmech==m & Ptype==0,2);
-  [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
-  % default mech params | same pop & mech: (expressions, functions, odes, terms)
-  old=Pdata(Pmech==m & Ptype==1,1); new=Pdata(Pmech==m & Ptype==1,2);
-  [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
-  % reserved keywords: (expressions, functions, odes, terms)
-  old={'Npre','N[1]','Npost','N[0]','Npop','dt'};
-  %k0=unique(Ppop(Pmech==m)); 
-  k0=unique(Tpop(Tmech==m)); 
-  n0=NE(k0);
-  if m>0, k1=Minputs{m}(1); else k1=k0; end
-  n1=NE(k1);
-  new={n1,n1,n0,n0,n0,dt};
-  if ~isempty(timelimits)
-    old = {old{:},'timelimits(1)','timelimits(2)','timelimits'};
-    new = {new{:},timelimits(1),timelimits(2),sprintf('[%g %g]',timelimits)};
+  if parms.coder==1
+    for k=1:length(new)
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
+    end
   end
   [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
-  % prefixes: expressions: (expressions, functions, odes, terms)
+  % substitute default mech params | same pop & mech: into (expressions, functions, odes, terms)
+  old=Pdata(Pmech==m & Ptype==1,1); new=Pdata(Pmech==m & Ptype==1,2);
+  if parms.coder==1
+    for k=1:length(new)
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
+    end
+  end
+  [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
+  % substitute reserved keywords: into (expressions, functions, odes, terms)
+  k0=unique(Tpop(Tmech==m));
+  n0=NE(k0); % target pop size (postsynaptic)
+  if m>0, k1=Minputs{m}(1); else k1=k0; end
+  n1=NE(k1); % source pop size (presynaptic)
+  if parms.coder==0
+    old={'Npre','N[1]','Npost','N[0]','Npop','dt'};
+    new={n1,n1,n0,n0,n0,dt};
+    if ~isempty(timelimits)
+      old = {old{:},'timelimits(1)','timelimits(2)','timelimits'};
+      new = {new{:},timelimits(1),timelimits(2),sprintf('[%g %g]',timelimits)};
+    end
+  else
+    src=[EL{k1} '_Npop'];
+    dst=[EL{k0} '_Npop'];
+    old={'Npre','N[1]','Npost','N[0]','Npop','timelimits'};
+    new={src,src,dst,dst,dst,'timelimits'};
+    if ~isfield(modelparams,src), modelparams.(src)=n1; end
+    if ~isfield(modelparams,dst), modelparams.(dst)=n0; end
+    for k=1:length(new)
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
+    end
+  end
+  [f,e,o,t,ic]=substitute(old,new,f,e,o,t,ic);
+  % ------------------------------------------------
+  % go ahead and substitute values into ICs for coder
+  if parms.coder==1
+    old2a=Pdata(Pmech==m & Ptype==0,2); % entity params
+    old2b=Pdata(Pmech==m & Ptype==1,2); % mechanism params
+    old2c={src,dst,dst}';               % reserved params
+    old2=cat(1,old2a,old2b,old2c);
+    new={}; old={};
+    for k=1:length(old2)
+      if ~isempty(old2{k})
+        old{end+1}=[coderprefix old2{k}];
+        new{end+1}=modelparams.(old2{k});
+      end
+    end
+    ic=substitute(old,new,ic);
+  end
+  % ------------------------------------------------
+  % substitute prefixed-auxvars/expressions: into (expressions, functions, odes, terms)
   old=Cexpr(Cmech==m,1); new=Cexpr(Cmech==m,2);
   tmpind=find(~cellfun(@isempty,regexp(old,'[\[\]\(\)]+')));
   if ~isempty(tmpind)
@@ -617,58 +675,83 @@ for m=1:nmech
     end
   end
   [f,e,o,t]=substitute(old,new,f,e,o,t);
-  % prefixes: functions: (functions, odes, terms)
+  % substitute prefixed functions: into (functions, odes, terms)
   old=Hfunc(Hmech==m,1); new=Hfunc(Hmech==m,2);
   [f,o,t]=substitute(old,new,f,o,t);
-  % prefixes: vars (Sg(E) => Sg(~E) => Sm(E) => S~m(E)): (odes, terms)
-  %E=unique(Ppop(Pmech==m));
+  % substitute prefixed state vars (Sg(E) => Sg(~E) => Sm(E) => S~m(E)): into (odes, terms)
   E=unique(Tpop(Tmech==m));
   if isempty(E) % added 26-May-2014
     continue;
   end
-  old=Svars(Spop==E & (Smech==m | Stype==0),1); 
-  new=Svars(Spop==E & (Smech==m | Stype==0),2); 
+  old=Svars(Spop==E & (Smech==m | Stype==0),1);
+  new=Svars(Spop==E & (Smech==m | Stype==0),2);
   old2={}; new2={}; old3={}; new3={};
   for k=1:length(old), old2{k}=[old{k} '[0]']; new2{k}=new{k}; end
   for k=1:length(old)
-    old3{k}=[old{k} '[1]']; 
-    new3{k}= [EL{k1} new{k}(find(new{k}=='_',1,'first'):end)]; 
+    old3{k}=[old{k} '[1]'];
+    new3{k}= [EL{k1} new{k}(find(new{k}=='_',1,'first'):end)];
   end
   [f,o,t]=substitute(old3,new3,f,o,t);
   [f,o,t]=substitute(old2,new2,f,o,t);
   [f,o,t]=substitute(old,new,f,o,t);
   for k=1:length(old), old2{k}=[old{k} 'post']; new2{k}=new{k}; end
   for k=1:length(old)
-    old3{k}=[old{k} 'pre']; 
-    new3{k}= [EL{k1} new{k}(find(new{k}=='_',1,'first'):end)]; 
+    old3{k}=[old{k} 'pre'];
+    new3{k}= [EL{k1} new{k}(find(new{k}=='_',1,'first'):end)];
   end
   [o,t]=substitute(old3,new3,o,t);
-  [o,t]=substitute(old2,new2,o,t);  
-  % substitute IN & OUT
+  [o,t]=substitute(old2,new2,o,t);
+  % substitute IN & OUT into (odes, interface terms)
   newOUT=Svars(Spop==E & Stype==0,2); if ~isempty(newOUT), newOUT=newOUT{1}; end
   newIN=Svars(Spop==k1 & Stype==0,2); if ~isempty(newIN), newIN=newIN{1}; end
   old={'IN','OUT','X'};
   new={newIN,newOUT,newOUT};
-  [o,t]=substitute(old,new,o,t);  
+  [o,t]=substitute(old,new,o,t);
   % update model arrays
-  Hfunc(Hmech==m,3)=f; 
-  Cexpr(Cmech==m,3)=e; 
-  Sodes(Smech==m)=o; 
+  Hfunc(Hmech==m,3)=f;
+  Cexpr(Cmech==m,3)=e;
+  Sodes(Smech==m)=o;
   Tsubst(Tmech==m,2)=t;
   Svars(Smech==m,4)=ic;
 end
+% substitutions into entity-level dynamics
 E=unique(Spop(Stype==0));
 for e=1:length(E)
   idx=(Stype==0 & Spop==E(e));
   o=Sodes(idx);
-  old=Svars(idx,1); new=Svars(idx,2); 
+  % state variables into odes
+  old=Svars(idx,1); new=Svars(idx,2);
   o=substitute(old,new,o);
-  old=Pdata(Ptype==0,1); new=Pdata(Ptype==0,2);
+  % parameters into odes
+  % -------------------------------------
+  % edit: JSS constrained to same pop on 06-Jun-2015)
+%   old=Pdata(Ptype==0,1); new=Pdata(Ptype==0,2);
+  old=Pdata(Ptype==0 & Ppop==e,1); 
+  new=Pdata(Ptype==0 & Ppop==e,2);
+  % -------------------------------------
+  if parms.coder==1
+    for k=1:length(new)
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
+    end
+  end
   o=substitute(old,new,o);
-  old={'Npost','N[0]','Npop','dt'}; n0=NE(e);
-  new={n0,n0,n0,dt};
+  % reserve keywords into odes
+  n0=NE(e);
+  if parms.coder==0
+    old={'Npost','N[0]','Npop','dt'};
+    new={n0,n0,n0,dt};
+  else
+    dst=[EL{e} '_Npop'];
+    old={'Npost','N[0]','Npop'};
+    new={dst,dst,dst};
+    for k=1:length(new)
+      if ischar(new{k}), new{k}=[coderprefix new{k}]; end;
+    end
+    if ~isfield(modelparams,dst), modelparams.(dst)=n0; end
+  end
   o=substitute(old,new,o);
   % ----------------------------------
+  % interface statements (functions only) into odes
   tmp=ismember(Tsubst(:,1),Hfunc(:,1))&(Tpop==E(e)); % limit to within-entity substitutions
   old=Tsubst(tmp,1); new=Tsubst(tmp,2);
   % ---
@@ -676,12 +759,17 @@ for e=1:length(E)
   for k=1:numel(new)
       new{k}=['((' new{k} ')+' old{k} ')'];
   end
-  % ---
+  o=substitute(old,new,o);
+  % remove function substitution placeholders (added 21-Feb-2015 to prevent another downstream substitution
+  for k=1:numel(new)
+      new{k}='0';
+  end
   o=substitute(old,new,o);
   % ----------------------------------
   Sodes(idx)=o;
 end
 
+% ELIMINATE FUNCTION CALLS
 Hfunc0=Hfunc; Sodes0=Sodes; Tsubst0=Tsubst;
 if parms.nofunctions
   try
@@ -695,13 +783,14 @@ if parms.nofunctions
       pat = @(s)sprintf('(\\W+%s)|(^%s)\\(',s,s); % function label pattern
       funcinds=find(~cellfun(@isempty,cellfun(@(s)regexp(target,pat(s)),Hfunc(:,2),'unif',0)));
       for f=1:length(funcinds)
-        keep_going=1;
+        %keep_going=1;
         ind = funcinds(f);
         submatch = regexp(target,[Hfunc{ind,2} '\([\w\s,]*\)'],'match');
-        %submatch = regexp(target,[Hfunc{ind,2} '[\w\s,]*'],'match');      
+        %submatch = regexp(target,[Hfunc{ind,2} '[\w\s,]*'],'match');
         %submatch = regexp(target,[Hfunc{ind,2} '\(.*\)'],'match');
         %subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'\([a-zA-Z]\w*\)','match');
         if ~isempty(submatch)
+            keep_going=1;
             subvars = regexp(strrep(submatch,Hfunc{ind,2},''),'[a-zA-Z]\w*','match');
             subvars = unique([subvars{:}]);
             subvars = cellfun(@(s)strrep(s,'(',''),subvars,'unif',0);
@@ -715,13 +804,13 @@ if parms.nofunctions
               error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
             end
             expr = substitute(vars,subvars,expr);
-            target = strrep(target,submatch{1},['(' expr{1} ')']); 
+            target = strrep(target,submatch{1},['(' expr{1} ')']);
         end
       end
       Hfunc{t,3}=target;
     end
-  end  
-  
+  end
+
   % Substitute functions into ODEs
   for t=1:size(Sodes,1)
     target=Sodes{t,1};
@@ -747,12 +836,12 @@ if parms.nofunctions
             error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
           end
           expr = substitute(vars,subvars,expr);
-          target = strrep(target,submatch{1},['(' expr{1} ')']); 
+          target = strrep(target,submatch{1},['(' expr{1} ')']);
       end
     end
     Sodes{t,1}=target;
-  end  
-  
+  end
+
   % Substitute functions into enitity-dynamic-substitution terms
   for t=1:size(Tsubst,1)
     % match function labels to substitution terms
@@ -776,7 +865,7 @@ if parms.nofunctions
             error('coding error in buildmodel2 when inserting full expressions into terms Tmk');
           end
           expr = substitute(vars,subvars,expr);
-          Tsubst{t,2} = strrep(Tsubst{t,2},submatch{1},['(' expr{1} ')']); 
+          Tsubst{t,2} = strrep(Tsubst{t,2},submatch{1},['(' expr{1} ')']);
       end
     end
   end
@@ -795,7 +884,7 @@ for t=1:size(Tsubst,1)
   Sodes(idx)=substitute(old,new,o);
   o = Sodes0(idx);
   old=Tsubst0{t,1}; new=['((' Tsubst0{t,2} ')+' old ')'];
-  Sodes0(idx)=substitute(old,new,o);  
+  Sodes0(idx)=substitute(old,new,o);
 end
 
 % Insert global entity state vars into other entity dnamics
@@ -805,12 +894,12 @@ allnewvars=Svars(:,2);
 if parms.couple_flag==1
   for i=1:nvar % loop over all state vars
     if Stype(i)==1 % skip intrinsic variables
-      continue; 
+      continue;
     end
     str=Sodes{i};
     for j=1:N % loop over all populations
       if Spop(i)==j % do not substitute this var's label here
-        continue; 
+        continue;
       end
       % get state vars for this population
       vars=alloldvars(Spop==j);
@@ -822,7 +911,7 @@ if parms.couple_flag==1
           continue;
         end
         var=vars{k};
-        subvar=newvars{k};    
+        subvar=newvars{k};
   %       var='U'; subvar='y_U';
   %       str='V./ U+E_V';%'E_V+U./';
         ops='+-/^\.\s\*';
@@ -855,28 +944,43 @@ for i=1:nvar
   Pg=Pdata(Ptype==0 & Ppop==Spop(i),:);
   if any(find(cellfun(@(x)isequal(x,[s '_IC']),Pg(:,1))))
     ind2=find(cellfun(@(x)isequal(x,[s '_IC']),Pg(:,1)));
-    icval=Pg{ind2(1),2};
+    if parms.coder==0
+      icval=Pg{ind2(1),2};
+    else
+      icval=modelparams.(Pg{ind2(1),2});
+    end
     if numel(icval)==1
-      ic = sprintf('[%s]',num2str(ones(1,NE(Spop(i)))*icval));    
+      ic = sprintf('[%s]',num2str(ones(1,NE(Spop(i)))*icval));
     elseif numel(icval)==NE(Spop(i))
       ic = sprintf('[%s]',num2str(icval));
     elseif ischar(icval)
       ic = eval(icval);
     end
-  end    
-  if ischar(ic)
+  end
+  if ischar(ic) %&& parms.coder==0
     ic=eval(ic);
   elseif numel(ic)==1
     ic=repmat(ic,[NE(Spop(i)) 1]);
   end
   if size(ic,1)<size(ic,2), ic=ic'; end
-  if any(find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1))))
-    ind2=find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1)));
-    ic=ic+Pg{ind2(1),2}.*rand(size(ic));
-  end  
+%   if any(find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1))))
+%     ind2=find(cellfun(@(x)isequal(x,[s '_IC_noise']),Pg(:,1)));
+%     if parms.coder==0
+%       icnoise=Pg{ind2(1),2};
+%       ic=ic+icnoise.*rand(size(ic));
+%     else
+%       icnoise=modelparams.(Pg{ind2(1),2});
+%       ic=ic+icnoise.*rand(size(ic));
+%     end
+%   end
   Svars{i,4}=ic;
   Svars{i,3}=stateindx+(1:length(ic));
   stateindx=stateindx+length(ic);
+  if parms.coder==1
+    % store ICs for setting in odefun file using params.mat
+    fld=sprintf('IC_%s',Svars{i,2});
+    modelparams.(fld) = ic;
+  end
 end
 IC=cat(1,Svars{:,4});
 
@@ -916,7 +1020,7 @@ auxvars=Cexpr(:,[2 3 1]);
 % Collect equations in system struct
 % For spec.entities(i) & spec.connections(i,j): auxvars=Cexpr(:,2:3); functions=Hfunc(:,2:3)
 % Set spec.variables.entity=Spop; spec.variables.labels=Svars(:,2)
-% For each entity i: 
+% For each entity i:
 % 	spec.entities(i).var_index=cat(1,Svars{Spop==i,3})
 % 	spec.entities(i).var_list=cat(1,Svars{Spop==i,2})
 % 	spec.entities(i).orig_var_list=cat(1,Svars{Spop==i,1})
@@ -942,7 +1046,7 @@ for i=1:N
         m.params.(flds{s1(k)}) = p{2*s2(k)};
       end
       sys.entities(i).mechs(j) = m;
-    end    
+    end
   end
   sys.entities(i).auxvars = auxvars(Cpop==i,:);
   sys.entities(i).functions = functions(Hpop==i,:);
@@ -959,7 +1063,7 @@ for i=1:N
     tmp=repmat(Svars(k,2),[1 nthis]);
     sys.entities(i).var_list      = {sys.entities(i).var_list{:} tmp{:}}; %repmat( Svars(Spop==i,2);
     tmp=repmat(Svars(k,1),[1 nthis]);
-    sys.entities(i).orig_var_list = {sys.entities(i).orig_var_list{:} tmp{:}}; %sys.entities(i).orig_var_list=Svars(Spop==i,1);    
+    sys.entities(i).orig_var_list = {sys.entities(i).orig_var_list{:} tmp{:}}; %sys.entities(i).orig_var_list=Svars(Spop==i,1);
   end
   sys.variables.entity=[sys.variables.entity i*ones(1,nhere)];
   if any(mechtype{i}==0) % connection mechanisms
@@ -982,8 +1086,8 @@ for i=1:N
       end
       if 0%isempty(sys.connections(ii,jj).parameters) % pull default params from mech structure
         p = sys.entities(i).connection_mechs(j).params;
-        keys = fieldnames(p); 
-        vals = struct2cell(p); 
+        keys = fieldnames(p);
+        vals = struct2cell(p);
         tmp=[keys(:) vals(:)]';
         sys.connections(ii,jj).parameters = [tmp(:)]';
       end
@@ -1023,6 +1127,9 @@ sys.model.auxvars = auxvars;
 sys.model.ode = model;
 sys.model.IC = IC;
 sys.model.parms = parms;
+if parms.coder==1
+  sys.model.parameters = modelparams;
+end
 
 if parms.verbose
   % Print model info
@@ -1055,7 +1162,7 @@ if parms.verbose
     end
   end
   fprintf(fileID,'\n\nConnections:\n');
-  fprintf(fileID,'%-10.6s\t',' '); 
+  fprintf(fileID,'%-10.6s\t',' ');
   for i = 1:N, fprintf(fileID,'%-10.6s\t',EL{i}); end; fprintf(fileID,'\n');
   for i = 1:N
     fprintf(fileID,'%-10.6s\t',EL{i});
@@ -1153,7 +1260,7 @@ if nargout>7
     end
   end
   txt{end+1}=sprintf('\n\nConnections:\n');
-  txt{end+1}=sprintf('%-10.6s\t',' '); 
+  txt{end+1}=sprintf('%-10.6s\t',' ');
   for i = 1:N, txt{end+1}=sprintf('%-10.6s\t',EL{i}); end; txt{end+1}=sprintf('\n');
   for i = 1:N
     txt{end+1}=sprintf('%-10.6s\t',EL{i});
@@ -1219,9 +1326,9 @@ if nargout>7
   txt{end+1}=sprintf('Specification files:\n');
   for f = 1:length(spec.files)
     txt{end+1}=sprintf('%s\n',spec.files{f});
-  end  
+  end
   txt=[txt{:}];
-end  
+end
 
 if ~strcmp(nodefield,'entities')
   sys.(nodefield) = sys.entities;
@@ -1308,17 +1415,20 @@ function varargout = substitute(old,new,varargin)
     if ~iscell(cellmat), cellmat={cellmat}; end
     cells = cellmat(:);
     for j = 1:numel(cells)
-      if ~ischar(cells{j}), continue; end      
+      if ~ischar(cells{j}), continue; end
       for k = 1:numel(old)
         this = cells{j};
         % handle reserved words first
         if isequal(old{k},'Npre') && isempty(regexp(cells{j},'[^A-Za-z]+Npre')), continue; end
         if isequal(old{k},'Npost') && isempty(regexp(cells{j},'[^A-Za-z]+Npost')), continue; end
         key = old{k};
+        if isempty(key)
+          continue;
+        end
         l = length(key);
         key = strrep(key,'[','\[');
         key = strrep(key,']','\]');
-        if isnumeric(new{k})
+        if isnumeric(new{k}) && any(size(new{k})==1)
           val=sprintf('(%g)',new{k});
         elseif ischar(new{k})
           val=new{k};
@@ -1328,7 +1438,7 @@ function varargout = substitute(old,new,varargin)
         if inds(1)>1
           tmp=this(1:inds(1)-1);
         else
-          tmp=[];
+          tmp='';
         end
         for c=1:length(inds)
           tmp=[tmp val];

@@ -8,6 +8,7 @@ parms = mmil_args2parms( varargin, ...
                       'var',[],[],...
                       'varlabel','V',[],...
                       'visible_flag',1,[],...
+                      'xlim',[],[],...
                    }, false);
                  
 if ~isfield(spec,'entities') && isfield(spec,'cells')
@@ -37,7 +38,7 @@ dy = 1 / nrows;
 xstep = mod((1:ncols)-1,ncols);
 ystep = mod((1:nrows)-1,nrows)+1;
 xpos = .035+xstep*dx; % .02+xstep*dx;
-ypos = .05+1-ystep*dy; % .02+1-ystep*dy;
+ypos = .02+1-ystep*dy; % .02+1-ystep*dy;
  
 if parms.plot_flag
   cnt=1;
@@ -84,14 +85,27 @@ if parms.plot_flag
       dat = squeeze(data(pop).epochs.data(var,:,1:n))';
 %       lab = data(pop).sensor_info(var).label;
       imagesc(T,1:n,dat); axis xy; colormap(1-gray); colorbar
-      xlabel('time [s]'); ylabel('cell');
+      xlabel('time [s]'); ylabel('cell'); 
+      
+      if n<=10
+        cellticks=1:n;
+      elseif n<=100
+        cellticks=[1 10:10:n];
+      else
+        cellticks=round(linspace(1,n,10));
+      end
+      set(gca,'ytick',cellticks,'yticklabel',cellticks);
       % calc LFP to overlay with traces
       text(min(xlim)+.2*diff(xlim),min(ylim)+.8*diff(ylim),strrep(lab,'_','\_'),'fontsize',14,'fontweight','bold');
       lfp = mean(dat,1)';
       if cnt==1, lfps = zeros(npop,length(T)); end
       lfps(pop,:) = lfp;
       cnt=cnt+1;
-      xlim([T(1) T(end)]);
+      if isempty(parms.xlim)
+        xlim([T(1) T(end)]);
+      else
+        xlim(parms.xlim);
+      end
     else % even, plot spectrum
       nshow=min(maxtraces,n);
       show=randperm(n);
@@ -103,7 +117,11 @@ if parms.plot_flag
       end
       xlabel('time [s]'); ylabel(strrep(lab,'_','\_'));%'V');
       text(min(xlim)+.2*diff(xlim),min(ylim)+.8*diff(ylim),[strrep(lab,'_','\_') ' (' num2str(nshow) '-cell subset)'],'fontsize',14,'fontweight','bold');
-      xlim([T(1) T(end)]);
+      if isempty(parms.xlim)
+        xlim([T(1) T(end)]);
+      else
+        xlim(parms.xlim);
+      end
     end
   end
 else

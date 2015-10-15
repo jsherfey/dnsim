@@ -16,7 +16,8 @@ end
 spec.simulation = mmil_args2parms( varargin, ...
                    {  'logfid',1,[],...
                       'logfile',[],[],...
-                      'sim_cluster_flag',0,[],...
+                      'sim_cluster_flag',[],[],...
+                      'cluster_flag',0,[],...
                       'sim_cluster','scc2.bu.edu',[],...
                       'sim_qsubscript','qmatjobs_memlimit',[],...
                       'sim_driver','biosimdriver.m',[],...
@@ -39,7 +40,51 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'plotpower_flag',0,[],...
                       'overwrite_flag',0,[],...
                       'addpath',[],[],...
+                      'coder',0,[],...
+                      'sims_per_job',1,[],...
+                      'timesurfer_flag',1,[],...
                    }, false);
+                 
+% coder (0 or 1): whether to compile sim and run mex
+% sims_per_job (integer): # sims per job
+
+if ~isempty(spec.simulation.sim_cluster_flag) % for backwards-compatibility
+  spec.simulation.cluster_flag=spec.simulation.sim_cluster_flag;
+end
+
+if spec.simulation.coder==1
+  if ~exist('codegen')
+    fprintf('codegen not found. will run m-file simulation.\n');
+    spec.simulation.coder=0;
+  elseif spec.simulation.cluster_flag==1
+    cwd=pwd;
+    try
+      % create MEX file 
+      tmpparms=spec.simulation;
+      tmpparms.cluster_flag=0; % set to 0 b/c job-specific params.mat should be created from the compute node
+      args = mmil_parms2args(tmpparms);
+      spec = buildmodel(spec,args{:});
+      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m   
+      [odefun_subdir,file]=fileparts(file);
+      cd(odefun_subdir);
+      tic
+      codegen_odefun(file);
+      toc
+      filemex = fullfile(odefun_subdir,[file,'_mex.mexa64']);
+      mfile = fullfile(odefun_subdir,[file '.m']);
+      cd(cwd);
+    catch err
+      fprintf('Error: %s\n',err.message);
+      for i=1:length(err.stack)
+        fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
+      end     
+      fprintf('Re-run simstudy() with "coder" set to 0\n');
+      cd(cwd);
+      return
+    end    
+    % (below: copy mex and odefun.m to [batchdir]/odefun)
+  end
+end
 
 if ischar(scope), scope={scope}; end
 if ischar(variable), scope={variable}; end
@@ -132,7 +177,7 @@ end
 home=home(1:end-1); % remove new line character
 cwd = pwd;
 
-if spec.simulation.sim_cluster_flag % run on cluster
+if spec.simulation.cluster_flag % run on cluster
   % create batchdir
   if isempty(spec.simulation.batchdir)
     batchname = ['B' timestamp];
@@ -152,20 +197,62 @@ if spec.simulation.sim_cluster_flag % run on cluster
   %end
   % create jobs
   jobs={};
-  auxcmd = '';
+  auxcmd = 'clear all; ';
   if ischar(p.addpath)
     auxcmd=sprintf('addpath(genpath(''%s'')); ',p.addpath);
   end
   auxcmd = [auxcmd 'try rng(''shuffle''); end; '];
   for k=1:length(allspecs)
+    if spec.simulation.coder==1
+      subdir = fullfile(batchdir,odefun_subdir,['job' num2str(k)]);
+      auxcmd2 = [auxcmd sprintf('addpath(''%s''); ',subdir)];
+      mkdir(subdir);
+    else
+      auxcmd2 = auxcmd;
+    end
     modelspec=allspecs{k};
     specfile = sprintf('spec%g.mat',k);
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag);
-    fprintf(fileID,'exit\n');
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''overwrite_flag'',%g,''timesurfer_flag'',%g);\n',auxcmd2,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.overwrite_flag,p.timesurfer_flag);
+    if spec.simulation.sims_per_job==1
+      fprintf(fileID,'exit\n');
+    end
     fclose(fileID);
+  end
+  if spec.simulation.coder==1
+    % copy mex and m files to batchdir/odefun_subdir
+    [status,result]=system(sprintf('cp %s %s',fullfile(cwd,filemex),fullfile(batchdir,filemex)));
+    if status, disp(result); return; end % if error occurred
+    [status,result]=system(sprintf('cp %s %s',fullfile(cwd,mfile),fullfile(batchdir,mfile)));
+    if status, disp(result); return; end % if error occurred
+  end
+  if spec.simulation.sims_per_job>1
+    % create jobs grouping several simulation scripts
+    jobs={};
+    nperjob=spec.simulation.sims_per_job;
+    nsims=length(allspecs);
+    njobs=ceil(nsims/nperjob);
+    cnt=0;
+    for k=1:njobs
+      jobs{end+1}=sprintf('jobs%g.m',k);
+      fileID=fopen(jobs{end},'wt');
+      if spec.simulation.coder==1
+        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);      
+        fprintf(fileID,'addpath %s\n',subdir);
+        mkdir(subdir);
+      end
+      for i=1:nperjob
+        if (cnt+i)>nsims
+          break;
+        end
+        fprintf(fileID,'job%g;\n',cnt+i);
+      end
+      cnt=cnt+nperjob;
+      fprintf(fileID,'exit\n');
+      fclose(fileID);
+    end
   end
   % create scriptlist.txt (list of jobs)
   fileID = fopen('scriptlist.txt', 'wt');
@@ -173,7 +260,7 @@ if spec.simulation.sim_cluster_flag % run on cluster
     [a,this] = fileparts(jobs{i});
     fprintf(fileID,'%s\n',this);
   end
-  fclose(fileID);
+  fclose(fileID);  
   % submit the jobs
   cmd = sprintf('%s %s %s',spec.simulation.sim_qsubscript,batchname,spec.simulation.memlimit);
   fprintf(logfid,'executing: "%s" on cluster %s\n',cmd,spec.simulation.sim_cluster);
@@ -188,7 +275,11 @@ if spec.simulation.sim_cluster_flag % run on cluster
   end
   % log errors
   if s, fprintf(logfid,'%s',m); end
-  fprintf(logfid,'%g jobs submitted.\n',length(allspecs));        
+  if spec.simulation.sims_per_job==1
+    fprintf(logfid,'%g jobs submitted.\n',length(jobs));
+  else
+    fprintf(logfid,'%g jobs submitted (%g simulations).\n',length(jobs),length(allspecs));
+  end
 else
   % run on local machine
   for specnum = 1:length(allspecs) % loop over elements of search space

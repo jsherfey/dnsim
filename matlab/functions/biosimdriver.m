@@ -64,6 +64,10 @@ end
 % run biosim
 args = mmil_parms2args(spec.simulation);
 [sim_data,spec,parms.biosim] = runsim(spec,args{:},'verbose',parms.verbose);
+if isempty(sim_data)
+  fprintf(logfid,'Simulation failed. No data to save.\n');
+  return;
+end
 
 % save simulated data with prefix
 if parms.savedata_flag
@@ -212,7 +216,7 @@ end
 
 % -----------------------------------------------------
 % characterize cells if appropriate (if contains iStepProtcol)
-if parms.savedata_flag && ismember(SimMech,spec.entities(1).mechanisms)
+if 0 %parms.savedata_flag && ismember(SimMech,spec.entities(1).mechanisms)
   try
     inputs={};
     for i=1:length(sim_data)

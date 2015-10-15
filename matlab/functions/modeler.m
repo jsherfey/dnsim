@@ -380,6 +380,7 @@ uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.59 .91 .4 .09],'string','intrinsic mechanisms','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','BackgroundColor',bgcolor,'units','normalized','style','text','position',[.31 .91 .25 .09],'string','dynamics (schema)','ListboxTop',0,'HorizontalAlignment','left','fontsize',10,'fontweight','normal');
 uicontrol('parent',p_net_select,'tag','nodecontrols','style','pushbutton','units','normalized','position',[.9 .92 .1 .1],'string','undo','backgroundcolor',[.8 .8 .8],'callback',@undo);
+uicontrol('parent',p_net_select,'tag','nodecontrols','units','normalized','position',[.8 .92 .1 .1],'style','pushbutton','string','quicksim','callback',@RunSimStudy);
   
 % left panel: mechanism editor %GUI_mechpanel;
 % compartment label
@@ -398,6 +399,7 @@ else
   u=[];
 end
 txt_comp = uicontrol('style','text','string',cl,'units','normalized','position',[.05 .95 .1 .05],'parent',pmech,'FontWeight','bold','visible','off');
+
 % button to expand/collapse mechanism editor
 H.btn_resizemech=uicontrol('parent',pmech,'style','pushbutton','units','normalized','position',[.4 .97 .2 .04],'string','expand','callback',@ResizeMechEditor,'visible','on');
 % button to upload a new mechanisms
@@ -2629,6 +2631,7 @@ if ~isfield(H,'text_scope') || ~ishandle(H.text_scope)
   H.edit_dt = uicontrol('parent',H.pbatchcontrols,'units','normalized',...
     'style','edit','position',[.45 .35+yshift .1 ht],'backgroundcolor','w','string','0.01',...
     'HorizontalAlignment','left');
+  H.chk_usecoder=uicontrol('style','checkbox','value',0,'parent',H.pbatchcontrols,'backgroundcolor',bgcolor2,'units','normalized','position'   ,[.6 .35+yshift .1 ht],'string','coder');  
   H.edit_repeats = uicontrol('parent',H.pbatchcontrols,'units','normalized',...
     'style','edit','position',[.18 .15+yshift .2 ht],'backgroundcolor','w','string','1',...
     'HorizontalAlignment','left');  
@@ -2792,7 +2795,7 @@ for i=1:nrepeats
     'timelimits',lims,'dsfact',dsfact,'sim_cluster_flag',clusterflag,'timestamp',timestamp,...
     'savedata_flag',get(H.chk_savedata,'value'),'savepopavg_flag',get(H.chk_savesum,'value'),'savespikes_flag',get(H.chk_savespikes,'value'),'saveplot_flag',get(H.chk_saveplots,'value'),...
     'plotvars_flag',get(H.chk_plottraces,'value'),'plotrates_flag',get(H.chk_plotrates,'value'),'plotpower_flag',get(H.chk_plotspectra,'value'),...
-    'addpath',fullfile(BIOSIMROOT,'matlab'),'overwrite_flag',get(H.chk_overwrite,'value'),'SOLVER',get(H.edit_SOLVER,'string'));
+    'addpath',fullfile(BIOSIMROOT,'matlab'),'coder',get(H.chk_usecoder,'value'),'overwrite_flag',get(H.chk_overwrite,'value'),'SOLVER',get(H.edit_SOLVER,'string'));
   clear tmpspec
   if isempty(rootoutdir)
     note.batch.rootoutdir = {};

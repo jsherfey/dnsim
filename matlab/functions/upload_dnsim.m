@@ -31,15 +31,15 @@ if nargin<1
     spec=CURRSPEC;
   end
 end
-if ~isdeployed
-  try
-    if ~exist('ganymed-ssh2-build250','dir')
-      sshfrommatlabinstall(1); % run at tool launch before setting global vars
-    else
-      sshfrommatlabinstall;
-    end
-  end
-end
+% if ~isdeployed
+%   try
+%     if ~exist('ganymed-ssh2-build250','dir')
+%       sshfrommatlabinstall(1); % run at tool launch before setting global vars
+%     else
+%       sshfrommatlabinstall;
+%     end
+%   end
+% end
 
 % create upload figure
 % function GetUploadInfo(src,evnt)
