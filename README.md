@@ -1,6 +1,8 @@
 dnsim
 =====
 
+[![Join the chat at https://gitter.im/jsherfey/dnsim](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jsherfey/dnsim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Dynamic Neural Simulator - a modular modeling tool for large ODE models.
 
 -------------------------------
