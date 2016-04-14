@@ -3,7 +3,16 @@ global BIOSIMROOT
 [BIOSIMROOT,o]=fileparts(which(mfilename));
 clear o
 if ~isdeployed
-  addpath(genpath(BIOSIMROOT));
+  %addpath(genpath(BIOSIMROOT));
+  
+  % Instead of adding everything to the path as Jason had, I'll onl add the
+  % core DNSim code. This can keep my code better separated.
+  addpath(genpath(fullfile(BIOSIMROOT,'csh')));
+  addpath(genpath(fullfile(BIOSIMROOT,'database/')));
+  addpath(genpath(fullfile(BIOSIMROOT,'ganymed-ssh2-build250/')));
+  addpath(genpath(fullfile(BIOSIMROOT,'matlab')));
+  
+  
 end
 
 % randomize seed

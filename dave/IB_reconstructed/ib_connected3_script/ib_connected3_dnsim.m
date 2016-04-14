@@ -1,5 +1,5 @@
 % Model: ib_connected3
-cd /home/davestanley/research/dnsim/ib_connected3;
+% cd /home/davestanley/research/dnsim/ib_connected3;
 spec=[];
 spec.nodes(1).label = 'IBa';
 spec.nodes(1).multiplicity = 3;
