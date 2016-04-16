@@ -1,6 +1,7 @@
 
 
-addpath(genpath('helper_dave'));
+currd = pwd;
+addpath(genpath(fullfile(currd,'helper_dave')));
 
 
 
