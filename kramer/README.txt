@@ -1,10 +1,6 @@
 
 
-This should contain the original Kramer model code from Jason. The code should be unchanged, except I added a single function called
-
-kramer/kramer/kramer_remove_all_but_IB.m
-
-This implements the full kramer model with the B, RS, and LTS cells cut out. This is a test to make sure that the model IB cells in the kramer model are the same as the kramer_IB model. IT appears that they are (see Google Doc presentation)
+This should contain the original Kramer model code from Jason. The code should be unchanged, directly from the zip files.
 
 
 

@@ -1,0 +1,17 @@
+gCaH = [6.5]
+tauCaH = [0.33333]
+c_CaHaM = [3]
+c_CaHbM = [3]
+IC = [0]
+IC_noise = [0.01]
+E_CaH=[125]
+
+aM(V) = c_CaHaM.*(1.6./(1+exp(-.072*(V-5))))
+bM(V) = c_CaHbM.*(.02*(V+8.9)./(exp((V+8.9)/5)-1))
+ICaH(V,m) = gCaH.*m.^2.*(V-E_CaH)
+ 
+mCaH' = (aM(V).*(1-mCaH)-bM(V).*mCaH)/tauCaH;
+mCaH(0) = IC+IC_noise.*rand(Npop,1)
+ 
+current => -ICaH(V,mCaH)
+ 

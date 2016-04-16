@@ -1,0 +1,12 @@
+g_COM = [0.4]
+comspan = [0.5]
+ 
+UB = max(Npre,Npost)
+Xpre = linspace(1,UB,Npre)'*ones(1,Npost)
+Xpost = (linspace(1,UB,Npost)'*ones(1,Npre))'
+mask = abs(Xpre-Xpost)<=comspan
+
+ICOM(V1,V2) = g_COM.*sum(((V1*ones(1,size(V1,1)))'-(V2*ones(1,size(V2,1)))).*mask,2)
+ 
+current => -ICOM(Vpost,Vpre)
+ 
