@@ -19,12 +19,15 @@ elseif ~isfield(spec,'entities') && isfield(spec,'nodes')
   spec.entities=spec.nodes;
 end
 threshold = parms.spikethreshold; % used to create point process {dn}
+% number of seconds before which to cut off spikes for
+% total_spikerate_minus_initial counting
+initial_time_threshold = 1.0;
 npop = length(spec.entities);
 var = parms.var;
 fig = [];
 
 % prepare point process data
-spiketimes={}; spikeinds={}; rates={}; alldn={}; spikes={}; orders={};
+spiketimes={}; spikeinds={}; rates={}; alldn={}; spikes={}; orders={}; total_spikerate_minus_initial = {}
 for pop=1:npop
   labels = {data(pop).sensor_info.label};
   if isempty(parms.var)
@@ -59,6 +62,9 @@ for pop=1:npop
     dn(cell,ind) = 1;
     spiketimes{pop}{cell}=t(ind);
     spikeinds{pop}{cell}=ind;
+
+    first_spike_post_initial_index = find(spiketimes{pop}{cell} > initial_time_threshold, 1);
+    total_spikerate_minus_initial{pop}{cell} = (length(spiketimes{pop}{cell}) - first_spike_post_initial_index + 1) / (max(t) - spiketimes{pop}{cell}(first_spike_post_initial_index));
   end
   % calc firing rate from point process
   [frates, tmins, ordered_elec] = frate(dn, parms);
@@ -120,6 +126,13 @@ if parms.plot_flag
       ylabel('firing rate [Hz]');
       %text(min(xlim)+.2*diff(xlim),min(ylim)+.8*diff(ylim),[strrep(lab,'_','\_') ' spike rate (threshold=' num2str(threshold) ')'],'fontsize',14,'fontweight','bold');
       title([strrep(lab,'_','\_') ' spike rate (threshold=' num2str(threshold) ')'],'fontsize',14,'fontweight','bold');
+
+      % apparently vline takes in seconds on the x-axis?
+      vline(initial_time_threshold,'k');
+      % only plots first cell in the population's total spike rate (minus initial conditions)!
+      hh=text(initial_time_threshold + .05*range(xlim),min(ylim)+.75*range(ylim),num2str(total_spikerate_minus_initial{pop}{1}));
+      set(hh,'fontsize',12);
+
       if pop==npop
         xlabel('time [s]');
       else

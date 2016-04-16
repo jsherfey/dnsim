@@ -44,8 +44,9 @@ spec.simulation = mmil_args2parms( varargin, ...
                       'addpath',[],[],...
                       'coder',0,[],...
                       'sims_per_job',1,[],...
+                      'timesurfer_flag',1,[],...
                    }, false);
-                 
+
 % coder (0 or 1): whether to compile sim and run mex
 % sims_per_job (integer): # sims per job
 
@@ -60,12 +61,12 @@ if spec.simulation.coder==1
   else
     cwd=pwd;
     try
-      % create MEX file 
+      % create MEX file
       tmpparms=spec.simulation;
       tmpparms.cluster_flag=0; % set to 0 b/c job-specific params.mat should be created from the compute node
       args = mmil_parms2args(tmpparms);
       spec = buildmodel(spec,args{:});
-      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m   
+      file = dnsimulator(spec,args{:}); % saved to odefun/odefun_timestamp.m
       [odefun_subdir,file]=fileparts(file);
       cd(odefun_subdir);
       tic
@@ -78,11 +79,11 @@ if spec.simulation.coder==1
       fprintf('Error: %s\n',err.message);
       for i=1:length(err.stack)
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
-      end     
+      end
       fprintf('Re-run simstudy() with "coder" set to 0\n');
       cd(cwd);
       return
-    end    
+    end
     % (below: copy mex and odefun.m to [batchdir]/odefun)
   end
 end
@@ -99,7 +100,7 @@ if (iscell(variable) && isequal(variable{1},'mechanisms')) && ((iscell(values) &
   scope=strrep(scope,'(','');
   scope=strrep(scope,')','');
   if ~isempty(scope)
-    scope=splitstr(scope,',');
+    scope=strread(scope,'%s','delimiter',',');
   end
   allspecs = get_leaveoneout_space(spec,scope);
 else
@@ -212,12 +213,13 @@ if spec.simulation.cluster_flag % run on cluster
       auxcmd2 = auxcmd;
     end
     modelspec=allspecs{k};
+    modelspec.jobnumber = sprintf('job%4.4i',k);
     specfile = sprintf('spec%g.mat',k);
     save(specfile,'modelspec');
     jobs{end+1} = sprintf('job%g.m',k);
     fileID = fopen(jobs{end},'wt');
 
-    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''jsondata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''plotpacoupling_flag'',%g,''overwrite_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.jsondata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.plotpacoupling_flag,p.overwrite_flag);
+    fprintf(fileID,'%sload(''%s'',''modelspec''); %s(modelspec,''rootoutdir'',''%s'',''prefix'',''%s'',''cluster_flag'',1,''batchdir'',''%s'',''jobname'',''%s'',''savedata_flag'',%g,''jsondata_flag'',%g,''savepopavg_flag'',%g,''savespikes_flag'',%g,''saveplot_flag'',%g,''plotvars_flag'',%g,''plotrates_flag'',%g,''plotpower_flag'',%g,''plotpacoupling_flag'',%g,''overwrite_flag'',%g,''timesurfer_flag'',%g);\n',auxcmd,specfile,scriptname,rootoutdir{k},prefix{k},batchdir,jobs{end},p.savedata_flag,p.jsondata_flag,p.savepopavg_flag,p.savespikes_flag,p.saveplot_flag,p.plotvars_flag,p.plotrates_flag,p.plotpower_flag,p.plotpacoupling_flag,p.overwrite_flag,p.timesurfer_flag);
     if spec.simulation.sims_per_job==1
       fprintf(fileID,'exit\n');
     end
@@ -241,7 +243,7 @@ if spec.simulation.cluster_flag % run on cluster
       jobs{end+1}=sprintf('jobs%g.m',k);
       fileID=fopen(jobs{end},'wt');
       if spec.simulation.coder==1
-        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);      
+        subdir = fullfile(batchdir,odefun_subdir,['jobs' num2str(k)]);
         fprintf(fileID,'addpath %s\n',subdir);
         mkdir(subdir);
       end
@@ -262,15 +264,12 @@ if spec.simulation.cluster_flag % run on cluster
     [a,this] = fileparts(jobs{i});
     fprintf(fileID,'%s\n',this);
   end
-  fclose(fileID);  
+  fclose(fileID);
   % submit the jobs
   cmd = sprintf('%s %s %s',spec.simulation.sim_qsubscript,batchname,spec.simulation.memlimit);
   fprintf(logfid,'executing: "%s" on cluster %s\n',cmd,spec.simulation.sim_cluster);
   if ~strmatch(host,spec.simulation.sim_cluster);
     % connect to cluster and submit jobs
-    if 0
-      [s,m] = system(sprintf('ssh %s "%s"',spec.simulation.sim_cluster,cmd));
-    end
   else
     % submit jobs on the current host
     [s,m] = system(cmd);
@@ -286,18 +285,18 @@ else
   % run on local machine
   for specnum = 1:length(allspecs) % loop over elements of search space
     modelspec = allspecs{specnum};
+    modelspec.jobnumber = sprintf('job%4.4i',1);
     fprintf(logfid,'processing simulation...');
     try
       biosimdriver(modelspec,'rootoutdir',rootoutdir{specnum},'prefix',prefix{specnum},'verbose',1,...
        'savedata_flag',p.savedata_flag,'jsondata_flag',p.jsondata_flag,'savepopavg_flag',p.savepopavg_flag,'savespikes_flag',p.savespikes_flag,...
        'saveplot_flag',p.saveplot_flag,'plotvars_flag',p.plotvars_flag,'plotrates_flag',p.plotrates_flag,'plotpower_flag',p.plotpower_flag,...
-       'plotpacoupling_flag',p.plotpacoupling_flag,'overwrite_flag',p.overwrite_flag);
-        %'savefig_flag',0,'savedata_flag',0);
+       'plotpacoupling_flag',p.plotpacoupling_flag,'overwrite_flag',p.overwrite_flag,'timesurfer_flag',p.timesurfer_flag);
     catch err
       fprintf('Error: %s\n',err.message);
       for i=1:length(err.stack)
         fprintf('\t in %s (line %g)\n',err.stack(i).name,err.stack(i).line);
-      end      
+      end
     end
     fprintf(logfid,'done (%g of %g)\n',specnum,length(allspecs));
   end

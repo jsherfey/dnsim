@@ -268,12 +268,3 @@ end
 % s.connections.label='test-test';
 % s.connections.mechanisms={'iSYN'};
 % dnsim(s);
-
-
-
-
-
-
-
-
-

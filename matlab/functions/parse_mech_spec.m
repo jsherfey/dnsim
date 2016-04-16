@@ -48,7 +48,7 @@ if ~isempty(Vin)
   end
   Vin = unique({Vin{:} aux_Vin{:}});
   try
-    tmp=cellfun(@(x)splitstr(x,','),Vin,'uniformoutput',false);
+    tmp=cellfun(@(x)strread(x,'%s','delimiter',','),Vin,'uniformoutput',false);
     tmp=unique(cat(1,tmp{:}))';
     Vin = tmp;
   end
@@ -123,7 +123,7 @@ end
     end
     % parse expressions
     if isempty(regexp(str,'\[.+;.+\]'))
-      expr = strtrim(splitstr(str,';'));
+      expr = strtrim(strread(str,'%s','delimiter',';'));
     else
       expr = strtrim(str);
     end
@@ -145,7 +145,7 @@ end
           odes{end,1} = [odes{end,1} ';'];
         end
       elseif ~isempty(regexp(lhs,'\w+\(0\)','match')) % IC: x(0) = ...
-        tmp = strtrim(splitstr(lhs,'('));
+        tmp = strtrim(strread(lhs,'%s','delimiter','('));
         ickey{end+1} = tmp{1};
         if isempty(regexp(rhs,'[^\d\.\-+\\]+','match'))
           icval{end+1} = str2num(rhs);
@@ -160,14 +160,14 @@ end
         precalcs{end+1,1} = strtrim(lhs);
         precalcs{end,2} = strtrim(rhs);
       elseif ~isempty(regexp(lhs,'\w+\([\w,]+\)','match')) % function: x(v) = ...
-        tmp = strtrim(splitstr(lhs,'('));
+        tmp = strtrim(strread(lhs,'%s','delimiter','('));
         funcs{end+1,1} = tmp{1};
         funcs{end,2} = ['@(' tmp{2} ' ' rhs];
         Vin{end+1} = tmp{2}(1:end-1);
         VinFunc{end+1} = tmp{1};
       elseif numel(regexp(expr{s},'=>'))==1 % function substitution
         subst{end+1,1} = lhs;
-        tmp = strtrim(splitstr(rhs,'('));
+        tmp = strtrim(strread(rhs,'%s','delimiter','('));
         subst{end,2} = strtrim(tmp{1}(2:end));
         try tmp = ['(' tmp{2}]; catch tmp = '()'; end
         tmp1 = regexp(tmp,'\([\[\]\S\s]+\)','match');%regexp(tmp,'\(\S+\)\[\]','match');
