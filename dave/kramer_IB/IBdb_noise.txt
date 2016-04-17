@@ -1,4 +1,0 @@
-V_noise = [.1]
- 
-current => V_noise.*randn(Npop,1).*sqrt(dt)/dt
- 

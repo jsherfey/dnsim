@@ -22,8 +22,10 @@ kramer:
 		presentation)
 
 kramer_IB
-	This contains kramer_IB_single.m, which is a single compartment implementation of the
-	kramer_IB cell. Just for playing around.
+	This used to contain the kramer_IB model, but now I've moved it to a separate repo.
+	See: https://github.com/davestanley-cogrhythms/model-dnsim-kramer_IB
+
+
 
 
 
