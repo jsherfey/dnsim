@@ -1,4 +1,4 @@
-function [fig,lfps,T,dat_out]=plotv_dav(data,spec,varargin)
+function [fig,lfps,T,dat_out,lab_out]=plotv_dav(data,spec,varargin)
 % Purpose: plot V (per population): image and (traces + mean(V))
 % Dave modifications - added option to output all cells data
 lfps=[]; T=[]; dat_out = {};
@@ -92,6 +92,7 @@ if parms.plot_flag
       if cnt==1, lfps = zeros(npop,length(T)); end
       lfps(pop,:) = lfp;
       dat_out{pop} = dat;
+      lab_out{pop} = lab;
       cnt=cnt+1;
       xlim([T(1) T(end)]);
     else % even, plot spectrum
@@ -134,6 +135,28 @@ else
     if cnt==1, lfps = zeros(npop,length(T)); end
     lfps(i,:) = mean(dat,1)';
     dat_out{i} = dat;
+    lab = data(i).sensor_info(var).label;
+    lab_out{i} = lab;
     cnt=cnt+1;
   end
+  
+  % Fill in empty dat_outs with zeros
+  if length(dat_out) < npop
+      dat_out{npop} = [];
+  end
+  for i = 1:npop
+      if isempty(dat_out{i});
+          dat_out{i} = zeros(size(dat));
+          lab_out{i} = [];
+      end
+  end
+  
+  % Pack and reshape output data
+  T=T(:);
+  dat_out = cat(3,dat_out{:});
+  dat_out = permute(dat_out,[2,3,1]);   % Data x compartments/cells x multiplicity (cells)
+  lfps = lfps';
+  
+  
+  
 end
